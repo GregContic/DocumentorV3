@@ -1,0 +1,306 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Container,
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Button,
+  Box,
+  Chip,
+  TextField,
+  MenuItem,
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import {
+  Visibility as VisibilityIcon,
+  Reply as ReplyIcon,
+  Delete as DeleteIcon,
+} from '@mui/icons-material';
+import { inquiryService } from '../services/api';
+
+const statusColors = {
+  pending: 'warning',
+  inProgress: 'info',
+  resolved: 'success',
+  closed: 'default',
+};
+
+const InquiriesDashboard = () => {
+  const [inquiries, setInquiries] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedInquiry, setSelectedInquiry] = useState(null);
+  const [replyDialogOpen, setReplyDialogOpen] = useState(false);
+  const [replyText, setReplyText] = useState('');
+
+  useEffect(() => {
+    fetchInquiries();
+  }, []);
+
+  const fetchInquiries = async () => {
+    try {
+      const response = await inquiryService.getAllInquiries();
+      setInquiries(response.data);
+    } catch (error) {
+      console.error('Error fetching inquiries:', error);
+    }
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleStatusChange = async (inquiryId, newStatus) => {
+    try {
+      await inquiryService.updateInquiryStatus(inquiryId, newStatus);
+      fetchInquiries();
+    } catch (error) {
+      console.error('Error updating inquiry status:', error);
+    }
+  };
+
+  const handleViewInquiry = (inquiry) => {
+    setSelectedInquiry(inquiry);
+  };
+
+  const handleReply = async () => {
+    if (!selectedInquiry || !replyText.trim()) return;
+
+    try {
+      await inquiryService.replyToInquiry(selectedInquiry._id, replyText);
+      setReplyDialogOpen(false);
+      setReplyText('');
+      fetchInquiries();
+    } catch (error) {
+      console.error('Error sending reply:', error);
+    }
+  };
+
+  const handleDeleteInquiry = async (inquiryId) => {
+    if (window.confirm('Are you sure you want to delete this inquiry?')) {
+      try {
+        await inquiryService.deleteInquiry(inquiryId);
+        fetchInquiries();
+      } catch (error) {
+        console.error('Error deleting inquiry:', error);
+      }
+    }
+  };
+
+  const filteredInquiries = inquiries.filter((inquiry) => {
+    const matchesSearch = 
+      inquiry.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inquiry.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inquiry.message.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || inquiry.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Student Inquiries Dashboard
+      </Typography>
+
+      {/* Filters */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label="Search by student name, subject, or message"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            select
+            label="Filter by status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+            <MenuItem value="inProgress">In Progress</MenuItem>
+            <MenuItem value="resolved">Resolved</MenuItem>
+            <MenuItem value="closed">Closed</MenuItem>
+          </TextField>
+        </Grid>
+      </Grid>
+
+      {/* Inquiries Table */}
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Student Name</TableCell>
+              <TableCell>Subject</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredInquiries
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((inquiry) => (
+                <TableRow key={inquiry._id}>
+                  <TableCell>{inquiry.studentName}</TableCell>
+                  <TableCell>{inquiry.subject}</TableCell>
+                  <TableCell>
+                    {new Date(inquiry.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={inquiry.status}
+                      color={statusColors[inquiry.status]}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Tooltip title="View Details">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleViewInquiry(inquiry)}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Reply">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setSelectedInquiry(inquiry);
+                            setReplyDialogOpen(true);
+                          }}
+                        >
+                          <ReplyIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeleteInquiry(inquiry._id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredInquiries.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </TableContainer>
+
+      {/* View Inquiry Dialog */}
+      <Dialog
+        open={Boolean(selectedInquiry)}
+        onClose={() => setSelectedInquiry(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedInquiry && (
+          <>
+            <DialogTitle>
+              Inquiry Details - {selectedInquiry.subject}
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  From: {selectedInquiry.studentName}
+                </Typography>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Date: {new Date(selectedInquiry.createdAt).toLocaleString()}
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 2 }}>
+                  {selectedInquiry.message}
+                </Typography>
+                {selectedInquiry.replies && selectedInquiry.replies.length > 0 && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Replies
+                    </Typography>
+                    {selectedInquiry.replies.map((reply, index) => (
+                      <Paper key={index} sx={{ p: 2, mb: 2 }}>
+                        <Typography variant="subtitle2">
+                          {reply.repliedBy} - {new Date(reply.date).toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                          {reply.message}
+                        </Typography>
+                      </Paper>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setSelectedInquiry(null)}>Close</Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
+      {/* Reply Dialog */}
+      <Dialog
+        open={replyDialogOpen}
+        onClose={() => setReplyDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Reply to Inquiry</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Type your reply here..."
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReplyDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleReply} variant="contained" color="primary">
+            Send Reply
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+};
+
+export default InquiriesDashboard; 
