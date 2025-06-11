@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { Archive as ArchiveIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -34,18 +35,26 @@ const Navbar = () => {
                 <>
                   <Button color="inherit" onClick={() => navigate('/admin/dashboard')}>
                     Dashboard
+                  </Button>                  <Button color="inherit" onClick={() => navigate('/admin/inquiries')}>
+                    Active Inquiries
                   </Button>
-                  <Button color="inherit" onClick={() => navigate('/admin/inquiries')}>
-                    Inquiries
+                  <Button 
+                    color="inherit" 
+                    onClick={() => navigate('/admin/inquiries/archive')}
+                    startIcon={<ArchiveIcon />}
+                  >
+                    Archived Inquiries
                   </Button>
                 </>
-              ) : (
-                <>
+              ) : (<>
                   <Button color="inherit" onClick={() => navigate('/request-document')}>
                     Request Document
                   </Button>
                   <Button color="inherit" onClick={() => navigate('/my-requests')}>
                     My Requests
+                  </Button>
+                  <Button color="inherit" onClick={() => navigate('/inquiries')}>
+                    Inquiries
                   </Button>
                 </>
               )}

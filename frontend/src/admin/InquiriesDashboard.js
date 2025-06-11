@@ -27,6 +27,7 @@ import {
   Visibility as VisibilityIcon,
   Reply as ReplyIcon,
   Delete as DeleteIcon,
+  Archive as ArchiveIcon,
 } from '@mui/icons-material';
 import { inquiryService } from '../services/api';
 
@@ -68,10 +69,15 @@ const InquiriesDashboard = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
   const handleStatusChange = async (inquiryId, newStatus) => {
     try {
-      await inquiryService.updateInquiryStatus(inquiryId, newStatus);
+      const response = await inquiryService.updateInquiryStatus(inquiryId, newStatus);
+      
+      // If the inquiry was marked as resolved, automatically archive it
+      if (newStatus === 'resolved' && response.data) {
+        await inquiryService.archiveInquiry(inquiryId);
+      }
+      
       fetchInquiries();
     } catch (error) {
       console.error('Error updating inquiry status:', error);
@@ -106,11 +112,23 @@ const InquiriesDashboard = () => {
     }
   };
 
+  const handleArchiveInquiry = async (inquiryId) => {
+    if (window.confirm('Are you sure you want to archive this inquiry?')) {
+      try {
+        await inquiryService.archiveInquiry(inquiryId);
+        fetchInquiries();
+      } catch (error) {
+        console.error('Error archiving inquiry:', error);
+      }
+    }
+  };
+
   const filteredInquiries = inquiries.filter((inquiry) => {
+    // Use user info for search and display
+    const studentName = inquiry.user ? `${inquiry.user.firstName} ${inquiry.user.lastName}` : '';
     const matchesSearch = 
-      inquiry.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inquiry.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inquiry.message.toLowerCase().includes(searchTerm.toLowerCase());
+      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (inquiry.message || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || inquiry.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -151,67 +169,84 @@ const InquiriesDashboard = () => {
       {/* Inquiries Table */}
       <TableContainer component={Paper}>
         <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Student Name</TableCell>
-              <TableCell>Subject</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredInquiries
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((inquiry) => (
-                <TableRow key={inquiry._id}>
-                  <TableCell>{inquiry.studentName}</TableCell>
-                  <TableCell>{inquiry.subject}</TableCell>
-                  <TableCell>
-                    {new Date(inquiry.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={inquiry.status}
-                      color={statusColors[inquiry.status]}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box>
-                      <Tooltip title="View Details">
+      <TableHead>
+        <TableRow>
+          <TableCell>Student Name</TableCell>
+          <TableCell>Email</TableCell>
+          <TableCell>Message</TableCell>
+          <TableCell>Date</TableCell>
+          <TableCell>Status</TableCell>
+          <TableCell>Actions</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {filteredInquiries
+          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+          .map((inquiry) => {
+            const studentName = inquiry.user ? `${inquiry.user.firstName} ${inquiry.user.lastName}` : '';
+            const email = inquiry.user ? inquiry.user.email : '';
+            return (
+              <TableRow key={inquiry._id}>
+                <TableCell>{studentName}</TableCell>
+                <TableCell>{email}</TableCell>
+                <TableCell>{inquiry.message}</TableCell>
+                <TableCell>
+                  {new Date(inquiry.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={inquiry.status}
+                    color={statusColors[inquiry.status]}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Box>
+                    <Tooltip title="View Details">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewInquiry(inquiry)}
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Reply">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setSelectedInquiry(inquiry);
+                          setReplyDialogOpen(true);
+                        }}
+                      >
+                        <ReplyIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteInquiry(inquiry._id)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                    {inquiry.status === 'resolved' && (
+                      <Tooltip title="Archive">
                         <IconButton
                           size="small"
-                          onClick={() => handleViewInquiry(inquiry)}
+                          color="default"
+                          onClick={() => handleArchiveInquiry(inquiry._id)}
                         >
-                          <VisibilityIcon />
+                          <ArchiveIcon />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Reply">
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setSelectedInquiry(inquiry);
-                            setReplyDialogOpen(true);
-                          }}
-                        >
-                          <ReplyIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteInquiry(inquiry._id)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
+                    )}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+      </TableBody>
         </Table>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
@@ -234,12 +269,15 @@ const InquiriesDashboard = () => {
         {selectedInquiry && (
           <>
             <DialogTitle>
-              Inquiry Details - {selectedInquiry.subject}
+              Inquiry Details
             </DialogTitle>
             <DialogContent>
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle1" gutterBottom>
-                  From: {selectedInquiry.studentName}
+                  From: {selectedInquiry.user ? `${selectedInquiry.user.firstName} ${selectedInquiry.user.lastName}` : ''}
+                </Typography>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Email: {selectedInquiry.user ? selectedInquiry.user.email : ''}
                 </Typography>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Date: {new Date(selectedInquiry.createdAt).toLocaleString()}
@@ -303,4 +341,4 @@ const InquiriesDashboard = () => {
   );
 };
 
-export default InquiriesDashboard; 
+export default InquiriesDashboard;

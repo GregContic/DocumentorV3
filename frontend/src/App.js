@@ -13,10 +13,17 @@ import Register from './pages/public/Register';
 // User Pages
 import DocumentRequest from './components/DocumentDashboard';
 import MyRequests from './pages/user/MyRequests';
+import UserInquiriesDashboard from './components/UserInquiriesDashboard';
+import Form137Request from './pages/user/Form137Request';
+import Form138Request from './pages/user/Form138Request';
+import SF9Request from './pages/user/SF9Request';
+import SF10Request from './pages/user/SF10Request';
+import DiplomaRequest from './pages/user/DiplomaRequest';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import InquiriesDashboard from './pages/admin/InquiriesDashboard';
+import InquiryArchive from './admin/InquiryArchive';
 
 // Protected Route
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -56,10 +63,58 @@ function App() {
               }
             />
             <Route
+              path="/request-form137"
+              element={
+                <ProtectedRoute>
+                  <Form137Request />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/request-form138"
+              element={
+                <ProtectedRoute>
+                  <Form138Request />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/request-sf9"
+              element={
+                <ProtectedRoute>
+                  <SF9Request />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/request-sf10"
+              element={
+                <ProtectedRoute>
+                  <SF10Request />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/request-diploma"
+              element={
+                <ProtectedRoute>
+                  <DiplomaRequest />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/my-requests"
               element={
                 <ProtectedRoute>
                   <MyRequests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inquiries"
+              element={
+                <ProtectedRoute>
+                  <UserInquiriesDashboard />
                 </ProtectedRoute>
               }
             />
@@ -78,6 +133,14 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <InquiriesDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/inquiries/archive"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <InquiryArchive />
                 </ProtectedRoute>
               }
             />

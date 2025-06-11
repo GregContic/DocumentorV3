@@ -2,8 +2,11 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Ensure API_URL doesn't end with a slash
+const normalizedURL = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: normalizedURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,31 +37,36 @@ export const authService = {
 
 // Document request services
 export const documentService = {
-  createRequest: (requestData) => api.post('/documents/request', requestData),
-  getMyRequests: () => api.get('/documents/my-requests'),
-  getRequestById: (id) => api.get(`/documents/request/${id}`),
+  createRequest: (requestData) => api.post('/api/documents/request', requestData),
+  getMyRequests: () => api.get('/api/documents/my-requests'),
+  getRequestById: (id) => api.get(`/api/documents/request/${id}`),
   // Admin specific endpoints
-  getAllRequests: () => api.get('/admin/documents/requests'),
+  getAllRequests: () => api.get('/api/documents/admin/documents/requests'),
   updateRequestStatus: (requestId, status) => 
-    api.patch(`/admin/documents/request/${requestId}/status`, { status }),
-  getRequestStats: () => api.get('/admin/documents/stats'),
+    api.patch(`/api/documents/admin/documents/request/${requestId}/status`, { status }),
+  getRequestStats: () => api.get('/api/documents/admin/documents/stats'),
 };
 
 // Inquiry services
 export const inquiryService = {
   // Student endpoints
-  createInquiry: (inquiryData) => api.post('/inquiries', inquiryData),
-  getMyInquiries: () => api.get('/inquiries/my-inquiries'),
-  getInquiryById: (id) => api.get(`/inquiries/${id}`),
+  createInquiry: (inquiryData) => api.post('/api/inquiries', inquiryData),
+  getMyInquiries: () => api.get('/api/inquiries/my-inquiries'),
+  getInquiryById: (id) => api.get(`/api/inquiries/${id}`),
   
   // Admin endpoints
-  getAllInquiries: () => api.get('/admin/inquiries'),
+  getAllInquiries: () => api.get('/api/inquiries/admin/inquiries'),
   updateInquiryStatus: (inquiryId, status) => 
-    api.patch(`/admin/inquiries/${inquiryId}/status`, { status }),
+    api.patch(`/api/inquiries/admin/inquiries/${inquiryId}/status`, { status }),
   replyToInquiry: (inquiryId, message) => 
-    api.post(`/admin/inquiries/${inquiryId}/reply`, { message }),
-  deleteInquiry: (inquiryId) => api.delete(`/admin/inquiries/${inquiryId}`),
-  getInquiryStats: () => api.get('/admin/inquiries/stats'),
+    api.post(`/api/inquiries/admin/inquiries/${inquiryId}/reply`, { message }),
+  deleteInquiry: (inquiryId) => api.delete(`/api/inquiries/admin/inquiries/${inquiryId}`),
+  getInquiryStats: () => api.get('/api/inquiries/admin/stats'),
+  // Inquiry archive methods
+  getArchivedInquiries: () => 
+    api.get('/api/inquiries/admin/archived-inquiries'),
+  archiveInquiry: (inquiryId) =>
+    api.patch(`/api/inquiries/admin/inquiries/${inquiryId}/archive`),
 };
 
-export default api; 
+export default api;

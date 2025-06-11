@@ -16,6 +16,8 @@ import {
   TextField,
   MenuItem,
   Grid,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import { documentService } from '../services/api';
 
@@ -32,6 +34,8 @@ const Dashboard = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchRequests();
@@ -39,10 +43,16 @@ const Dashboard = () => {
 
   const fetchRequests = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await documentService.getAllRequests();
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching requests:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to load requests. Please try again later.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,18 +75,31 @@ const Dashboard = () => {
   };
 
   const filteredRequests = requests.filter((request) => {
-    const matchesSearch = request.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.documentType.toLowerCase().includes(searchTerm.toLowerCase());
+    // Use user info for search
+    const studentName = request.user ? `${request.user.firstName} ${request.user.lastName}` : '';
+    const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (request.documentType || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+  return (    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Document Requests Dashboard
       </Typography>
 
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
       {/* Filters */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={6}>
@@ -110,7 +133,9 @@ const Dashboard = () => {
           <TableHead>
             <TableRow>
               <TableCell>Student Name</TableCell>
+              <TableCell>Email</TableCell>
               <TableCell>Document Type</TableCell>
+              <TableCell>Purpose</TableCell>
               <TableCell>Request Date</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Actions</TableCell>
@@ -119,54 +144,58 @@ const Dashboard = () => {
           <TableBody>
             {filteredRequests
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((request) => (
-                <TableRow key={request._id}>
-                  <TableCell>{request.studentName}</TableCell>
-                  <TableCell>{request.documentType}</TableCell>
-                  <TableCell>
-                    {new Date(request.requestDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={request.status}
-                      color={statusColors[request.status]}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box>
-                      {request.status === 'pending' && (
-                        <>
+              .map((request) => {
+                const studentName = request.user ? `${request.user.firstName} ${request.user.lastName}` : '';
+                const email = request.user ? request.user.email : '';
+                return (
+                  <TableRow key={request._id}>
+                    <TableCell>{studentName}</TableCell>
+                    <TableCell>{email}</TableCell>
+                    <TableCell>{request.documentType}</TableCell>
+                    <TableCell>{request.purpose}</TableCell>
+                    <TableCell>{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : ''}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={request.status}
+                        color={statusColors[request.status]}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box>
+                        {request.status === 'pending' && (
+                          <>
+                            <Button
+                              size="small"
+                              color="success"
+                              onClick={() => handleStatusChange(request._id, 'approved')}
+                              sx={{ mr: 1 }}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={() => handleStatusChange(request._id, 'rejected')}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        {request.status === 'approved' && (
                           <Button
                             size="small"
-                            color="success"
-                            onClick={() => handleStatusChange(request._id, 'approved')}
-                            sx={{ mr: 1 }}
+                            color="primary"
+                            onClick={() => handleStatusChange(request._id, 'completed')}
                           >
-                            Approve
+                            Mark as Completed
                           </Button>
-                          <Button
-                            size="small"
-                            color="error"
-                            onClick={() => handleStatusChange(request._id, 'rejected')}
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                      {request.status === 'approved' && (
-                        <Button
-                          size="small"
-                          color="primary"
-                          onClick={() => handleStatusChange(request._id, 'completed')}
-                        >
-                          Mark as Completed
-                        </Button>
-                      )}
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        )}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
         <TablePagination
@@ -177,10 +206,11 @@ const Dashboard = () => {
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
+        />      </TableContainer>
+        </>
+      )}
     </Container>
   );
 };
 
-export default Dashboard; 
+export default Dashboard;
