@@ -5,20 +5,28 @@ const User = require('../models/User');
 exports.createRequest = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { documentType, purpose, preferredPickupDate, preferredPickupTime, additionalNotes } = req.body;
-    const request = new DocumentRequest({
+    const requestData = {
       user: userId,
-      documentType,
-      purpose,
-      preferredPickupDate,
-      preferredPickupTime,
-      additionalNotes
-    });
+      ...req.body // This will include all the form fields from the frontend
+    };
+    
+    const request = new DocumentRequest(requestData);
     await request.save();
-    res.status(201).json({ message: 'Request submitted successfully', request });
+    res.status(201).json({ 
+      message: 'Request submitted successfully', 
+      request: {
+        id: request._id,
+        documentType: request.documentType,
+        status: request.status,
+        createdAt: request.createdAt
+      }
+    });
   } catch (error) {
     console.error('Error creating request:', error);
-    res.status(500).json({ message: 'Error creating request' });
+    res.status(500).json({ 
+      message: 'Error creating request',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -26,11 +34,57 @@ exports.createRequest = async (req, res) => {
 exports.getMyRequests = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const requests = await DocumentRequest.find({ user: userId }).sort({ createdAt: -1 });
-    res.json(requests);
+    
+    // Ensure the user can only access their own requests
+    const requests = await DocumentRequest.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .lean(); // Use lean() for better performance
+    
+    res.json({
+      success: true,
+      data: requests,
+      count: requests.length
+    });
   } catch (error) {
     console.error('Error fetching user requests:', error);
-    res.status(500).json({ message: 'Error fetching requests' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching requests',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// User: Get a specific request by ID (only if it belongs to the user)
+exports.getRequestById = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { requestId } = req.params;
+    
+    // Find request that belongs to the authenticated user
+    const request = await DocumentRequest.findOne({ 
+      _id: requestId, 
+      user: userId 
+    }).lean();
+    
+    if (!request) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Request not found or access denied' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: request
+    });
+  } catch (error) {
+    console.error('Error fetching request:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching request',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

@@ -14,26 +14,55 @@ const documentRequestSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  preferredPickupDate: {
-    type: String,
-    required: true
-  },
-  preferredPickupTime: {
-    type: String,
-    required: true
-  },
-  additionalNotes: {
-    type: String
-  },
+  
+  // Student Information
+  surname: String,
+  givenName: String,
+  dateOfBirth: Date,
+  placeOfBirth: String,
+  province: String,
+  town: String,
+  barrio: String,
+  sex: String,
+  studentNumber: String,
+  
+  // Parent/Guardian Information
+  parentGuardianName: String,
+  parentGuardianAddress: String,
+  parentGuardianOccupation: String,
+  
+  // Educational Information
+  elementaryCourseCompleted: String,
+  elementarySchool: String,
+  elementaryYear: String,
+  elementaryGenAve: String,
+  yearGraduated: String,
+  currentSchool: String,
+  schoolAddress: String,
+  
+  // Pickup Information
+  preferredPickupDate: String,
+  preferredPickupTime: String,
+  additionalNotes: String,
+  
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'completed'],
+    enum: ['pending', 'approved', 'rejected', 'completed', 'processing', 'submitted'],
     default: 'pending'
   },
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
+});
+// Pre-save middleware to update the updatedAt field
+documentRequestSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 module.exports = mongoose.model('DocumentRequest', documentRequestSchema);

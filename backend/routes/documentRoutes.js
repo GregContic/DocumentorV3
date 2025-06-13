@@ -6,6 +6,7 @@ const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware')
 // User routes
 router.post('/request', authenticate, documentController.createRequest);
 router.get('/my-requests', authenticate, documentController.getMyRequests);
+router.get('/request/:requestId', authenticate, documentController.getRequestById);
 
 // Admin routes
 router.get('/admin/documents/requests', authenticate, authorizeAdmin, documentController.getAllRequests);
