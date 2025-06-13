@@ -10,85 +10,413 @@ import {
   TableHead,
   TableRow,
   Chip,
+  Box,
+  CircularProgress,
+  Alert,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Divider,
 } from '@mui/material';
+import {
+  Visibility as ViewIcon,
+  Refresh as RefreshIcon,
+} from '@mui/icons-material';
+import { documentService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const MyRequests = () => {
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { user } = useAuth();
+  const fetchUserRequests = async () => {
+    if (!user?.id) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+      try {
+      // Fetch requests for the current authenticated user only
+      // The backend should automatically filter by the authenticated user's token
+      const response = await documentService.getMyRequests();
+      
+      if (response && response.data) {
+        // Handle both old format (direct array) and new format (object with data property)
+        const requestsData = response.data.data || response.data;
+        const userRequests = Array.isArray(requestsData) ? requestsData : [];
+        setRequests(userRequests);
+      } else {
+        setRequests([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user requests:', error);
+      if (error.response?.status === 401) {
+        setError('Session expired. Please login again.');
+      } else if (error.response?.status === 403) {
+        setError('Access denied. You can only view your own requests.');
+      } else {
+        setError('Failed to load your requests. Please try again.');
+      }
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Implement fetch requests logic here
-    // For example:
-    // const fetchRequests = async () => {
-    //   const response = await api.getUserRequests(user.id);
-    //   setRequests(response.data);
-    // };
-    // fetchRequests();
-    
-    // Temporary mock data
-    setRequests([
-      {
-        id: 1,
-        documentType: 'Certificate',
-        purpose: 'Employment',
-        status: 'pending',
-        submittedAt: '2024-03-15',
-      },
-      {
-        id: 2,
-        documentType: 'Transcript',
-        purpose: 'Further Studies',
-        status: 'approved',
-        submittedAt: '2024-03-14',
-      },
-    ]);
-  }, []);
+    fetchUserRequests();
+  }, [user?.id]);
 
+  const handleViewDetails = (request) => {
+    setSelectedRequest(request);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedRequest(null);
+  };
+  const handleRefresh = () => {
+    fetchUserRequests();
+  };
+
+  // Additional security check: ensure request belongs to current user
+  const validateRequestOwnership = (request) => {
+    if (!user?.id) return false;
+    // Check if the request belongs to the current user
+    return request.user === user.id || request.userId === user.id;
+  };
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'approved':
+      case 'completed':
         return 'success';
       case 'pending':
+      case 'submitted':
         return 'warning';
       case 'rejected':
+      case 'denied':
         return 'error';
+      case 'processing':
+      case 'in_progress':
+        return 'info';
       default:
         return 'default';
     }
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={handleRefresh} startIcon={<RefreshIcon />}>
+          Try Again
+        </Button>
+      </Container>
+    );
+  }
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        My Document Requests
-      </Typography>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Document Type</TableCell>
-              <TableCell>Purpose</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Submitted Date</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {requests.map((request) => (
-              <TableRow key={request.id}>
-                <TableCell>{request.documentType}</TableCell>
-                <TableCell>{request.purpose}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={request.status}
-                    color={getStatusColor(request.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{request.submittedAt}</TableCell>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          My Document Requests
+        </Typography>
+        <Button 
+          variant="outlined" 
+          onClick={handleRefresh}
+          startIcon={<RefreshIcon />}
+          disabled={loading}
+        >
+          Refresh
+        </Button>
+      </Box>
+
+      {requests.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No Document Requests Found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            You haven't submitted any document requests yet.
+          </Typography>
+        </Paper>
+      ) : (
+        <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: 'primary.main' }}>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Request ID</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Document Type</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Purpose</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Submitted Date</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>            <TableBody>
+              {requests
+                .filter(request => validateRequestOwnership(request)) // Additional security filter
+                .map((request, index) => (
+                <TableRow 
+                  key={request._id || request.id || index}
+                  sx={{ '&:hover': { backgroundColor: 'grey.50' } }}
+                >
+                  <TableCell sx={{ fontWeight: 'medium' }}>
+                    #{request._id?.slice(-6) || request.id || `REQ-${index + 1}`}
+                  </TableCell>
+                  <TableCell>{request.documentType || 'N/A'}</TableCell>
+                  <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {request.purpose || 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={request.status || 'Unknown'}
+                      color={getStatusColor(request.status)}
+                      size="small"
+                      sx={{ fontWeight: 'medium' }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {formatDate(request.submittedAt || request.createdAt)}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<ViewIcon />}
+                      onClick={() => handleViewDetails(request)}
+                    >
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      {/* Request Details Dialog */}
+      <Dialog 
+        open={dialogOpen} 
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >        <DialogTitle>
+          Request Details - #{selectedRequest?._id?.slice(-6) || selectedRequest?.id || 'N/A'}
+        </DialogTitle>
+        <DialogContent>
+          {selectedRequest && (
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Document Type:
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  {selectedRequest.documentType || 'N/A'}
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Status:
+                </Typography>
+                <Chip
+                  label={selectedRequest.status || 'Unknown'}
+                  color={getStatusColor(selectedRequest.status)}
+                  size="small"
+                  sx={{ mt: 0.5 }}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Purpose:
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  {selectedRequest.purpose || 'N/A'}
+                </Typography>
+              </Grid>
+
+              {/* Student Information */}
+              {(selectedRequest.surname || selectedRequest.givenName) && (
+                <>
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="h6" color="primary.main">
+                      Student Information
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Name:
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedRequest.surname && selectedRequest.givenName 
+                        ? `${selectedRequest.surname}, ${selectedRequest.givenName}`
+                        : selectedRequest.studentName || 'N/A'
+                      }
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Student Number:
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedRequest.studentNumber || 'N/A'}
+                    </Typography>
+                  </Grid>
+                </>
+              )}
+
+              {/* Educational Information */}
+              {(selectedRequest.currentSchool || selectedRequest.yearGraduated) && (
+                <>
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="h6" color="primary.main">
+                      Educational Information
+                    </Typography>
+                  </Grid>
+                  {selectedRequest.currentSchool && (
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        School:
+                      </Typography>
+                      <Typography variant="body1">
+                        {selectedRequest.currentSchool}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {selectedRequest.yearGraduated && (
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Year Graduated:
+                      </Typography>
+                      <Typography variant="body1">
+                        {selectedRequest.yearGraduated}
+                      </Typography>
+                    </Grid>
+                  )}
+                </>
+              )}
+
+              {/* Pickup Information */}
+              {(selectedRequest.preferredPickupDate || selectedRequest.preferredPickupTime) && (
+                <>
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="h6" color="primary.main">
+                      Pickup Schedule
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Preferred Date:
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedRequest.preferredPickupDate 
+                        ? formatDate(selectedRequest.preferredPickupDate)
+                        : 'N/A'
+                      }
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Preferred Time:
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedRequest.preferredPickupTime 
+                        ? new Date(selectedRequest.preferredPickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : 'N/A'
+                      }
+                    </Typography>
+                  </Grid>
+                </>
+              )}
+
+              {/* Additional Notes */}
+              {selectedRequest.additionalNotes && (
+                <>
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Additional Notes:
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedRequest.additionalNotes}
+                    </Typography>
+                  </Grid>
+                </>
+              )}
+
+              {/* Timestamps */}
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="h6" color="primary.main">
+                  Request Timeline
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Submitted:
+                </Typography>
+                <Typography variant="body1">
+                  {formatDate(selectedRequest.submittedAt || selectedRequest.createdAt)}
+                </Typography>
+              </Grid>
+              {selectedRequest.updatedAt && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Last Updated:
+                  </Typography>
+                  <Typography variant="body1">
+                    {formatDate(selectedRequest.updatedAt)}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

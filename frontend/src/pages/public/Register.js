@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import bgImage from '../../assets/eastern.jpg';
 import {
   Container,
   Paper,
@@ -22,6 +23,14 @@ import {
   Lock as LockIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
+
+const commonInputProps = {
+  sx: {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '12px',
+    }
+  }
+};
 
 const Register = () => {
   const navigate = useNavigate();
@@ -118,19 +127,64 @@ const Register = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Fade in timeout={800}>
-        <Box sx={{ mt: 8, mb: 4 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        '&::before': {          content: '""',
+          position: 'fixed',
+          backgroundColor: 'rgba(0, 0, 0, 0.4)', // Adding dark overlay with 0.4 opacity
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,          backgroundImage: `url(${bgImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          filter: 'blur(3px) opacity(0.9)',
+          transform: 'scale(1.1)', // Prevents blur edges
+          zIndex: -2,
+        },
+        '&::after': {
+          content: '""',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)', // Adjust the last number (0.4) to control opacity
+          zIndex: -1,
+        },
+      }}
+    >
+      <Container 
+        maxWidth="sm" 
+        sx={{ 
+          position: 'relative',
+          zIndex: 1,
+          py: 4
+        }}
+      >
+        <Fade in timeout={800}>
+          <Box>
           <Paper
-            elevation={3}
-            sx={{
-              p: 4,
-              borderRadius: 2,
-              bgcolor: 'background.paper',
-              transition: 'transform 0.3s ease-in-out',
+            elevation={3}            sx={{
+              p: { xs: 3, sm: 4 },
+              width: '100%',
+              background: 'linear-gradient(to bottom, #ffffff, #f8f9fa)',
+              borderRadius: '16px',
+              transition: 'transform 0.2s ease-in-out',
               '&:hover': {
-                transform: 'scale(1.02)',
-              },
+                transform: 'translateY(-4px)',
+              }
             }}
           >
             <Typography
@@ -171,6 +225,7 @@ const Register = () => {
                         </InputAdornment>
                       ),
                     }}
+                    {...commonInputProps}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -188,6 +243,7 @@ const Register = () => {
                         </InputAdornment>
                       ),
                     }}
+                    {...commonInputProps}
                   />
                 </Grid>
               </Grid>
@@ -208,6 +264,7 @@ const Register = () => {
                     </InputAdornment>
                   ),
                 }}
+                {...commonInputProps}
               />
 
               <TextField
@@ -236,6 +293,7 @@ const Register = () => {
                     </InputAdornment>
                   ),
                 }}
+                {...commonInputProps}
               />
 
               <TextField
@@ -264,6 +322,7 @@ const Register = () => {
                     </InputAdornment>
                   ),
                 }}
+                {...commonInputProps}
               />
 
               <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -278,11 +337,18 @@ const Register = () => {
                   type="submit"
                   variant="contained"
                   size="large"
-                  disabled={loading}
-                  sx={{
+                  disabled={loading}                  sx={{
                     minWidth: 120,
-                    borderRadius: 2,
+                    py: 1.5,
+                    borderRadius: '12px',
+                    fontSize: '1rem',
                     textTransform: 'none',
+                    background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                    }
                   }}
                 >
                   {loading ? (
@@ -293,11 +359,11 @@ const Register = () => {
                 </Button>
               </Box>
             </form>
-          </Paper>
-        </Box>
-      </Fade>
-    </Container>
+          </Paper>          </Box>
+        </Fade>
+      </Container>
+    </Box>
   );
 };
 
-export default Register; 
+export default Register;

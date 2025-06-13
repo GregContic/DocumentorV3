@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import bgImage from '../../assets/eastern.jpg';
 import {
   Container,
   Paper,
@@ -9,17 +10,21 @@ import {
   TextField,
   Button,
   Box,
+  Link,
   Alert,
   InputAdornment,
   IconButton,
   CircularProgress,
   Fade,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
-  Visibility,
-  VisibilityOff,
-  Email as EmailIcon,
+  Person as PersonIcon,
   Lock as LockIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  School as SchoolIcon,
 } from '@mui/icons-material';
 
 const Login = () => {
@@ -34,6 +39,8 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     // Check for success message from registration
@@ -113,153 +120,245 @@ const Login = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Fade in timeout={800}>
-        <Box
-          sx={{
-            mt: 8,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
+    <Box      sx={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          filter: 'blur(3px) opacity(0.9)',
+          transform: 'scale(1.1)', // Prevents blur edges
+          zIndex: -2,
+        },
+        '&::after': {
+          content: '""',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)', // Adjust the last number (0.4) to control opacity
+          zIndex: -1,
+        },
+      }}
+    >
+      <Container 
+        maxWidth="xs" 
+        sx={{ 
+          position: 'relative',
+          zIndex: 1,
+          py: 4
+        }}
+      >
+        <Fade in timeout={800}>
           <Paper
             elevation={3}
             sx={{
-              p: 4,
+              p: { xs: 3, sm: 4 },
               width: '100%',
-              borderRadius: 2,
-              bgcolor: 'background.paper',
-              transition: 'transform 0.3s ease-in-out',
+              background: 'linear-gradient(to bottom, #ffffff, #f8f9fa)',
+              borderRadius: '16px',
+              transition: 'transform 0.2s ease-in-out',
               '&:hover': {
-                transform: 'scale(1.02)',
-              },
+                transform: 'translateY(-4px)',
+              }
             }}
           >
-            <Typography
-              variant="h4"
-              gutterBottom
-              align="center"
+            <Box
               sx={{
-                fontWeight: 'bold',
-                color: 'primary.main',
-                mb: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3,
               }}
             >
-              Welcome Back
-            </Typography>
-            
-            {success && (
-              <Fade in>
-                <Alert severity="success" sx={{ mb: 3 }}>
-                  {success}
-                </Alert>
-              </Fade>
-            )}
-
-            {error && (
-              <Fade in>
-                <Alert severity="error" sx={{ mb: 3 }}>
-                  {error}
-                </Alert>
-              </Fade>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                margin="normal"
-                required
-                error={!!error && error.includes('email')}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailIcon color={error && error.includes('email') ? 'error' : 'primary'} />
-                    </InputAdornment>
-                  ),
-                }}
+              <Box
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                  },
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  mb: 2,
                 }}
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleChange}
-                margin="normal"
-                required
-                error={!!error && error.includes('password')}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockIcon color={error && error.includes('password') ? 'error' : 'primary'} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleClickShowPassword}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                  },
-                }}
-              />
-              
-              <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Button
-                  variant="text"
-                  onClick={() => navigate('/register')}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Don't have an account? Sign Up
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading}
+              >
+                <Box
                   sx={{
-                    minWidth: 120,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    position: 'relative',
+                    bgcolor: 'primary.main',
+                    borderRadius: '50%',
+                    p: 2,
+                    mb: 2,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                   }}
                 >
-                  {loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    'Sign In'
-                  )}
-                </Button>
+                  <SchoolIcon
+                    sx={{
+                      fontSize: 40,
+                      color: 'white',
+                    }}
+                  />
+                </Box>
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  sx={{
+                    fontWeight: 600,
+                    color: 'primary.main',
+                    textAlign: 'center',
+                    mb: 1,
+                  }}
+                >
+                  Welcome Back
+                </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ textAlign: 'center', mb: 3 }}
+                >
+                  Sign in to continue to Document Request System
+                </Typography>
               </Box>
-            </form>
+
+              {success && (
+                <Fade in>
+                  <Alert severity="success" sx={{ mb: 3 }}>
+                    {success}
+                  </Alert>
+                </Fade>
+              )}
+
+              {error && (
+                <Fade in>
+                  <Alert severity="error" sx={{ mb: 3 }}>
+                    {error}
+                  </Alert>
+                </Fade>
+              )}
+
+              <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Email Address"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, email: e.target.value }))
+                    }
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonIcon color="primary" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '12px',
+                      }
+                    }}
+                  />
+
+                  <TextField
+                    required
+                    fullWidth
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, password: e.target.value }))
+                    }
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockIcon color="primary" />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '12px',
+                      }
+                    }}
+                  />
+
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    disabled={loading}
+                    sx={{
+                      mt: 2,
+                      py: 1.5,
+                      borderRadius: '12px',
+                      fontSize: '1rem',
+                      textTransform: 'none',
+                      background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                      }
+                    }}
+                  >
+                    {loading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      mt: 2,
+                      gap: 1,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Don't have an account?
+                    </Typography>                  <Link
+                      component={RouterLink}
+                      to="/register"
+                      variant="body2"
+                      sx={{
+                        color: 'primary.main',
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                        '&:hover': {
+                          textDecoration: 'underline',
+                        },
+                      }}
+                    >
+                      Create an account
+                    </Link>
+                  </Box>
+                </Box>
+              </form>
+            </Box>
           </Paper>
-        </Box>
-      </Fade>
-    </Container>
+        </Fade>      </Container>
+    </Box>
   );
 };
 

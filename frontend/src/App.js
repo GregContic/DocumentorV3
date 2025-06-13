@@ -28,17 +28,8 @@ import InquiryArchive from './admin/InquiryArchive';
 // Protected Route
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
-// Create a theme instance
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-});
+// Import our custom theme
+import { theme } from './theme/theme';
 
 function App() {
   return (

@@ -34,8 +34,7 @@ import { documentService } from '../../services/api';
 
 const DiplomaRequest = () => {
   const [activeStep, setActiveStep] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);  const [formData, setFormData] = useState({
     documentType: 'High School Diploma',
     purpose: '',
     studentNumber: '',
@@ -207,17 +206,22 @@ const DiplomaRequest = () => {
                   label="Preferred Pickup Date"
                   value={formData.preferredPickupDate}
                   onChange={(newDate) => {
-                    if (newDate) {
-                      setFormData(prev => ({
-                        ...prev,
-                        preferredPickupDate: formatDate(newDate)
-                      }));
-                    }
+                    setFormData(prev => ({
+                      ...prev,
+                      preferredPickupDate: newDate
+                    }));
                   }}
-                  renderInput={(params) => <TextField {...params} fullWidth required />}
+                  shouldDisableDate={isWeekendDay}
                   minDate={new Date()}
                   maxDate={addDaysToDate(new Date(), 30)}
-                  shouldDisableDate={isWeekendDay}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      required: true,
+                      error: !!errors.preferredPickupDate,
+                      helperText: errors.preferredPickupDate
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -226,13 +230,25 @@ const DiplomaRequest = () => {
                   value={formData.preferredPickupTime}
                   onChange={(newTime) => {
                     if (newTime) {
+                      // Set time to exact hours only (no minutes)
+                      newTime.setMinutes(0);
                       setFormData(prev => ({
                         ...prev,
                         preferredPickupTime: newTime
                       }));
                     }
                   }}
-                  renderInput={(params) => <TextField {...params} fullWidth required />}
+                  minTime={new Date(0, 0, 0, 8)} // 8 AM
+                  maxTime={new Date(0, 0, 0, 15)} // 3 PM
+                  minutesStep={60}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      required: true,
+                      error: !!errors.preferredPickupTime,
+                      helperText: errors.preferredPickupTime
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -299,7 +315,7 @@ const DiplomaRequest = () => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Pickup Schedule"
-                    secondary={`Date: ${formData.preferredPickupDate ? formatDate(new Date(formData.preferredPickupDate)) : 'Not set'}, Time: ${formData.preferredPickupTime ? formatDate(new Date(formData.preferredPickupTime), 'HH:mm') : 'Not set'}`}
+                    secondary={`Date: ${formData.preferredPickupDate ? formData.preferredPickupDate.toLocaleDateString() : 'Not set'}, Time: ${formData.preferredPickupTime ? formData.preferredPickupTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Not set'}`}
                   />
                 </ListItem>
               </List>
@@ -330,13 +346,12 @@ const DiplomaRequest = () => {
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}
-        </Stepper>
-
-        <form onSubmit={handleSubmit}>
+        </Stepper>        <form onSubmit={(e) => e.preventDefault()}>
           {renderStepContent(activeStep)}
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
             <Button
+              type="button"
               onClick={handleBack}
               disabled={activeStep === 0 || loading}
             >
@@ -344,9 +359,10 @@ const DiplomaRequest = () => {
             </Button>
             {activeStep === steps.length - 1 ? (
               <Button
-                type="submit"
+                type="button"
                 variant="contained"
                 color="primary"
+                onClick={handleSubmit}
                 endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}
                 disabled={loading}
               >
@@ -354,6 +370,7 @@ const DiplomaRequest = () => {
               </Button>
             ) : (
               <Button
+                type="button"
                 variant="contained"
                 onClick={handleNext}
                 disabled={loading}
