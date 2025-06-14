@@ -22,6 +22,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -83,17 +84,15 @@ const Form137Request = () => {
     'Request Form (will be provided)',
   ];
 
-  const steps = ['Student Information', 'Parent/Guardian Info', 'Educational Background', 'Schedule Pickup', 'Review & Submit'];
-  const validateStep = (stepIndex) => {
+  const steps = ['Student Information', 'Parent/Guardian Info', 'Educational Background', 'Schedule Pickup', 'Review & Submit'];  const validateStep = (stepIndex) => {
     const newErrors = {};
 
-    switch (stepIndex) {
-      case 0: // Student Information
+    switch (stepIndex) {case 0: // Student Information
         if (!formData.purpose.trim()) newErrors.purpose = 'Purpose is required';
         if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
         if (!formData.givenName.trim()) newErrors.givenName = 'Given name is required';
         if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-        if (!formData.sex.trim()) newErrors.sex = 'Sex is required';
+        if (!formData.sex) newErrors.sex = 'Sex is required';
         if (!formData.placeOfBirth.trim()) newErrors.placeOfBirth = 'Place of birth is required';
         if (!formData.studentNumber.trim()) newErrors.studentNumber = 'Student number is required';
         break;
@@ -115,15 +114,14 @@ const Form137Request = () => {
         if (!formData.preferredPickupTime) newErrors.preferredPickupTime = 'Pickup time is required';
         break;
       default:
-        break;
-    }
+        break;    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const handleNext = () => {
-    if (validateStep(activeStep)) {
+  };  const handleNext = () => {
+    const isValid = validateStep(activeStep);
+    
+    if (isValid) {
       setActiveStep((prev) => prev + 1);
     }
   };
@@ -241,8 +239,7 @@ const Form137Request = () => {
                   }}
                 />
               </DatePickerWrapper>
-            </Grid>
-            <Grid item xs={12} md={6}>
+            </Grid>            <Grid item xs={12} md={6}>
               <FormControl fullWidth required error={!!errors.sex}>
                 <InputLabel>Sex</InputLabel>
                 <Select
@@ -253,7 +250,7 @@ const Form137Request = () => {
                   <MenuItem value="Male">Male</MenuItem>
                   <MenuItem value="Female">Female</MenuItem>
                 </Select>
-                {errors.sex && <Typography variant="caption" color="error" sx={{ ml: 2, mt: 0.5 }}>{errors.sex}</Typography>}
+                {errors.sex && <FormHelperText>{errors.sex}</FormHelperText>}
               </FormControl>
             </Grid>
             <Grid item xs={12}>

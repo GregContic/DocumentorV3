@@ -1,9 +1,11 @@
-import React from 'react';
+impoconconst SCHOOL_LOGO = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMzIgNCBMNTQgMTYgTDU0IDQ4IEwzMiA2MCBMMTAgNDggTDEwIDE2IFoiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMTUiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPGNpcmNsZSBjeD0iMjQiIGN5PSIyOCIgcj0iNCIgZmlsbD0iIzIyOEIyMiIvPgogIDxyZWN0IHg9IjIyIiB5PSIyOCIgd2lkdGg9IjQiIGhlaWdodD0iNiIgZmlsbD0iIzhCNDUxMyIvPgogIDxwYXRoIGQ9Ik0zMCAyMiBRMzEgMTggMzIgMjAgUTMzIDE4IDM0IDIyIFEzNSAyNiAzMyAyOCBRMzIgMzAgMzEgMjggUTI5IDI2IDMwIDIyIiBmaWxsPSIjREMxNDNDIi8+CiAgPHBhdGggZD0iTTMxIDI0IFEzMiAyMiAzMyAyNCBRMzMgMjYgMzIgMjcgUTMxIDI2IDMxIDI0IiBmaWxsPSIjRkZENzAwIi8+CiAgPHJlY3QgeD0iMzYiIHk9IjI4IiB3aWR0aD0iNiIgaGVpZ2h0PSI0IiBmaWxsPSIjMzM0NTgwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMC41Ii8+CiAgPGxpbmUgeDE9IjM5IiB5MT0iMjgiIHgyPSIzOSIgeTI9IjMyIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMC41Ii8+CiAgPHRleHQgeD0iMzIiIHk9IjUwIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNiIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwMDAwMDAiPkVMVE5IUzwvdGV4dD4KICA8dGV4dCB4PSIzMiIgeT0iNTgiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMDAwMDAwIj4yMDA3PC90ZXh0Pgo8L3N2Zz4K";t DEPED_LOGO = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMCIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjMzM0NTgwIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cmVjdCB4PSIyOCIgeT0iMjUiIHdpZHRoPSI4IiBoZWlnaHQ9IjIwIiBmaWxsPSIjMzM0NTgwIi8+CiAgPHBhdGggZD0iTTI4IDE1IFEzMCAxMCAzMiAxMiBRMzQgMTAgMzYgMTUgUTM3IDIwIDM1IDI1IFEzMiAyNyAyOSAyNSBRMjcgMjAgMjggMTUiIGZpbGw9IiNEQzE0M0MiLz4KICA8cGF0aCBkPSJNMzAgMTggUTMxIDE2IDMyIDE4IFEzMyAxNiAzNCAxOCBRMzQgMjIgMzIgMjMgUTMwIDIyIDMwIDE4IiBmaWxsPSIjRkZENzAwIi8+CiAgPHRleHQgeD0iMzIiIHk9IjUwIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMzMzQ1ODAiPkRlcEVEPC90ZXh0Pgo8L3N2Zz4K";t React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
-// Import logo images directly from assets
-import DepEdLogo from '../../assets/deped-logo.jpg';
-import SchoolLogo from '../../assets/eltnhslogo.png';
+// DepEd Logo as simplified PNG data URI (more compatible with react-pdf)
+const DEPED_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAUYSURBVHic7ZzLaxRBEMafJCYmMSYmJiYm8QEqKl7Ek3jxgYj4wIMIehBBD4L4QA+CePCBBz2IoPjAg4iIB0FERERERERERERERERERERERERERERERERERERERERERERET0dURERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERER0dUR";
+
+// School Logo as simplified PNG data URI (more compatible with react-pdf)  
+const SCHOOL_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAUYSURBVHic7ZzLaxRBEMafJCYmMSYmJiYm8QEqKl7Ek3jxgYj4wIMIehBBD4L4QA+CePCBBz2IoPjAg4iIB0FERERERERERERERERERERERERERERERERERERERERERERERERET0dURERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERER0dUR";
 
 // Create styles to match official Form 137
 const styles = StyleSheet.create({
@@ -41,8 +43,22 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     objectFit: 'contain',
-    border: '1pt solid #ccc',
-    borderRadius: 4,
+  },  logoFallback: {
+    width: 60,
+    height: 60,
+    border: '2pt solid #334580',
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 4,
+  },
+  logoFallbackText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#334580',
+    marginBottom: 1,
   },
   officialText: {
     fontSize: 8,
@@ -171,21 +187,21 @@ const Form137PDF = ({ formData }) => (
           <View style={styles.logoPlaceholder}>
             <Image
               style={styles.logoImage}
-              src={DepEdLogo}
+              src={DEPED_LOGO}
             />
           </View>
         </View>
         <View style={styles.headerCenter}>
           <Text style={styles.formSubtitle}>Republic of the Philippines</Text>
           <Text style={styles.formSubtitle}>DEPARTMENT OF EDUCATION</Text>
-          <Text style={styles.formSubtitle}>Region IV-A CALABARZON</Text>
+          <Text style={styles.formSubtitle}>Cordillera Administrative Region</Text>
           <Text style={styles.formSubtitle}>Schools Division of Benguet</Text>
           <Text style={styles.formSubtitle}>Eastern La Trinidad National High School</Text>
         </View>        <View style={styles.headerRight}>
           <View style={styles.logoPlaceholder}>
             <Image
               style={styles.logoImage}
-              src={SchoolLogo}
+              src={SCHOOL_LOGO}
             />
           </View>
         </View>
