@@ -42,6 +42,7 @@ import { formatDate, addDaysToDate, isWeekendDay } from '../../utils/dateUtils';
 import { documentService } from '../../services/api';
 import AIDocumentUploader from '../../components/AIDocumentUploader';
 import AIAssistantCard from '../../components/AIAssistantCard';
+import FormAssistantChatCard from '../../components/FormAssistantChatCard';
 
 const Form137Request = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -196,6 +197,13 @@ const Form137Request = () => {
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Fill out your personal information below. You can use our AI assistant to automatically extract information from document images.
               </Typography>
+            </Grid>            
+            {/* Form Assistant Chat Card */}
+            <Grid item xs={12}>
+              <FormAssistantChatCard
+                onAIUpload={() => setShowAIUploader(true)}
+                formType="Form 137"
+              />
             </Grid>
             
             {/* AI Assistant Card */}

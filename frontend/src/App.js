@@ -28,6 +28,9 @@ import InquiryArchive from './admin/InquiryArchive';
 // Protected Route
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
+// Chatbot
+import EnhancedFloatingChatbot from './components/Chatbot/EnhancedFloatingChatbot';
+
 // Import our custom theme
 import { theme } from './theme/theme';
 
@@ -139,6 +142,9 @@ function App() {
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          
+          {/* Enhanced Floating Chatbot - Available on all pages */}
+          <EnhancedFloatingChatbot />
         </Router>
       </AuthProvider>
     </ThemeProvider>
