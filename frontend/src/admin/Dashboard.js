@@ -19,7 +19,9 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import { QrCodeScanner as QrIcon } from '@mui/icons-material';
 import { documentService } from '../services/api';
+import QRVerificationDialog from '../components/QRVerificationDialog';
 
 const statusColors = {
   pending: 'warning',
@@ -36,6 +38,8 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [qrVerificationOpen, setQrVerificationOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
   useEffect(() => {
     fetchRequests();
@@ -74,6 +78,16 @@ const Dashboard = () => {
     }
   };
 
+  const handleOpenQrDialog = (request) => {
+    setSelectedRequest(request);
+    setQrVerificationOpen(true);
+  };
+
+  const handleCloseQrDialog = () => {
+    setQrVerificationOpen(false);
+    setSelectedRequest(null);
+  };
+
   const filteredRequests = requests.filter((request) => {
     // Use user info for search
     const studentName = request.user ? `${request.user.firstName} ${request.user.lastName}` : '';
@@ -83,10 +97,27 @@ const Dashboard = () => {
     return matchesSearch && matchesStatus;
   });
 
-  return (    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Document Requests Dashboard
       </Typography>
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Button
+          variant="contained"
+          startIcon={<QrIcon />}
+          onClick={() => setQrVerificationOpen(true)}
+          sx={{
+            background: 'linear-gradient(45deg, #2e7d32, #4caf50)',
+            '&:hover': {
+              background: 'linear-gradient(45deg, #1b5e20, #2e7d32)',
+            },
+          }}
+        >
+          Verify Document QR Code
+        </Button>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -191,6 +222,14 @@ const Dashboard = () => {
                             Mark as Completed
                           </Button>
                         )}
+                        <Button
+                          size="small"
+                          color="info"
+                          onClick={() => handleOpenQrDialog(request)}
+                        >
+                          <QrIcon fontSize="small" sx={{ mr: 0.5 }} />
+                          Verify QR
+                        </Button>
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -205,9 +244,15 @@ const Dashboard = () => {
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />      </TableContainer>
-        </>
+          onRowsPerPageChange={handleChangeRowsPerPage}        />
+      </TableContainer>
+      
+      {/* QR Verification Dialog */}
+      <QRVerificationDialog
+        open={qrVerificationOpen}
+        onClose={() => setQrVerificationOpen(false)}
+      />
+      </>
       )}
     </Container>
   );

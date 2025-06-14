@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import Form137PDF from '../../components/PDFTemplates/Form137PDF';
+import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
 import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { formatDate, addDaysToDate, isWeekendDay } from '../../utils/dateUtils';
 import { documentService } from '../../services/api';
@@ -86,15 +87,41 @@ const Form137Request = () => {
 
   const steps = ['Student Information', 'Parent/Guardian Info', 'Educational Background', 'Schedule Pickup', 'Review & Submit'];  const validateStep = (stepIndex) => {
     const newErrors = {};
+    
+    console.log('🔍 Validating step:', stepIndex);
+    console.log('📋 Current form data:', formData);
 
-    switch (stepIndex) {case 0: // Student Information
-        if (!formData.purpose.trim()) newErrors.purpose = 'Purpose is required';
-        if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
-        if (!formData.givenName.trim()) newErrors.givenName = 'Given name is required';
-        if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-        if (!formData.sex) newErrors.sex = 'Sex is required';
-        if (!formData.placeOfBirth.trim()) newErrors.placeOfBirth = 'Place of birth is required';
-        if (!formData.studentNumber.trim()) newErrors.studentNumber = 'Student number is required';
+    switch (stepIndex) {
+      case 0: // Student Information
+        console.log('✅ Validating Student Information...');
+        if (!formData.purpose.trim()) {
+          newErrors.purpose = 'Purpose is required';
+          console.log('❌ Purpose validation failed');
+        }
+        if (!formData.surname.trim()) {
+          newErrors.surname = 'Surname is required';
+          console.log('❌ Surname validation failed');
+        }
+        if (!formData.givenName.trim()) {
+          newErrors.givenName = 'Given name is required';
+          console.log('❌ Given name validation failed');
+        }
+        if (!formData.dateOfBirth) {
+          newErrors.dateOfBirth = 'Date of birth is required';
+          console.log('❌ Date of birth validation failed');
+        }
+        if (!formData.sex) {
+          newErrors.sex = 'Sex is required';
+          console.log('❌ Sex validation failed');
+        }
+        if (!formData.placeOfBirth.trim()) {
+          newErrors.placeOfBirth = 'Place of birth is required';
+          console.log('❌ Place of birth validation failed');
+        }
+        if (!formData.studentNumber.trim()) {
+          newErrors.studentNumber = 'Student number is required';
+          console.log('❌ Student number validation failed');
+        }
         break;
       case 1: // Parent/Guardian Information
         if (!formData.parentGuardianName.trim()) newErrors.parentGuardianName = 'Parent/Guardian name is required';
@@ -112,17 +139,27 @@ const Form137Request = () => {
       case 3: // Schedule Pickup
         if (!formData.preferredPickupDate) newErrors.preferredPickupDate = 'Pickup date is required';
         if (!formData.preferredPickupTime) newErrors.preferredPickupTime = 'Pickup time is required';
+        break;      default:
         break;
-      default:
-        break;    }
+    }
 
+    console.log('🚨 Validation errors found:', newErrors);
+    console.log('✅ Validation passed:', Object.keys(newErrors).length === 0);
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };  const handleNext = () => {
+  };
+
+  const handleNext = () => {
+    console.log('🔥 handleNext called, activeStep:', activeStep);
     const isValid = validateStep(activeStep);
+    console.log('📊 Step validation result:', isValid);
     
     if (isValid) {
+      console.log('✅ Moving to next step');
       setActiveStep((prev) => prev + 1);
+    } else {
+      console.log('❌ Validation failed, staying on current step');
     }
   };
 
@@ -705,33 +742,23 @@ const Form137Request = () => {
             >
               Back
             </Button>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              {activeStep === steps.length - 1 && (
-                <PDFDownloadLink
-                  document={<Form137PDF formData={formData} />}
+            <Box sx={{ display: 'flex', gap: 2 }}>              {activeStep === steps.length - 1 && (
+                <Form137PDFWithQR
+                  formData={formData}
                   fileName={`form137_request_${formData.studentNumber}.pdf`}
-                  style={{ textDecoration: 'none' }}
+                  variant="outlined"
+                  color="primary"
+                  sx={{
+                    borderWidth: 2,
+                    '&:hover': {
+                      borderWidth: 2,
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                    }
+                  }}
                 >
-                  {({ blob, url, loading: pdfLoading, error }) => (
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      color="primary"
-                      disabled={pdfLoading || error}
-                      startIcon={<DownloadIcon />}
-                      sx={{
-                        borderWidth: 2,
-                        '&:hover': {
-                          borderWidth: 2,
-                          transform: 'translateY(-1px)',
-                          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                        }
-                      }}
-                    >
-                      Download PDF
-                    </Button>
-                  )}
-                </PDFDownloadLink>
+                  Download PDF
+                </Form137PDFWithQR>
               )}
               <Button
                 type="button"

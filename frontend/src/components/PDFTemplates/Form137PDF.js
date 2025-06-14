@@ -1,9 +1,39 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import QRCode from 'qrcode';
 
 // Import logo images directly from assets
 import DepEdLogo from '../../assets/deped-logo.jpg';
 import SchoolLogo from '../../assets/eltnhslogo.png';
+
+// Generate QR code for document verification
+const generateVerificationQR = async (formData) => {
+  const qrData = {
+    type: 'document_verification',
+    documentId: `FORM137_${formData.studentNumber}_${Date.now()}`,
+    documentType: 'Form 137',
+    studentName: `${formData.givenName} ${formData.surname}`,
+    studentNumber: formData.studentNumber,
+    issuedDate: new Date().toISOString().split('T')[0],
+    school: 'Eastern La Trinidad National High School',
+    verificationCode: Math.random().toString(36).substring(2, 15).toUpperCase()
+  };
+
+  try {
+    const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData), {
+      width: 100,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+    return qrCodeDataURL;
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    return null;
+  }
+};
 
 // Create styles to match official Form 137
 const styles = StyleSheet.create({
@@ -161,12 +191,42 @@ const styles = StyleSheet.create({
     borderTop: '0.5pt solid #ccc',
     paddingTop: 5,
   },
+  
+  // QR Code styles
+  qrCodeSection: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    alignItems: 'center',
+  },
+  qrCodeContainer: {
+    border: '1pt solid #ccc',
+    padding: 5,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+  },
+  qrCodeImage: {
+    width: 80,
+    height: 80,
+  },
+  qrCodeLabel: {
+    fontSize: 7,
+    textAlign: 'center',
+    marginTop: 2,
+    color: '#666',
+  },
+  verificationText: {
+    fontSize: 6,
+    textAlign: 'center',
+    marginTop: 1,
+    color: '#888',
+  },
 });
 
 // Create Document Component matching official Form 137
-const Form137PDF = ({ formData }) => (
+const Form137PDF = ({ formData, qrCode }) => (
   <Document>
-    <Page size="A4" style={styles.page}>      {/* Official Header */}
+    <Page size="A4" style={styles.page}>{/* Official Header */}
       <View style={styles.headerRow}>        <View style={styles.headerLeft}>
           <View style={styles.logoPlaceholder}>
             <Image
@@ -178,7 +238,7 @@ const Form137PDF = ({ formData }) => (
         <View style={styles.headerCenter}>
           <Text style={styles.formSubtitle}>Republic of the Philippines</Text>
           <Text style={styles.formSubtitle}>DEPARTMENT OF EDUCATION</Text>
-          <Text style={styles.formSubtitle}>Region IV-A CALABARZON</Text>
+          <Text style={styles.formSubtitle}>Cordillera Administrative Region</Text>
           <Text style={styles.formSubtitle}>Schools Division of Benguet</Text>
           <Text style={styles.formSubtitle}>Eastern La Trinidad National High School</Text>
         </View>        <View style={styles.headerRight}>
@@ -406,6 +466,19 @@ const Form137PDF = ({ formData }) => (
           </View>
         </View>
       </View>
+        {/* QR Code Section */}
+      {qrCode && (
+        <View style={styles.qrCodeSection}>
+          <View style={styles.qrCodeContainer}>
+            <Image
+              style={styles.qrCodeImage}
+              src={qrCode}
+            />
+            <Text style={styles.qrCodeLabel}>Scan to Verify</Text>
+            <Text style={styles.verificationText}>Document Verification</Text>
+          </View>
+        </View>
+      )}
       
       {/* Footer */}
       <View style={styles.footer}>

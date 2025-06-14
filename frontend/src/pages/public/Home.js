@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import QRCodeDisplay from '../../components/QRCodeDisplay';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -712,6 +713,136 @@ const Home = () => {
               </Button>
             </Box>
           </Box>
+        </Container>
+      </Box>
+
+      {/* QR Code Quick Access Section */}
+      <Box
+        sx={{
+          py: 8,
+          background: 'linear-gradient(180deg, #f8f9ff 0%, #ffffff 100%)',
+        }}
+      >
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+                background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Quick Access with QR Codes
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '600px', mx: 'auto' }}>
+              Scan these QR codes with your mobile device for instant access to our services
+            </Typography>
+          </Box>
+          
+          <Grid container spacing={4} justifyContent="center">
+            <Grid item xs={12} sm={6} md={4}>
+              <Card
+                sx={{
+                  height: '100%',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 24px rgba(25, 118, 210, 0.15)',
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ mb: 2 }}>
+                    <QRCodeDisplay
+                      data={`${window.location.origin}/request/form-137`}
+                      size={120}
+                      title="Form 137 Request"
+                      description="Quick access to Form 137 request form"
+                    />
+                  </Box>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Form 137 Request
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Scan to directly access the Form 137 request form on your mobile device
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={4}>
+              <Card
+                sx={{
+                  height: '100%',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 24px rgba(25, 118, 210, 0.15)',
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ mb: 2 }}>
+                    <QRCodeDisplay
+                      data={`${window.location.origin}/track`}
+                      size={120}
+                      title="Track Requests"
+                      description="Monitor your request status"
+                    />
+                  </Box>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Track Your Requests
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Scan to quickly check the status of your document requests
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={4}>
+              <Card
+                sx={{
+                  height: '100%',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 24px rgba(25, 118, 210, 0.15)',
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ mb: 2 }}>
+                    <QRCodeDisplay
+                      data={JSON.stringify({
+                        type: 'contact_info',
+                        school: 'Eastern La Trinidad National High School',
+                        phone: '+63-XXX-XXX-XXXX',
+                        email: 'info@eltnhs.edu.ph',
+                        address: 'La Trinidad, Benguet, Philippines'
+                      })}
+                      size={120}
+                      title="Contact Info"
+                      description="School contact information"
+                    />
+                  </Box>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Contact Information
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Scan to save our school contact information to your device
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Container>
       </Box>
     </Box>
