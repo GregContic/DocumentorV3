@@ -40,6 +40,8 @@ import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
 import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { formatDate, addDaysToDate, isWeekendDay } from '../../utils/dateUtils';
 import { documentService } from '../../services/api';
+import AIDocumentUploader from '../../components/AIDocumentUploader';
+import AIAssistantCard from '../../components/AIAssistantCard';
 
 const Form137Request = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -72,11 +74,11 @@ const Form137Request = () => {
     preferredPickupDate: null,
     preferredPickupTime: null,
     additionalNotes: '',
-  });
-  const [errors, setErrors] = useState({});
+  });  const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showAIUploader, setShowAIUploader] = useState(false);
 
   const requirements = [
     'Valid School ID or Any Valid Government ID',
@@ -87,41 +89,16 @@ const Form137Request = () => {
 
   const steps = ['Student Information', 'Parent/Guardian Info', 'Educational Background', 'Schedule Pickup', 'Review & Submit'];  const validateStep = (stepIndex) => {
     const newErrors = {};
-    
-    console.log('🔍 Validating step:', stepIndex);
-    console.log('📋 Current form data:', formData);
 
     switch (stepIndex) {
       case 0: // Student Information
-        console.log('✅ Validating Student Information...');
-        if (!formData.purpose.trim()) {
-          newErrors.purpose = 'Purpose is required';
-          console.log('❌ Purpose validation failed');
-        }
-        if (!formData.surname.trim()) {
-          newErrors.surname = 'Surname is required';
-          console.log('❌ Surname validation failed');
-        }
-        if (!formData.givenName.trim()) {
-          newErrors.givenName = 'Given name is required';
-          console.log('❌ Given name validation failed');
-        }
-        if (!formData.dateOfBirth) {
-          newErrors.dateOfBirth = 'Date of birth is required';
-          console.log('❌ Date of birth validation failed');
-        }
-        if (!formData.sex) {
-          newErrors.sex = 'Sex is required';
-          console.log('❌ Sex validation failed');
-        }
-        if (!formData.placeOfBirth.trim()) {
-          newErrors.placeOfBirth = 'Place of birth is required';
-          console.log('❌ Place of birth validation failed');
-        }
-        if (!formData.studentNumber.trim()) {
-          newErrors.studentNumber = 'Student number is required';
-          console.log('❌ Student number validation failed');
-        }
+        if (!formData.purpose.trim()) newErrors.purpose = 'Purpose is required';
+        if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
+        if (!formData.givenName.trim()) newErrors.givenName = 'Given name is required';
+        if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
+        if (!formData.sex) newErrors.sex = 'Sex is required';
+        if (!formData.placeOfBirth.trim()) newErrors.placeOfBirth = 'Place of birth is required';
+        if (!formData.studentNumber.trim()) newErrors.studentNumber = 'Student number is required';
         break;
       case 1: // Parent/Guardian Information
         if (!formData.parentGuardianName.trim()) newErrors.parentGuardianName = 'Parent/Guardian name is required';
@@ -140,26 +117,17 @@ const Form137Request = () => {
         if (!formData.preferredPickupDate) newErrors.preferredPickupDate = 'Pickup date is required';
         if (!formData.preferredPickupTime) newErrors.preferredPickupTime = 'Pickup time is required';
         break;      default:
-        break;
-    }
+        break;    }
 
-    console.log('🚨 Validation errors found:', newErrors);
-    console.log('✅ Validation passed:', Object.keys(newErrors).length === 0);
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
-    console.log('🔥 handleNext called, activeStep:', activeStep);
     const isValid = validateStep(activeStep);
-    console.log('📊 Step validation result:', isValid);
     
     if (isValid) {
-      console.log('✅ Moving to next step');
       setActiveStep((prev) => prev + 1);
-    } else {
-      console.log('❌ Validation failed, staying on current step');
     }
   };
 
@@ -218,15 +186,41 @@ const Form137Request = () => {
     }
   };
   const renderStepContent = (step) => {
-    switch (step) {
-      case 0: // Student Information
+    switch (step) {      case 0: // Student Information
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
                 Student Information
               </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Fill out your personal information below. You can use our AI assistant to automatically extract information from document images.
+              </Typography>
             </Grid>
+            
+            {/* AI Assistant Card */}
+            <Grid item xs={12}>
+              <AIAssistantCard
+                show={!showAIUploader}
+                onStartAIProcessing={() => setShowAIUploader(true)}
+              />
+            </Grid>
+            
+            {/* AI Document Uploader */}
+            {showAIUploader && (
+              <Grid item xs={12}>
+                <AIDocumentUploader
+                  formData={formData}
+                  setFormData={setFormData}
+                  onDataExtracted={(extractedData, confidence) => {
+                    console.log('AI extracted data:', extractedData);
+                    console.log('Confidence score:', confidence);
+                    // You can add additional logic here for handling the extracted data
+                  }}
+                />
+              </Grid>
+            )}
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth
