@@ -31,6 +31,9 @@ import {
 import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { formatDate, addDaysToDate, isWeekendDay } from '../../utils/dateUtils';
 import { documentService } from '../../services/api';
+import AIDocumentUploader from '../../components/AIDocumentUploader';
+import AIAssistantCard from '../../components/AIAssistantCard';
+import FormAssistantChatCard from '../../components/FormAssistantChatCard';
 
 const Form138Request = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -44,11 +47,11 @@ const Form138Request = () => {
     preferredPickupDate: null,
     preferredPickupTime: null,
     additionalNotes: '',
-  });
-  const [errors, setErrors] = useState({});
+  });  const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showAIUploader, setShowAIUploader] = useState(false);
 
   const requirements = [
     'Valid School ID or Any Valid Government ID',
@@ -81,7 +84,6 @@ const Form138Request = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleNext = () => {
     if (validateStep(activeStep)) {
       setActiveStep((prev) => prev + 1);
@@ -98,7 +100,14 @@ const Form138Request = () => {
 
     setLoading(true);
     try {
-      await documentService.createRequest(formData);
+      // Format the data before submission
+      const submissionData = {
+        ...formData,
+        preferredPickupDate: formData.preferredPickupDate ? formatDate(formData.preferredPickupDate) : null,
+        preferredPickupTime: formData.preferredPickupTime ? formatDate(formData.preferredPickupTime, 'HH:mm') : null,
+      };
+      
+      await documentService.createRequest(submissionData);
       setShowSuccess(true);
       // Reset form
       setFormData({
@@ -121,16 +130,58 @@ const Form138Request = () => {
     }
   };
 
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    // Only submit if we're on the last step
+    if (activeStep === steps.length - 1) {
+      handleSubmit(e);
+    }
+  };
+
   const renderStepContent = (step) => {
-    switch (step) {
-      case 0:
+    switch (step) {      case 0:
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
                 Personal Details
               </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Fill out your personal information below. You can use our AI assistant to automatically extract information from document images.
+              </Typography>
             </Grid>
+            
+            {/* Form Assistant Chat Card */}
+            <Grid item xs={12}>
+              <FormAssistantChatCard
+                onAIUpload={() => setShowAIUploader(true)}
+                formType="Form 138"
+              />
+            </Grid>
+            
+            {/* AI Assistant Card */}
+            <Grid item xs={12}>
+              <AIAssistantCard
+                show={!showAIUploader}
+                onStartAIProcessing={() => setShowAIUploader(true)}
+              />
+            </Grid>
+            
+            {/* AI Document Uploader */}
+            {showAIUploader && (
+              <Grid item xs={12}>
+                <AIDocumentUploader
+                  formData={formData}
+                  setFormData={setFormData}
+                  onDataExtracted={(extractedData, confidence) => {
+                    console.log('AI extracted data:', extractedData);
+                    console.log('Confidence score:', confidence);
+                    // You can add additional logic here for handling the extracted data
+                  }}
+                />
+              </Grid>
+            )}
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -201,20 +252,25 @@ const Form138Request = () => {
                 <Typography variant="h6" gutterBottom>
                   Schedule Pickup
                 </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Grid>              <Grid item xs={12} md={6}>
                 <DatePicker
                   label="Preferred Pickup Date"
                   value={formData.preferredPickupDate}
                   onChange={(newDate) => {
-                    if (newDate) {
-                      setFormData(prev => ({
-                        ...prev,
-                        preferredPickupDate: formatDate(newDate)
-                      }));
-                    }
+                    setFormData(prev => ({
+                      ...prev,
+                      preferredPickupDate: newDate
+                    }));
                   }}
-                  renderInput={(params) => <TextField {...params} fullWidth required />}
+                  renderInput={(params) => (
+                    <TextField 
+                      {...params} 
+                      fullWidth 
+                      required 
+                      error={!!errors.preferredPickupDate}
+                      helperText={errors.preferredPickupDate}
+                    />
+                  )}
                   minDate={new Date()}
                   maxDate={addDaysToDate(new Date(), 30)}
                   shouldDisableDate={isWeekendDay}
@@ -225,14 +281,20 @@ const Form138Request = () => {
                   label="Preferred Pickup Time"
                   value={formData.preferredPickupTime}
                   onChange={(newTime) => {
-                    if (newTime) {
-                      setFormData(prev => ({
-                        ...prev,
-                        preferredPickupTime: newTime
-                      }));
-                    }
+                    setFormData(prev => ({
+                      ...prev,
+                      preferredPickupTime: newTime
+                    }));
                   }}
-                  renderInput={(params) => <TextField {...params} fullWidth required />}
+                  renderInput={(params) => (
+                    <TextField 
+                      {...params} 
+                      fullWidth 
+                      required 
+                      error={!!errors.preferredPickupTime}
+                      helperText={errors.preferredPickupTime}
+                    />
+                  )}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -311,34 +373,93 @@ const Form138Request = () => {
         return null;
     }
   };
-
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" gutterBottom align="center">
-            Request Form 138
-          </Typography>
-          <Typography variant="body1" color="text.secondary" align="center">
-            Fill out the form below to request your Form 138 (Report Card)
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: { xs: 2, md: 4 },
+          background: 'linear-gradient(to bottom, #ffffff, #f8f9fa)',
+          borderRadius: '16px',
+          transition: 'transform 0.2s ease-in-out',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+          }
+        }}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          mb: 4,
+          background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+          borderRadius: '12px',
+          p: 2,
+          color: 'white'
+        }}>
+          <SchoolIcon sx={{ fontSize: 40, mr: 2 }} />
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+            Form 138 Request
           </Typography>
         </Box>
 
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+        <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
+          Fill out the form below to request your Form 138 (Report Card)
+        </Typography>
+
+        <Stepper 
+          activeStep={activeStep} 
+          sx={{ 
+            mb: 4,
+            '& .MuiStepLabel-root .Mui-completed': {
+              color: 'success.main',
+            },
+            '& .MuiStepLabel-root .Mui-active': {
+              color: 'primary.main',
+            }
+          }}
+        >
           {steps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}
-        </Stepper>
+        </Stepper>        <form onSubmit={handleFormSubmit} noValidate>
+          <Box sx={{ 
+            mt: 4, 
+            mb: 4,
+            '& .MuiTextField-root': {
+              transition: 'transform 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+              }
+            }
+          }}>
+            {renderStepContent(activeStep)}
+          </Box>
 
-        <form onSubmit={handleSubmit}>
-          {renderStepContent(activeStep)}
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            mt: 4,
+            gap: 2,
+            flexWrap: 'wrap'
+          }}>
             <Button
+              type="button"
               onClick={handleBack}
               disabled={activeStep === 0 || loading}
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: '8px',
+                color: 'text.secondary',
+                '&:not(:disabled)': {
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    transform: 'translateY(-1px)',
+                  }
+                }
+              }}
             >
               Back
             </Button>
@@ -349,6 +470,16 @@ const Form138Request = () => {
                 color="primary"
                 endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}
                 disabled={loading}
+                sx={{
+                  px: 4,
+                  py: 1.5,
+                  background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 8px rgba(25, 118, 210, 0.3)',
+                  }
+                }}
               >
                 Submit Request
               </Button>
@@ -357,6 +488,17 @@ const Form138Request = () => {
                 variant="contained"
                 onClick={handleNext}
                 disabled={loading}
+                type="button"
+                sx={{
+                  px: 4,
+                  py: 1.5,
+                  background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 8px rgba(25, 118, 210, 0.3)',
+                  }
+                }}
               >
                 Next
               </Button>

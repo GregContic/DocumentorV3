@@ -31,6 +31,9 @@ import {
 import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { formatDate, addDaysToDate, isWeekendDay } from '../../utils/dateUtils';
 import { documentService } from '../../services/api';
+import AIDocumentUploader from '../../components/AIDocumentUploader';
+import AIAssistantCard from '../../components/AIAssistantCard';
+import FormAssistantChatCard from '../../components/FormAssistantChatCard';
 
 const DiplomaRequest = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -43,11 +46,11 @@ const DiplomaRequest = () => {
     preferredPickupDate: null,
     preferredPickupTime: null,
     additionalNotes: '',
-  });
-  const [errors, setErrors] = useState({});
+  });  const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showAIUploader, setShowAIUploader] = useState(false);
 
   const requirements = [
     'Valid School ID or Any Valid Government ID',
@@ -122,15 +125,49 @@ const DiplomaRequest = () => {
   };
 
   const renderStepContent = (step) => {
-    switch (step) {
-      case 0:
+    switch (step) {      case 0:
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
                 Personal Details
               </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Fill out your personal information below. You can use our AI assistant to automatically extract information from document images.
+              </Typography>
             </Grid>
+            
+            {/* Form Assistant Chat Card */}
+            <Grid item xs={12}>
+              <FormAssistantChatCard
+                onAIUpload={() => setShowAIUploader(true)}
+                formType="Diploma Request"
+              />
+            </Grid>
+            
+            {/* AI Assistant Card */}
+            <Grid item xs={12}>
+              <AIAssistantCard
+                show={!showAIUploader}
+                onStartAIProcessing={() => setShowAIUploader(true)}
+              />
+            </Grid>
+            
+            {/* AI Document Uploader */}
+            {showAIUploader && (
+              <Grid item xs={12}>
+                <AIDocumentUploader
+                  formData={formData}
+                  setFormData={setFormData}
+                  onDataExtracted={(extractedData, confidence) => {
+                    console.log('AI extracted data:', extractedData);
+                    console.log('Confidence score:', confidence);
+                    // You can add additional logic here for handling the extracted data
+                  }}
+                />
+              </Grid>
+            )}
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth

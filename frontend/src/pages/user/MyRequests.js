@@ -24,17 +24,87 @@ import {
 import {
   Visibility as ViewIcon,
   Refresh as RefreshIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { documentService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
+import Form138PDFWithQR from '../../components/PDFTemplates/Form138PDFWithQR';
+import SF9PDFWithQR from '../../components/PDFTemplates/SF9PDFWithQR';
 
 const MyRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const { user } = useAuth();
+  const [dialogOpen, setDialogOpen] = useState(false);  const { user } = useAuth();  // Function to render PDF download component based on document type
+  const renderPDFDownload = (request) => {
+    if (!request) return null;
+
+    const fileName = `${request.documentType?.replace(/\s+/g, '_')}_${request._id?.slice(-6) || 'request'}.pdf`;
+    
+    switch (request.documentType) {
+      case 'Form 137':
+        return (
+          <Form137PDFWithQR
+            formData={request}
+            fileName={fileName}
+            variant="outlined"
+            size="small"
+            color="primary"
+            sx={{ ml: 1 }}          >
+            PDF
+          </Form137PDFWithQR>
+        );
+      
+      case 'Form 138':
+        return (
+          <Form138PDFWithQR
+            formData={request}
+            fileName={fileName}
+            variant="outlined"
+            size="small"
+            color="primary"
+            sx={{ ml: 1 }}          >
+            PDF
+          </Form138PDFWithQR>
+        );
+        case 'School Form 9':
+        return (
+          <SF9PDFWithQR
+            formData={request}
+            fileName={fileName}
+            variant="outlined"
+            size="small"
+            color="primary"
+            sx={{ ml: 1 }}          >
+            PDF
+          </SF9PDFWithQR>
+        );
+      
+      case 'School Form 10':
+      case 'High School Diploma':
+        return (
+          <Button
+            variant="outlined"
+            size="small"
+            color="primary"
+            sx={{ ml: 1 }}
+            startIcon={<DownloadIcon />}
+            onClick={() => {
+              // For now, show an alert. We'll implement these PDF templates later
+              alert(`PDF download for ${request.documentType} is not yet available. This feature will be implemented soon.`);
+            }}
+          >
+            PDF
+          </Button>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   const fetchUserRequests = async () => {
     if (!user?.id) {
       setError('User not authenticated');
@@ -213,16 +283,18 @@ const MyRequests = () => {
                   </TableCell>
                   <TableCell>
                     {formatDate(request.submittedAt || request.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      startIcon={<ViewIcon />}
-                      onClick={() => handleViewDetails(request)}
-                    >
-                      View
-                    </Button>
+                  </TableCell>                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<ViewIcon />}
+                        onClick={() => handleViewDetails(request)}
+                      >
+                        View
+                      </Button>
+                      {renderPDFDownload(request)}
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
@@ -412,9 +484,13 @@ const MyRequests = () => {
               )}
             </Grid>
           )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Close</Button>
+        </DialogContent>        <DialogActions>
+          <Box sx={{ display: 'flex', gap: 2, width: '100%', justifyContent: 'space-between' }}>
+            <Box>
+              {selectedRequest && renderPDFDownload(selectedRequest)}
+            </Box>
+            <Button onClick={handleCloseDialog}>Close</Button>
+          </Box>
         </DialogActions>
       </Dialog>
     </Container>

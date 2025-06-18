@@ -18,10 +18,11 @@ import {
   Grid,
   Dialog,
   DialogTitle,
-  DialogContent,
-  DialogActions,
+  DialogContent,  DialogActions,
   IconButton,
   Tooltip,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -43,15 +44,16 @@ const InquiriesDashboard = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedInquiry, setSelectedInquiry] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');  const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   useEffect(() => {
     fetchInquiries();
   }, []);
-
   const fetchInquiries = async () => {
     try {
       const response = await inquiryService.getAllInquiries();
@@ -61,6 +63,12 @@ const InquiriesDashboard = () => {
     }
   };
 
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -68,19 +76,39 @@ const InquiriesDashboard = () => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  };
-  const handleStatusChange = async (inquiryId, newStatus) => {
+  };  const handleStatusChange = async (inquiryId, newStatus) => {
     try {
       const response = await inquiryService.updateInquiryStatus(inquiryId, newStatus);
       
       // If the inquiry was marked as resolved, automatically archive it
       if (newStatus === 'resolved' && response.data) {
-        await inquiryService.archiveInquiry(inquiryId);
+        try {
+          await inquiryService.archiveInquiry(inquiryId);
+          showSnackbar('Inquiry marked as resolved and automatically moved to archives', 'success');
+        } catch (archiveError) {
+          console.error('Error auto-archiving inquiry:', archiveError);
+          showSnackbar('Inquiry marked as resolved but failed to archive automatically', 'warning');
+        }
+      }
+      // If the inquiry was marked as closed, also archive it
+      else if (newStatus === 'closed' && response.data) {
+        try {
+          await inquiryService.archiveInquiry(inquiryId);
+          showSnackbar('Inquiry marked as closed and automatically moved to archives', 'success');
+        } catch (archiveError) {
+          console.error('Error auto-archiving closed inquiry:', archiveError);
+          showSnackbar('Inquiry marked as closed but failed to archive automatically', 'warning');
+        }
+      }
+      // For other status changes
+      else {
+        showSnackbar(`Inquiry status updated to ${newStatus}`, 'success');
       }
       
       fetchInquiries();
     } catch (error) {
       console.error('Error updating inquiry status:', error);
+      showSnackbar('Failed to update inquiry status', 'error');
     }
   };
 
@@ -122,8 +150,10 @@ const InquiriesDashboard = () => {
       }
     }
   };
-
   const filteredInquiries = inquiries.filter((inquiry) => {
+    // Exclude archived inquiries from the main dashboard
+    if (inquiry.archived === true) return false;
+    
     // Use user info for search and display
     const studentName = inquiry.user ? `${inquiry.user.firstName} ${inquiry.user.lastName}` : '';
     const matchesSearch = 
@@ -192,13 +222,19 @@ const InquiriesDashboard = () => {
                 <TableCell>{inquiry.message}</TableCell>
                 <TableCell>
                   {new Date(inquiry.createdAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={inquiry.status}
-                    color={statusColors[inquiry.status]}
+                </TableCell>                <TableCell>
+                  <TextField
+                    select
                     size="small"
-                  />
+                    value={inquiry.status}
+                    onChange={(e) => handleStatusChange(inquiry._id, e.target.value)}
+                    sx={{ minWidth: 120 }}
+                  >
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="inProgress">In Progress</MenuItem>
+                    <MenuItem value="resolved">Resolved</MenuItem>
+                    <MenuItem value="closed">Closed</MenuItem>
+                  </TextField>
                 </TableCell>
                 <TableCell>
                   <Box>
@@ -333,10 +369,25 @@ const InquiriesDashboard = () => {
         <DialogActions>
           <Button onClick={() => setReplyDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleReply} variant="contained" color="primary">
-            Send Reply
-          </Button>
+            Send Reply          </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setSnackbarOpen(false)} 
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
