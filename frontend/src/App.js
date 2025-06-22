@@ -22,9 +22,8 @@ import DiplomaRequest from './pages/user/DiplomaRequest';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
-import InquiriesDashboard from './pages/admin/InquiriesDashboard';
-import InquiryArchive from './admin/InquiryArchive';
-import DocumentArchive from './admin/DocumentArchive';
+import Archive from './admin/Archive';
+import Settings from './admin/Settings';
 
 // Protected Route
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -124,30 +123,21 @@ function App() {
               }
             />
             <Route
-              path="/admin/inquiries"
+              path="/admin/archive"
               element={
                 <ProtectedRoute requireAdmin={true}>
-                  <InquiriesDashboard />
+                  <Archive />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/admin/inquiries/archive"
+              path="/admin/settings"
               element={
                 <ProtectedRoute requireAdmin={true}>
-                  <InquiryArchive />
+                  <Settings />
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/admin/documents/archive"
-              element={
-                <ProtectedRoute requireAdmin={true}>
-                  <DocumentArchive />
-                </ProtectedRoute>
-              }
-            />
-
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

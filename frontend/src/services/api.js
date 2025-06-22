@@ -46,10 +46,10 @@ export const documentService = {
     api.patch(`/api/documents/admin/documents/request/${requestId}/status`, { status }),
   getRequestStats: () => api.get('/api/documents/admin/documents/stats'),
   // Archive endpoints
-  getArchivedRequests: () => api.get('/api/documents/admin/documents/archived-requests'),
+  getArchivedDocuments: () => api.get('/api/documents/admin/documents/archived-requests'),
   archiveRequest: (requestId) => 
     api.patch(`/api/documents/admin/documents/request/${requestId}/archive`),
-  restoreArchivedRequest: (requestId) => 
+  restoreDocument: (requestId) => 
     api.patch(`/api/documents/admin/documents/request/${requestId}/restore`),
 };
 
@@ -73,6 +73,16 @@ export const inquiryService = {
     api.get('/api/inquiries/admin/archived-inquiries'),
   archiveInquiry: (inquiryId) =>
     api.patch(`/api/inquiries/admin/inquiries/${inquiryId}/archive`),
+  restoreInquiry: (inquiryId) =>
+    api.patch(`/api/inquiries/admin/inquiries/${inquiryId}/restore`),
+};
+
+// Settings service
+export const settingsService = {
+  getSettings: () => api.get('/api/settings'),
+  updateSettings: (settings) => api.put('/api/settings', settings),
+  resetSettings: () => api.post('/api/settings/reset'),
+  getPublicSettings: () => api.get('/api/settings/public'),
 };
 
 export default api;

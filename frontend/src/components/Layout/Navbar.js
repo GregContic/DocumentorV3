@@ -26,7 +26,8 @@ import {
   ExitToApp as LogoutIcon,
   QuestionAnswer as InquiryIcon,
   Assignment as RequestsIcon,
-  School as SchoolIcon
+  School as SchoolIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -55,9 +56,8 @@ const Navbar = () => {
       ]    : user?.role === 'admin'
     ? [
         { text: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon /> },
-        { text: 'Active Inquiries', path: '/admin/inquiries', icon: <InquiryIcon /> },
-        { text: 'Archived Inquiries', path: '/admin/inquiries/archive', icon: <ArchiveIcon /> },
-        { text: 'Archived Documents', path: '/admin/documents/archive', icon: <ArchiveIcon /> }
+        { text: 'Archive', path: '/admin/archive', icon: <ArchiveIcon /> },
+        { text: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> }
       ]
     : [
         { text: 'Request Document', path: '/request-document', icon: <DescriptionIcon /> },

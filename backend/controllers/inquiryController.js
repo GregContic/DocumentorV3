@@ -45,10 +45,18 @@ exports.getArchivedInquiries = async (req, res) => {
     const inquiries = await Inquiry.find({ status: 'archived' })
       .populate('user', 'firstName lastName email')
       .sort({ archivedAt: -1 });
-    res.json(inquiries);
+    res.json({
+      success: true,
+      data: inquiries,
+      count: inquiries.length
+    });
   } catch (error) {
     console.error('Error fetching archived inquiries:', error);
-    res.status(500).json({ message: 'Error fetching archived inquiries' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching archived inquiries',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -97,6 +105,7 @@ exports.updateInquiryStatus = async (req, res) => {
       update.archivedAt = currentDate;
       if (!update.resolvedAt) {
         update.resolvedAt = currentDate;
+        update.resolvedBy = req.user.name || req.user.email;
       }
     }
     
@@ -132,5 +141,33 @@ exports.replyToInquiry = async (req, res) => {
   } catch (error) {
     console.error('Error replying to inquiry:', error);
     res.status(500).json({ message: 'Error replying to inquiry' });
+  }
+};
+
+// Admin: Restore archived inquiry
+exports.restoreInquiry = async (req, res) => {
+  try {
+    const { inquiryId } = req.params;
+    const inquiry = await Inquiry.findById(inquiryId);
+    
+    if (!inquiry) {
+      return res.status(404).json({ message: 'Inquiry not found' });
+    }
+    
+    if (inquiry.status !== 'archived') {
+      return res.status(400).json({ message: 'Inquiry is not archived' });
+    }
+    
+    inquiry.status = 'pending'; // or whatever the default status should be
+    inquiry.archivedAt = undefined;
+    await inquiry.save();
+    
+    res.json({
+      message: 'Inquiry restored successfully',
+      inquiry
+    });
+  } catch (error) {
+    console.error('Error restoring inquiry:', error);
+    res.status(500).json({ message: 'Error restoring inquiry' });
   }
 };

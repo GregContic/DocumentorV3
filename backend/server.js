@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/authRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -27,6 +28,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/documento
 app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/inquiries', inquiryRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {

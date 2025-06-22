@@ -12,6 +12,7 @@ router.get('/admin/inquiries', authenticate, authorizeAdmin, inquiryController.g
 router.get('/admin/archived-inquiries', authenticate, authorizeAdmin, inquiryController.getArchivedInquiries);
 router.patch('/admin/inquiries/:inquiryId/status', authenticate, authorizeAdmin, inquiryController.updateInquiryStatus);
 router.patch('/admin/inquiries/:inquiryId/archive', authenticate, authorizeAdmin, inquiryController.archiveInquiry);
+router.patch('/admin/inquiries/:inquiryId/restore', authenticate, authorizeAdmin, inquiryController.restoreInquiry);
 router.post('/admin/inquiries/:inquiryId/reply', authenticate, authorizeAdmin, inquiryController.replyToInquiry);
 
 module.exports = router;
