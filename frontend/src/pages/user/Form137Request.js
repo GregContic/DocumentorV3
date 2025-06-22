@@ -30,51 +30,40 @@ import {
   Description as DescriptionIcon,
   School as SchoolIcon,
   Assignment as AssignmentIcon,
-  Schedule as ScheduleIcon,
   Info as InfoIcon,
   Download as DownloadIcon,
+  Login as LoginIcon,
 } from '@mui/icons-material';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import Form137PDF from '../../components/PDFTemplates/Form137PDF';
 import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
-import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
-import { formatDate, addDaysToDate, isWeekendDay } from '../../utils/dateUtils';
+import { DatePickerWrapper, DatePicker } from '../../components/DatePickerWrapper';
 import { documentService } from '../../services/api';
 import AIDocumentUploader from '../../components/AIDocumentUploader';
 import AIAssistantCard from '../../components/AIAssistantCard';
 import FormAssistantChatCard from '../../components/FormAssistantChatCard';
+import { useAuth } from '../../context/AuthContext';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 const Form137Request = () => {
   const [activeStep, setActiveStep] = useState(0);
-  const [loading, setLoading] = useState(false);  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();const [formData, setFormData] = useState({
     documentType: 'Form 137',
-    purpose: '',
-    // Student Information
+    // Learner's Personal Information
     surname: '',
-    givenName: '',
-    dateOfBirth: null,
-    placeOfBirth: '',
-    province: '',
-    town: '',
-    barrio: '',
+    firstName: '',
+    middleName: '',
     sex: '',
+    dateOfBirth: null,
+    barangay: '',
+    city: '',
+    province: '',
+    learnerReferenceNumber: '',
     // Parent/Guardian Information
     parentGuardianName: '',
     parentGuardianAddress: '',
-    parentGuardianOccupation: '',
-    // Educational Information
-    elementaryCourseCompleted: '',
-    elementarySchool: '',
-    elementaryYear: '',
-    elementaryGenAve: '',
-    yearGraduated: '',
-    currentSchool: '',
-    schoolAddress: '',
-    studentNumber: '',
-    // Pickup Information
-    preferredPickupDate: null,
-    preferredPickupTime: null,
-    additionalNotes: '',
   });  const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -88,37 +77,27 @@ const Form137Request = () => {
     'Request Form (will be provided)',
   ];
 
-  const steps = ['Student Information', 'Parent/Guardian Info', 'Educational Background', 'Schedule Pickup', 'Review & Submit'];  const validateStep = (stepIndex) => {
+  const steps = ['Learner Information', 'Parent/Guardian Info', 'Review & Submit'];  const validateStep = (stepIndex) => {
     const newErrors = {};
 
     switch (stepIndex) {
-      case 0: // Student Information
-        if (!formData.purpose.trim()) newErrors.purpose = 'Purpose is required';
+      case 0: // Learner Information
         if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
-        if (!formData.givenName.trim()) newErrors.givenName = 'Given name is required';
+        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
         if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
         if (!formData.sex) newErrors.sex = 'Sex is required';
-        if (!formData.placeOfBirth.trim()) newErrors.placeOfBirth = 'Place of birth is required';
-        if (!formData.studentNumber.trim()) newErrors.studentNumber = 'Student number is required';
+        if (!formData.barangay.trim()) newErrors.barangay = 'Barangay is required for place of birth';
+        if (!formData.city.trim()) newErrors.city = 'City/Municipality is required for place of birth';
+        if (!formData.province.trim()) newErrors.province = 'Province is required for place of birth';
+        if (!formData.learnerReferenceNumber.trim()) newErrors.learnerReferenceNumber = 'Learner Reference Number (LRN) is required';
         break;
       case 1: // Parent/Guardian Information
         if (!formData.parentGuardianName.trim()) newErrors.parentGuardianName = 'Parent/Guardian name is required';
         if (!formData.parentGuardianAddress.trim()) newErrors.parentGuardianAddress = 'Parent/Guardian address is required';
-        if (!formData.parentGuardianOccupation.trim()) newErrors.parentGuardianOccupation = 'Parent/Guardian occupation is required';
         break;
-      case 2: // Educational Background
-        if (!formData.elementaryCourseCompleted.trim()) newErrors.elementaryCourseCompleted = 'Elementary course completed is required';
-        if (!formData.elementarySchool.trim()) newErrors.elementarySchool = 'Elementary school is required';
-        if (!formData.elementaryYear.trim()) newErrors.elementaryYear = 'Elementary year is required';
-        if (!formData.yearGraduated.trim()) newErrors.yearGraduated = 'Year graduated is required';
-        if (!formData.currentSchool.trim()) newErrors.currentSchool = 'Current school is required';
-        if (!formData.schoolAddress.trim()) newErrors.schoolAddress = 'School address is required';
+      default:
         break;
-      case 3: // Schedule Pickup
-        if (!formData.preferredPickupDate) newErrors.preferredPickupDate = 'Pickup date is required';
-        if (!formData.preferredPickupTime) newErrors.preferredPickupTime = 'Pickup time is required';
-        break;      default:
-        break;    }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -138,66 +117,73 @@ const Form137Request = () => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault(); // Prevent form from submitting
-  };
-
-  const handleSubmit = async () => {
+  };  const handleSubmit = async () => {
     if (!validateStep(activeStep)) return;
+
+    // Check authentication before submitting
+    if (!isAuthenticated) {
+      setErrorMessage('Please log in to submit your request.');
+      setShowError(true);
+      return;
+    }
 
     setLoading(true);
     try {
+      console.log('Submitting form data:', formData);
       const response = await documentService.createRequest(formData);
+      console.log('Submission response:', response);
       setShowSuccess(true);      // Reset form
       setFormData({
         documentType: 'Form 137',
-        purpose: '',
-        // Student Information
+        // Learner's Personal Information
         surname: '',
-        givenName: '',
-        dateOfBirth: null,
-        placeOfBirth: '',
-        province: '',
-        town: '',
-        barrio: '',
+        firstName: '',
+        middleName: '',
         sex: '',
+        dateOfBirth: null,
+        barangay: '',
+        city: '',
+        province: '',
+        learnerReferenceNumber: '',
         // Parent/Guardian Information
         parentGuardianName: '',
         parentGuardianAddress: '',
-        parentGuardianOccupation: '',
-        // Educational Information
-        elementaryCourseCompleted: '',
-        elementarySchool: '',
-        elementaryYear: '',
-        elementaryGenAve: '',
-        yearGraduated: '',
-        currentSchool: '',
-        schoolAddress: '',
-        studentNumber: '',
-        // Pickup Information
-        preferredPickupDate: null,
-        preferredPickupTime: null,
-        additionalNotes: '',
       });
       setActiveStep(0);
     } catch (error) {
       console.error('Submission error:', error);
-      setErrorMessage('Failed to submit request. Please try again.');
+      console.error('Error response:', error.response);
+        // More detailed error handling
+      let errorMsg = 'Failed to submit request. Please try again.';
+      if (error.response?.status === 401) {
+        errorMsg = 'You need to be logged in to submit a request. Please log in and try again.';
+      } else if (error.response?.status === 400) {
+        errorMsg = 'Invalid form data. Please check your inputs and try again.';
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (!isAuthenticated) {
+        errorMsg = 'Please log in to submit your request.';
+      }
+      
+      setErrorMessage(errorMsg);
       setShowError(true);
     } finally {
       setLoading(false);
     }
   };
   const renderStepContent = (step) => {
-    switch (step) {      case 0: // Student Information
+    switch (step) {      case 0: // Learner Information
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Student Information
+                Learner's Personal Information
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Fill out your personal information below. You can use our AI assistant to automatically extract information from document images.
+                Fill out the learner's personal information below. You can use our AI assistant to automatically extract information from document images.
               </Typography>
             </Grid>            
+            
             {/* Form Assistant Chat Card */}
             <Grid item xs={12}>
               <FormAssistantChatCard
@@ -223,46 +209,60 @@ const Form137Request = () => {
                   onDataExtracted={(extractedData, confidence) => {
                     console.log('AI extracted data:', extractedData);
                     console.log('Confidence score:', confidence);
-                    // You can add additional logic here for handling the extracted data
                   }}
                 />
               </Grid>
             )}
             
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label="Purpose of Request"
-                value={formData.purpose}
-                onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
-                error={!!errors.purpose}
-                helperText={errors.purpose}
-                multiline
-                rows={3}
-              />
+              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, color: 'primary.main' }}>
+                Full Name
+              </Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 required
-                label="Surname"
+                label="Surname (Last Name)"
                 value={formData.surname}
                 onChange={(e) => setFormData(prev => ({ ...prev, surname: e.target.value }))}
                 error={!!errors.surname}
                 helperText={errors.surname}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 required
-                label="Given Name"
-                value={formData.givenName}
-                onChange={(e) => setFormData(prev => ({ ...prev, givenName: e.target.value }))}
-                error={!!errors.givenName}
-                helperText={errors.givenName}
+                label="First Name"
+                value={formData.firstName}
+                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                error={!!errors.firstName}
+                helperText={errors.firstName}
               />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Middle Name"
+                value={formData.middleName}
+                onChange={(e) => setFormData(prev => ({ ...prev, middleName: e.target.value }))}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required error={!!errors.sex}>
+                <InputLabel>Sex</InputLabel>
+                <Select
+                  value={formData.sex}
+                  label="Sex"
+                  onChange={(e) => setFormData(prev => ({ ...prev, sex: e.target.value }))}
+                >
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                </Select>
+                {errors.sex && <FormHelperText>{errors.sex}</FormHelperText>}
+              </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <DatePickerWrapper>
@@ -278,82 +278,73 @@ const Form137Request = () => {
                   }}
                 />
               </DatePickerWrapper>
-            </Grid>            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required error={!!errors.sex}>
-                <InputLabel>Sex</InputLabel>
-                <Select
-                  value={formData.sex}
-                  label="Sex"
-                  onChange={(e) => setFormData(prev => ({ ...prev, sex: e.target.value }))}
-                >
-                  <MenuItem value="Male">Male</MenuItem>
-                  <MenuItem value="Female">Female</MenuItem>
-                </Select>
-                {errors.sex && <FormHelperText>{errors.sex}</FormHelperText>}
-              </FormControl>
             </Grid>
+            
             <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, color: 'primary.main' }}>
+                Place of Birth
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 required
-                label="Place of Birth"
-                value={formData.placeOfBirth}
-                onChange={(e) => setFormData(prev => ({ ...prev, placeOfBirth: e.target.value }))}
-                error={!!errors.placeOfBirth}
-                helperText={errors.placeOfBirth}
+                label="Barangay"
+                value={formData.barangay}
+                onChange={(e) => setFormData(prev => ({ ...prev, barangay: e.target.value }))}
+                error={!!errors.barangay}
+                helperText={errors.barangay}
               />
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
+                required
+                label="City/Municipality"
+                value={formData.city}
+                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                error={!!errors.city}
+                helperText={errors.city}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                required
                 label="Province"
                 value={formData.province}
                 onChange={(e) => setFormData(prev => ({ ...prev, province: e.target.value }))}
+                error={!!errors.province}
+                helperText={errors.province}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Town"
-                value={formData.town}
-                onChange={(e) => setFormData(prev => ({ ...prev, town: e.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Barrio"
-                value={formData.barrio}
-                onChange={(e) => setFormData(prev => ({ ...prev, barrio: e.target.value }))}
-              />
-            </Grid>
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 required
-                label="Student Number"
-                value={formData.studentNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, studentNumber: e.target.value }))}
-                error={!!errors.studentNumber}
-                helperText={errors.studentNumber}
+                label="Learner Reference Number (LRN)"
+                value={formData.learnerReferenceNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, learnerReferenceNumber: e.target.value }))}
+                error={!!errors.learnerReferenceNumber}
+                helperText={errors.learnerReferenceNumber || 'Enter the 12-digit LRN'}
+                placeholder="e.g., 123456789012"
               />
             </Grid>
           </Grid>
-        );
-
-      case 1: // Parent/Guardian Information
+        );      case 1: // Parent/Guardian Information
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Parent/Guardian Information
+                Parent/Guardian Details
               </Typography>
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 required
-                label="Parent/Guardian Name"
+                label="Name of Parent or Guardian"
                 value={formData.parentGuardianName}
                 onChange={(e) => setFormData(prev => ({ ...prev, parentGuardianName: e.target.value }))}
                 error={!!errors.parentGuardianName}
@@ -364,181 +355,20 @@ const Form137Request = () => {
               <TextField
                 fullWidth
                 required
-                label="Parent/Guardian Address"
+                label="Address of Parent or Guardian"
                 value={formData.parentGuardianAddress}
                 onChange={(e) => setFormData(prev => ({ ...prev, parentGuardianAddress: e.target.value }))}
                 error={!!errors.parentGuardianAddress}
                 helperText={errors.parentGuardianAddress}
                 multiline
-                rows={3}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label="Parent/Guardian Occupation"
-                value={formData.parentGuardianOccupation}
-                onChange={(e) => setFormData(prev => ({ ...prev, parentGuardianOccupation: e.target.value }))}
-                error={!!errors.parentGuardianOccupation}
-                helperText={errors.parentGuardianOccupation}
+                rows={4}
+                placeholder="Complete address including barangay, city/municipality, and province"
               />
             </Grid>
           </Grid>
         );
 
-      case 2: // Educational Background
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Educational Background
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, color: 'primary.main' }}>
-                Elementary Education
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label="Elementary Course Completed"
-                value={formData.elementaryCourseCompleted}
-                onChange={(e) => setFormData(prev => ({ ...prev, elementaryCourseCompleted: e.target.value }))}
-                error={!!errors.elementaryCourseCompleted}
-                helperText={errors.elementaryCourseCompleted}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label="Elementary School"
-                value={formData.elementarySchool}
-                onChange={(e) => setFormData(prev => ({ ...prev, elementarySchool: e.target.value }))}
-                error={!!errors.elementarySchool}
-                helperText={errors.elementarySchool}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label="Elementary Year Graduated"
-                value={formData.elementaryYear}
-                onChange={(e) => setFormData(prev => ({ ...prev, elementaryYear: e.target.value }))}
-                error={!!errors.elementaryYear}
-                helperText={errors.elementaryYear}
-                placeholder="e.g., 2018"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Elementary General Average"
-                value={formData.elementaryGenAve}
-                onChange={(e) => setFormData(prev => ({ ...prev, elementaryGenAve: e.target.value }))}
-                placeholder="e.g., 85.5"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, color: 'primary.main' }}>
-                Secondary Education
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label="Year Graduated (Secondary)"
-                value={formData.yearGraduated}
-                onChange={(e) => setFormData(prev => ({ ...prev, yearGraduated: e.target.value }))}
-                error={!!errors.yearGraduated}
-                helperText={errors.yearGraduated}
-                placeholder="e.g., 2022"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label="Secondary School Name"
-                value={formData.currentSchool}
-                onChange={(e) => setFormData(prev => ({ ...prev, currentSchool: e.target.value }))}
-                error={!!errors.currentSchool}
-                helperText={errors.currentSchool}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label="School Address"
-                value={formData.schoolAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, schoolAddress: e.target.value }))}
-                error={!!errors.schoolAddress}
-                helperText={errors.schoolAddress}
-                multiline
-                rows={2}
-              />
-            </Grid>
-          </Grid>
-        );
-
-      case 3: // Schedule Pickup
-        return (
-          <DatePickerWrapper>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Schedule Document Pickup
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <DatePicker
-                  label="Preferred Pickup Date"
-                  value={formData.preferredPickupDate}
-                  onChange={(newValue) => setFormData(prev => ({ ...prev, preferredPickupDate: newValue }))}
-                  textFieldProps={{
-                    fullWidth: true,
-                    required: true,
-                    error: !!errors.preferredPickupDate,
-                    helperText: errors.preferredPickupDate || 'Please select a date for pickup',
-                  }}
-                  minDate={addDaysToDate(new Date(), 3)}
-                  shouldDisableDate={isWeekendDay}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TimePicker
-                  label="Preferred Pickup Time"
-                  value={formData.preferredPickupTime}
-                  onChange={(newValue) => setFormData(prev => ({ ...prev, preferredPickupTime: newValue }))}
-                  textFieldProps={{
-                    fullWidth: true,
-                    required: true,
-                    error: !!errors.preferredPickupTime,
-                    helperText: errors.preferredPickupTime || 'Please select a time for pickup',
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Additional Notes"
-                  value={formData.additionalNotes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, additionalNotes: e.target.value }))}
-                  multiline
-                  rows={3}
-                />
-              </Grid>
-            </Grid>
-          </DatePickerWrapper>
-        );
-
-      case 4: // Review & Submit
+      case 2: // Review & Submit
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -557,78 +387,26 @@ const Form137Request = () => {
                     <Divider sx={{ my: 2 }} />
                   </Grid>
                   
-                  {/* Student Information */}
+                  {/* Learner Information */}
                   <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Student Information:</Typography>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Learner's Personal Information:</Typography>
                     <Typography paragraph>
-                      <strong>Name:</strong> {formData.surname}, {formData.givenName}<br/>
-                      <strong>Date of Birth:</strong> {formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : 'Not provided'}<br/>
+                      <strong>Full Name:</strong> {formData.surname}, {formData.firstName} {formData.middleName}<br/>
                       <strong>Sex:</strong> {formData.sex}<br/>
-                      <strong>Place of Birth:</strong> {formData.placeOfBirth}<br/>
-                      {(formData.province || formData.town || formData.barrio) && (
-                        <>
-                          <strong>Address:</strong> {[formData.barrio, formData.town, formData.province].filter(Boolean).join(', ')}<br/>
-                        </>
-                      )}
-                      <strong>Student Number:</strong> {formData.studentNumber}
+                      <strong>Date of Birth:</strong> {formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : 'Not provided'}<br/>
+                      <strong>Place of Birth:</strong> {[formData.barangay, formData.city, formData.province].filter(Boolean).join(', ')}<br/>
+                      <strong>Learner Reference Number (LRN):</strong> {formData.learnerReferenceNumber}
                     </Typography>
                   </Grid>
 
                   {/* Parent/Guardian Information */}
                   <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Parent/Guardian Information:</Typography>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Parent/Guardian Details:</Typography>
                     <Typography paragraph>
                       <strong>Name:</strong> {formData.parentGuardianName}<br/>
-                      <strong>Address:</strong> {formData.parentGuardianAddress}<br/>
-                      <strong>Occupation:</strong> {formData.parentGuardianOccupation}
+                      <strong>Address:</strong> {formData.parentGuardianAddress}
                     </Typography>
                   </Grid>
-
-                  {/* Educational Background */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Educational Background:</Typography>
-                    <Typography paragraph>
-                      <strong>Elementary:</strong> {formData.elementaryCourseCompleted}, {formData.elementarySchool} ({formData.elementaryYear})
-                      {formData.elementaryGenAve && ` - Average: ${formData.elementaryGenAve}`}<br/>
-                      <strong>Secondary:</strong> {formData.currentSchool}, {formData.schoolAddress} (Graduated: {formData.yearGraduated})
-                    </Typography>
-                  </Grid>
-
-                  {/* Purpose and Pickup */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Purpose:</Typography>
-                    <Typography paragraph>{formData.purpose}</Typography>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                      <ScheduleIcon sx={{ mr: 1 }} color="primary" />
-                      <Typography variant="subtitle1">Pickup Schedule</Typography>
-                    </Box>
-                    <Divider sx={{ my: 2 }} />
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2" color="text.secondary">Date:</Typography>
-                        <Typography>
-                          {formData.preferredPickupDate
-                            ? new Date(formData.preferredPickupDate).toLocaleDateString()
-                            : 'Not selected'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2" color="text.secondary">Time:</Typography>
-                        <Typography>
-                          {formData.preferredPickupTime
-                            ? new Date(formData.preferredPickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                            : 'Not selected'}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  {formData.additionalNotes && (
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">Additional Notes:</Typography>
-                      <Typography>{formData.additionalNotes}</Typography>
-                    </Grid>
-                  )}
                 </Grid>
               </Paper>
             </Grid>
@@ -636,7 +414,7 @@ const Form137Request = () => {
               <Paper sx={{ p: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <InfoIcon sx={{ mr: 1 }} />
-                  <Typography variant="subtitle1">Required Documents</Typography>
+                  <Typography variant="subtitle1">Required Documents for Pickup</Typography>
                 </Box>
                 <List dense>
                   {requirements.map((req, index) => (
@@ -651,7 +429,7 @@ const Form137Request = () => {
               </Paper>
             </Grid>
           </Grid>
-        );      default:
+        );default:
         return null;
     }
   };
@@ -669,8 +447,7 @@ const Form137Request = () => {
             transform: 'translateY(-2px)',
           }
         }}
-      >
-        <Box sx={{ 
+      >        <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           mb: 4,
@@ -680,12 +457,33 @@ const Form137Request = () => {
           color: 'white'
         }}>
           <SchoolIcon sx={{ fontSize: 40, mr: 2 }} />
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-            Form 137 Request
-          </Typography>
-        </Box>
-
-        <Stepper 
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+              Form 137 Request
+            </Typography>
+            {!isAuthenticated && (
+              <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
+                Please log in to submit your request
+              </Typography>
+            )}
+          </Box>
+          {!isAuthenticated && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => navigate('/login')}
+              startIcon={<LoginIcon />}
+              sx={{
+                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.3)',
+                }
+              }}
+            >
+              Login
+            </Button>
+          )}
+        </Box>        <Stepper 
           activeStep={activeStep} 
           sx={{ 
             mb: 4,
@@ -704,6 +502,24 @@ const Form137Request = () => {
           ))}
         </Stepper>
 
+        {!isAuthenticated && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              You need to be logged in to submit this form. You can still fill out the form and download it as PDF, 
+              but you'll need to{' '}
+              <Button 
+                component={RouterLink} 
+                to="/login" 
+                color="inherit" 
+                sx={{ textDecoration: 'underline', p: 0, minWidth: 'auto' }}
+              >
+                log in
+              </Button>
+              {' '}to submit it online.
+            </Typography>
+          </Alert>
+        )}
+
         <form onSubmit={handleFormSubmit} noValidate>
           <Box sx={{ 
             mt: 4, 
@@ -716,9 +532,7 @@ const Form137Request = () => {
             }
           }}>
             {renderStepContent(activeStep)}
-          </Box>
-
-          <Box sx={{ 
+          </Box>          <Box sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             mt: 4,
@@ -744,10 +558,29 @@ const Form137Request = () => {
             >
               Back
             </Button>
-            <Box sx={{ display: 'flex', gap: 2 }}>              {activeStep === steps.length - 1 && (
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              {!isAuthenticated && activeStep === steps.length - 1 && (
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => navigate('/login')}
+                  startIcon={<LoginIcon />}
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: '8px',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                    }
+                  }}
+                >
+                  Login to Submit
+                </Button>
+              )}
+              {activeStep === steps.length - 1 && (
                 <Form137PDFWithQR
                   formData={formData}
-                  fileName={`form137_request_${formData.studentNumber}.pdf`}
+                  fileName={`form137_request_${formData.learnerReferenceNumber || 'draft'}.pdf`}
                   variant="outlined"
                   color="primary"
                   sx={{
@@ -768,7 +601,7 @@ const Form137Request = () => {
                 color="primary"
                 onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}
                 endIcon={activeStep === steps.length - 1 ? (loading ? <CircularProgress size={24} /> : <SendIcon />) : undefined}
-                disabled={loading}
+                disabled={loading || (activeStep === steps.length - 1 && !isAuthenticated)}
                 sx={{
                   px: 4,
                   py: 1.5,
@@ -777,10 +610,15 @@ const Form137Request = () => {
                   '&:hover': {
                     transform: 'translateY(-1px)',
                     boxShadow: '0 4px 8px rgba(25, 118, 210, 0.3)',
+                  },
+                  '&:disabled': {
+                    background: '#ccc',
                   }
                 }}
               >
-                {activeStep === steps.length - 1 ? 'Submit Request' : 'Next'}
+                {activeStep === steps.length - 1 
+                  ? (isAuthenticated ? 'Submit Request' : 'Login Required') 
+                  : 'Next'}
               </Button>
             </Box>
           </Box>

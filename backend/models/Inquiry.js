@@ -9,10 +9,9 @@ const inquirySchema = new mongoose.Schema({
   message: {
     type: String,
     required: true
-  },
-  status: {
+  },  status: {
     type: String,
-    enum: ['pending', 'resolved', 'archived'],
+    enum: ['pending', 'inProgress', 'resolved', 'closed', 'archived'],
     default: 'pending'
   },
   createdAt: {

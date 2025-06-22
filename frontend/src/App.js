@@ -24,6 +24,7 @@ import DiplomaRequest from './pages/user/DiplomaRequest';
 import AdminDashboard from './pages/admin/Dashboard';
 import InquiriesDashboard from './pages/admin/InquiriesDashboard';
 import InquiryArchive from './admin/InquiryArchive';
+import DocumentArchive from './admin/DocumentArchive';
 
 // Protected Route
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -135,6 +136,14 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <InquiryArchive />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/documents/archive"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <DocumentArchive />
                 </ProtectedRoute>
               }
             />

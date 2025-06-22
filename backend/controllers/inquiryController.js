@@ -26,10 +26,12 @@ exports.getMyInquiries = async (req, res) => {
   }
 };
 
-// Admin: Get all inquiries
+// Admin: Get all inquiries (excluding archived)
 exports.getAllInquiries = async (req, res) => {
   try {
-    const inquiries = await Inquiry.find().populate('user', 'firstName lastName email').sort({ createdAt: -1 });
+    const inquiries = await Inquiry.find({ status: { $ne: 'archived' } })
+      .populate('user', 'firstName lastName email')
+      .sort({ createdAt: -1 });
     res.json(inquiries);
   } catch (error) {
     console.error('Error fetching all inquiries:', error);
@@ -77,17 +79,26 @@ exports.updateInquiryStatus = async (req, res) => {
     const { status } = req.body;
     const currentDate = new Date();
     
-    const update = {
-      status,
-      ...(status === 'resolved' ? { 
-        resolvedAt: currentDate,
-        resolvedBy: req.user.name || req.user.email
-      } : {}),
-      ...(status === 'archived' ? { 
-        archivedAt: currentDate,
-        resolvedAt: currentDate // Ensure resolved date is set if not already
-      } : {})
+    let update = {
+      status
     };
+    
+    // Handle different status updates
+    if (status === 'resolved') {
+      update.resolvedAt = currentDate;
+      update.resolvedBy = req.user.name || req.user.email;
+    } else if (status === 'completed') {
+      // When status is set to "completed", automatically archive the inquiry
+      update.status = 'archived';
+      update.archivedAt = currentDate;
+      update.resolvedAt = currentDate;
+      update.resolvedBy = req.user.name || req.user.email;
+    } else if (status === 'archived') {
+      update.archivedAt = currentDate;
+      if (!update.resolvedAt) {
+        update.resolvedAt = currentDate;
+      }
+    }
     
     const inquiry = await Inquiry.findByIdAndUpdate(
       inquiryId,
@@ -97,7 +108,11 @@ exports.updateInquiryStatus = async (req, res) => {
     
     if (!inquiry) return res.status(404).json({ message: 'Inquiry not found' });
     
-    res.json(inquiry);
+    res.json({
+      success: true,
+      message: status === 'completed' ? 'Inquiry completed and archived successfully' : 'Inquiry status updated successfully',
+      inquiry
+    });
   } catch (error) {
     console.error('Error updating inquiry status:', error);
     res.status(500).json({ message: 'Error updating inquiry status' });

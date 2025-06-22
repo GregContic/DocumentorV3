@@ -88,10 +88,12 @@ exports.getRequestById = async (req, res) => {
   }
 };
 
-// Admin: Get all requests
+// Admin: Get all requests (excluding archived)
 exports.getAllRequests = async (req, res) => {
   try {
-    const requests = await DocumentRequest.find().populate('user', 'firstName lastName email').sort({ createdAt: -1 });
+    const requests = await DocumentRequest.find({ archived: { $ne: true } })
+      .populate('user', 'firstName lastName email')
+      .sort({ createdAt: -1 });
     res.json(requests);
   } catch (error) {
     console.error('Error fetching all requests:', error);
@@ -104,15 +106,127 @@ exports.updateRequestStatus = async (req, res) => {
   try {
     const { requestId } = req.params;
     const { status } = req.body;
+    
+    const updateData = { status };
+    
+    // If status is being set to completed, also set completedAt and auto-archive
+    if (status === 'completed') {
+      updateData.completedAt = new Date();
+      updateData.archived = true;
+      updateData.archivedAt = new Date();
+      updateData.archivedBy = req.user.email || 'Admin';
+    }
+    
     const request = await DocumentRequest.findByIdAndUpdate(
       requestId,
-      { status },
+      updateData,
       { new: true }
     );
+    
     if (!request) return res.status(404).json({ message: 'Request not found' });
-    res.json(request);
+    
+    res.json({
+      success: true,
+      message: status === 'completed' ? 'Request completed and archived successfully' : 'Request status updated successfully',
+      request
+    });
   } catch (error) {
     console.error('Error updating request status:', error);
     res.status(500).json({ message: 'Error updating request status' });
+  }
+};
+
+// Admin: Get archived requests
+exports.getArchivedRequests = async (req, res) => {
+  try {
+    const archivedRequests = await DocumentRequest.find({ archived: true })
+      .populate('user', 'firstName lastName email')
+      .sort({ archivedAt: -1 });
+    res.json({
+      success: true,
+      data: archivedRequests,
+      count: archivedRequests.length
+    });
+  } catch (error) {
+    console.error('Error fetching archived requests:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching archived requests',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Admin: Archive a request manually
+exports.archiveRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    
+    const request = await DocumentRequest.findByIdAndUpdate(
+      requestId,
+      {
+        archived: true,
+        archivedAt: new Date(),
+        archivedBy: req.user.email || 'Admin'
+      },
+      { new: true }
+    );
+    
+    if (!request) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Request not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Request archived successfully',
+      request
+    });
+  } catch (error) {
+    console.error('Error archiving request:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error archiving request',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Admin: Restore archived request
+exports.restoreArchivedRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    
+    const request = await DocumentRequest.findByIdAndUpdate(
+      requestId,
+      {
+        archived: false,
+        archivedAt: null,
+        archivedBy: null
+      },
+      { new: true }
+    );
+    
+    if (!request) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Request not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Request restored successfully',
+      request
+    });
+  } catch (error) {
+    console.error('Error restoring request:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error restoring request',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };

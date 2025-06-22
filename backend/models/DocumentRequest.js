@@ -44,11 +44,23 @@ const documentRequestSchema = new mongoose.Schema({
   preferredPickupDate: String,
   preferredPickupTime: String,
   additionalNotes: String,
-  
-  status: {
+    status: {
     type: String,
     enum: ['pending', 'approved', 'rejected', 'completed', 'processing', 'submitted'],
     default: 'pending'
+  },
+  archived: {
+    type: Boolean,
+    default: false
+  },
+  archivedAt: {
+    type: Date
+  },
+  archivedBy: {
+    type: String
+  },
+  completedAt: {
+    type: Date
   },
   createdAt: {
     type: Date,

@@ -52,12 +52,12 @@ const Navbar = () => {
     ? [
         { text: 'Login', path: '/login', icon: <PersonIcon /> },
         { text: 'Register', path: '/register', icon: <PersonIcon /> }
-      ]
-    : user?.role === 'admin'
+      ]    : user?.role === 'admin'
     ? [
         { text: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon /> },
         { text: 'Active Inquiries', path: '/admin/inquiries', icon: <InquiryIcon /> },
-        { text: 'Archived Inquiries', path: '/admin/inquiries/archive', icon: <ArchiveIcon /> }
+        { text: 'Archived Inquiries', path: '/admin/inquiries/archive', icon: <ArchiveIcon /> },
+        { text: 'Archived Documents', path: '/admin/documents/archive', icon: <ArchiveIcon /> }
       ]
     : [
         { text: 'Request Document', path: '/request-document', icon: <DescriptionIcon /> },

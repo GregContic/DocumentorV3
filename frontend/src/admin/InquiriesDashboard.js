@@ -36,6 +36,7 @@ const statusColors = {
   pending: 'warning',
   inProgress: 'info',
   resolved: 'success',
+  completed: 'success',
   closed: 'default',
 };
 
@@ -80,8 +81,12 @@ const InquiriesDashboard = () => {
     try {
       const response = await inquiryService.updateInquiryStatus(inquiryId, newStatus);
       
+      // If the inquiry was marked as completed, it will be automatically archived by the backend
+      if (newStatus === 'completed' && response.data) {
+        showSnackbar('Inquiry marked as completed and automatically moved to archives', 'success');
+      }
       // If the inquiry was marked as resolved, automatically archive it
-      if (newStatus === 'resolved' && response.data) {
+      else if (newStatus === 'resolved' && response.data) {
         try {
           await inquiryService.archiveInquiry(inquiryId);
           showSnackbar('Inquiry marked as resolved and automatically moved to archives', 'success');
@@ -186,11 +191,11 @@ const InquiriesDashboard = () => {
             label="Filter by status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <MenuItem value="all">All</MenuItem>
+          >            <MenuItem value="all">All</MenuItem>
             <MenuItem value="pending">Pending</MenuItem>
             <MenuItem value="inProgress">In Progress</MenuItem>
             <MenuItem value="resolved">Resolved</MenuItem>
+            <MenuItem value="completed">Completed</MenuItem>
             <MenuItem value="closed">Closed</MenuItem>
           </TextField>
         </Grid>
@@ -229,10 +234,10 @@ const InquiriesDashboard = () => {
                     value={inquiry.status}
                     onChange={(e) => handleStatusChange(inquiry._id, e.target.value)}
                     sx={{ minWidth: 120 }}
-                  >
-                    <MenuItem value="pending">Pending</MenuItem>
+                  >                    <MenuItem value="pending">Pending</MenuItem>
                     <MenuItem value="inProgress">In Progress</MenuItem>
                     <MenuItem value="resolved">Resolved</MenuItem>
+                    <MenuItem value="completed">Completed</MenuItem>
                     <MenuItem value="closed">Closed</MenuItem>
                   </TextField>
                 </TableCell>

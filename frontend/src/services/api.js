@@ -45,6 +45,12 @@ export const documentService = {
   updateRequestStatus: (requestId, status) => 
     api.patch(`/api/documents/admin/documents/request/${requestId}/status`, { status }),
   getRequestStats: () => api.get('/api/documents/admin/documents/stats'),
+  // Archive endpoints
+  getArchivedRequests: () => api.get('/api/documents/admin/documents/archived-requests'),
+  archiveRequest: (requestId) => 
+    api.patch(`/api/documents/admin/documents/request/${requestId}/archive`),
+  restoreArchivedRequest: (requestId) => 
+    api.patch(`/api/documents/admin/documents/request/${requestId}/restore`),
 };
 
 // Inquiry services
