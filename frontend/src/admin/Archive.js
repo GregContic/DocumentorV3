@@ -27,6 +27,14 @@ import {
   Tab,
   Card,
   CardContent,
+  Divider,
+  InputAdornment,
+  Fade,
+  Slide,
+  useTheme,
+  Avatar,
+  Stack,
+  Badge,
 } from '@mui/material';
 import {
   Restore as RestoreIcon,
@@ -34,10 +42,20 @@ import {
   Archive as ArchiveIcon,
   Description as DocumentIcon,
   QuestionAnswer as InquiryIcon,
+  Visibility as ViewIcon,
+  Search as SearchIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  CalendarToday as CalendarIcon,
+  Message as MessageIcon,
+  Reply as ReplyIcon,
+  CheckCircle as CheckCircleIcon,
+  AccessTime as TimeIcon,
 } from '@mui/icons-material';
 import { documentService, inquiryService } from '../services/api';
 
 const Archive = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   
   // Document Archive State
@@ -127,6 +145,44 @@ const Archive = () => {
   const handleViewDetails = (item) => {
     setSelectedItem(item);
     setDialogOpen(true);
+  };  const handleBulkArchiveCompleted = async () => {
+    try {
+      setInquiryLoading(true);
+      const response = await inquiryService.bulkArchiveCompletedInquiries();
+      
+      if (response.data.success) {
+        alert(`Successfully archived ${response.data.archivedCount} completed inquiries!`);
+        // Refresh the inquiry list if we're on the inquiry tab
+        if (activeTab === 1) {
+          fetchArchivedInquiries();
+        }
+      }
+    } catch (error) {
+      console.error('Error bulk archiving completed inquiries:', error);
+      setInquiryError('Failed to archive completed inquiries: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setInquiryLoading(false);
+    }
+  };
+
+  const handleBulkArchiveCompletedDocuments = async () => {
+    try {
+      setDocumentLoading(true);
+      const response = await documentService.bulkArchiveCompletedRequests();
+      
+      if (response.data.success) {
+        alert(`Successfully archived ${response.data.archivedCount} completed document requests!`);
+        // Refresh the document list if we're on the documents tab
+        if (activeTab === 0) {
+          fetchArchivedDocuments();
+        }
+      }
+    } catch (error) {
+      console.error('Error bulk archiving completed documents:', error);
+      setDocumentError('Failed to archive completed documents: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setDocumentLoading(false);
+    }
   };
 
   const handleCloseDialog = () => {
@@ -152,294 +208,981 @@ const Archive = () => {
            email.toLowerCase().includes(inquirySearchTerm.toLowerCase()) ||
            (inquiry.message || '').toLowerCase().includes(inquirySearchTerm.toLowerCase());
   });
-
   const renderDocumentTable = () => (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <Box sx={{ p: 2 }}>
-        <TextField
-          fullWidth
-          label="Search archived documents..."
-          value={documentSearchTerm}
-          onChange={(e) => setDocumentSearchTerm(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-      </Box>
-      
-      {documentLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : documentError ? (
-        <Alert severity="error" sx={{ m: 2 }}>{documentError}</Alert>
-      ) : (
-        <>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Request ID</TableCell>
-                  <TableCell>Student Name</TableCell>
-                  <TableCell>Document Type</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Archived Date</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>              <TableBody>
-                {filteredDocuments
-                  .slice(documentPage * documentRowsPerPage, documentPage * documentRowsPerPage + documentRowsPerPage)
-                  .map((doc) => {
-                    const studentName = doc.user ? `${doc.user.firstName} ${doc.user.lastName}` : 'N/A';
-                    return (
-                      <TableRow key={doc._id} hover>
-                        <TableCell>{doc._id.slice(-8)}</TableCell>
-                        <TableCell>{studentName}</TableCell>
-                        <TableCell>{doc.documentType}</TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={doc.status} 
-                            color={doc.status === 'completed' ? 'success' : 'default'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {new Date(doc.archivedAt || doc.updatedAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="View Details">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleViewDetails(doc)}
-                            >
-                              <InfoIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Restore">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleRestoreDocument(doc._id)}
-                              color="primary"
-                            >
-                              <RestoreIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredDocuments.length}
-            rowsPerPage={documentRowsPerPage}
-            page={documentPage}
-            onPageChange={(event, newPage) => setDocumentPage(newPage)}
-            onRowsPerPageChange={(event) => {
-              setDocumentRowsPerPage(parseInt(event.target.value, 10));
-              setDocumentPage(0);
+    <Fade in timeout={300}>
+      <Paper 
+        sx={{ 
+          width: '100%', 
+          overflow: 'hidden',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+          border: '1px solid rgba(0,0,0,0.05)',
+        }}
+      >        <Box sx={{ 
+          p: 3, 
+          backgroundColor: 'primary.main',
+          color: 'white'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}>
+              <DocumentIcon />
+            </Avatar>
+            <Typography variant="h6" fontWeight="600">
+              Archived Document Requests
+            </Typography>
+            <Badge 
+              badgeContent={filteredDocuments.length} 
+              color="secondary"
+              sx={{ ml: 'auto' }}
+            />
+          </Box>
+          <TextField
+            fullWidth
+            placeholder="Search by student name, document type, or ID..."
+            value={documentSearchTerm}
+            onChange={(e) => setDocumentSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                </InputAdornment>
+              ),
+              sx: {
+                bgcolor: 'rgba(255,255,255,0.15)',
+                borderRadius: 2,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid rgba(255,255,255,0.3)',
+                },
+                '& input': {
+                  color: 'white',
+                  '&::placeholder': {
+                    color: 'rgba(255,255,255,0.7)',
+                    opacity: 1,
+                  },
+                },
+              },
             }}
           />
-        </>
-      )}
-    </Paper>
+        </Box>
+        
+        {documentLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
+            <CircularProgress size={60} thickness={4} />
+          </Box>
+        ) : documentError ? (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              m: 3, 
+              borderRadius: 2,
+              '& .MuiAlert-icon': { fontSize: 28 }
+            }}
+          >
+            {documentError}
+          </Alert>
+        ) : (
+          <>
+            <TableContainer sx={{ maxHeight: 600 }}>
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Request ID
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Student Name
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Document Type
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Status
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Archived Date
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Actions
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredDocuments
+                    .slice(documentPage * documentRowsPerPage, documentPage * documentRowsPerPage + documentRowsPerPage)
+                    .map((doc, index) => {
+                      const studentName = doc.user ? `${doc.user.firstName} ${doc.user.lastName}` : 'N/A';
+                      return (
+                        <TableRow 
+                          key={doc._id} 
+                          hover
+                          sx={{
+                            '&:hover': {
+                              bgcolor: 'rgba(103, 126, 234, 0.04)',
+                              transform: 'scale(1.001)',
+                              transition: 'all 0.2s ease-in-out',
+                            },
+                            '&:nth-of-type(even)': {
+                              bgcolor: 'rgba(0,0,0,0.02)',
+                            },
+                          }}
+                        >
+                          <TableCell sx={{ py: 2 }}>
+                            <Chip
+                              label={doc._id.slice(-8)}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontFamily: 'monospace', fontWeight: 600 }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ width: 32, height: 32, fontSize: 14 }}>
+                                {studentName.charAt(0)}
+                              </Avatar>
+                              <Typography variant="body2" fontWeight={500}>
+                                {studentName}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Typography variant="body2" fontWeight={500}>
+                              {doc.documentType}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Chip 
+                              label={doc.status} 
+                              color={doc.status === 'completed' ? 'success' : 'default'}
+                              size="small"
+                              sx={{ 
+                                fontWeight: 600,
+                                textTransform: 'capitalize',
+                                borderRadius: 2,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <CalendarIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                {new Date(doc.archivedAt || doc.updatedAt).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Stack direction="row" spacing={1}>
+                              <Tooltip title="View Details" arrow>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  startIcon={<ViewIcon />}                                  onClick={() => handleViewDetails(doc)}
+                                  sx={{ 
+                                    minWidth: 'auto',
+                                    px: 2,
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    backgroundColor: 'primary.main',
+                                    '&:hover': {
+                                      backgroundColor: 'primary.dark',
+                                      transform: 'translateY(-1px)',
+                                      boxShadow: 3,
+                                    },
+                                  }}
+                                >
+                                  View
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Restore Document" arrow>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleRestoreDocument(doc._id)}
+                                  sx={{
+                                    bgcolor: 'rgba(76, 175, 80, 0.1)',
+                                    color: '#4caf50',
+                                    '&:hover': {
+                                      bgcolor: 'rgba(76, 175, 80, 0.2)',
+                                      transform: 'translateY(-1px)',
+                                    },
+                                  }}
+                                >
+                                  <RestoreIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredDocuments.length}
+              rowsPerPage={documentRowsPerPage}
+              page={documentPage}
+              onPageChange={(event, newPage) => setDocumentPage(newPage)}
+              onRowsPerPageChange={(event) => {
+                setDocumentRowsPerPage(parseInt(event.target.value, 10));
+                setDocumentPage(0);
+              }}
+              sx={{
+                borderTop: '1px solid rgba(0,0,0,0.1)',
+                bgcolor: '#f8fafc',
+              }}
+            />
+          </>
+        )}
+      </Paper>
+    </Fade>
   );
-
   const renderInquiryTable = () => (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <Box sx={{ p: 2 }}>
-        <TextField
-          fullWidth
-          label="Search archived inquiries..."
-          value={inquirySearchTerm}
-          onChange={(e) => setInquirySearchTerm(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-      </Box>
-      
-      {inquiryLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : inquiryError ? (
-        <Alert severity="error" sx={{ m: 2 }}>{inquiryError}</Alert>
-      ) : (
-        <>
-          <TableContainer>
-            <Table>              <TableHead>
-                <TableRow>
-                  <TableCell>Student Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Message</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Archived Date</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredInquiries
-                  .slice(inquiryPage * inquiryRowsPerPage, inquiryPage * inquiryRowsPerPage + inquiryRowsPerPage)
-                  .map((inquiry) => {
-                    const studentName = inquiry.user ? `${inquiry.user.firstName} ${inquiry.user.lastName}` : 'N/A';
-                    const email = inquiry.user ? inquiry.user.email : 'N/A';
-                    return (
-                      <TableRow key={inquiry._id} hover>
-                        <TableCell>{studentName}</TableCell>
-                        <TableCell>{email}</TableCell>
-                        <TableCell sx={{ maxWidth: 300 }}>
-                          <Typography noWrap>{inquiry.message}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={inquiry.status} 
-                            color={inquiry.status === 'archived' ? 'info' : 'default'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {new Date(inquiry.archivedAt || inquiry.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="View Details">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleViewDetails(inquiry)}
-                            >
-                              <InfoIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Restore">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleRestoreInquiry(inquiry._id)}
-                              color="primary"
-                            >
-                              <RestoreIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredInquiries.length}
-            rowsPerPage={inquiryRowsPerPage}
-            page={inquiryPage}
-            onPageChange={(event, newPage) => setInquiryPage(newPage)}
-            onRowsPerPageChange={(event) => {
-              setInquiryRowsPerPage(parseInt(event.target.value, 10));
-              setInquiryPage(0);
+    <Fade in timeout={300}>
+      <Paper 
+        sx={{ 
+          width: '100%', 
+          overflow: 'hidden',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+          border: '1px solid rgba(0,0,0,0.05)',
+        }}
+      >        <Box sx={{ 
+          p: 3, 
+          backgroundColor: 'secondary.main',
+          color: 'white'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}>
+              <InquiryIcon />
+            </Avatar>
+            <Typography variant="h6" fontWeight="600">
+              Archived Inquiries
+            </Typography>
+            <Badge 
+              badgeContent={filteredInquiries.length} 
+              color="secondary"
+              sx={{ ml: 'auto' }}
+            />
+          </Box>
+          <TextField
+            fullWidth
+            placeholder="Search by student name, email, or message..."
+            value={inquirySearchTerm}
+            onChange={(e) => setInquirySearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                </InputAdornment>
+              ),
+              sx: {
+                bgcolor: 'rgba(255,255,255,0.15)',
+                borderRadius: 2,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid rgba(255,255,255,0.3)',
+                },
+                '& input': {
+                  color: 'white',
+                  '&::placeholder': {
+                    color: 'rgba(255,255,255,0.7)',
+                    opacity: 1,
+                  },
+                },
+              },
             }}
           />
-        </>
-      )}
-    </Paper>
-  );
-
-  const renderDetailsDialog = () => (
-    <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {activeTab === 0 ? 'Document Request Details' : 'Inquiry Details'}
+        </Box>
+      
+        {inquiryLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
+            <CircularProgress size={60} thickness={4} />
+          </Box>
+        ) : inquiryError ? (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              m: 3, 
+              borderRadius: 2,
+              '& .MuiAlert-icon': { fontSize: 28 }
+            }}
+          >
+            {inquiryError}
+          </Alert>
+        ) : (
+          <>
+            <TableContainer sx={{ maxHeight: 600 }}>
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Student Name
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Email
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Message Preview
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Status
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Archived Date
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc', py: 2 }}>
+                      Actions
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredInquiries
+                    .slice(inquiryPage * inquiryRowsPerPage, inquiryPage * inquiryRowsPerPage + inquiryRowsPerPage)
+                    .map((inquiry, index) => {
+                      const studentName = inquiry.user ? `${inquiry.user.firstName} ${inquiry.user.lastName}` : 'N/A';
+                      const email = inquiry.user ? inquiry.user.email : 'N/A';
+                      return (
+                        <TableRow 
+                          key={inquiry._id} 
+                          hover
+                          sx={{
+                            '&:hover': {
+                              bgcolor: 'rgba(240, 147, 251, 0.04)',
+                              transform: 'scale(1.001)',
+                              transition: 'all 0.2s ease-in-out',
+                            },
+                            '&:nth-of-type(even)': {
+                              bgcolor: 'rgba(0,0,0,0.02)',
+                            },
+                          }}
+                        >
+                          <TableCell sx={{ py: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ width: 32, height: 32, fontSize: 14 }}>
+                                {studentName.charAt(0)}
+                              </Avatar>
+                              <Typography variant="body2" fontWeight={500}>
+                                {studentName}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <EmailIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                {email}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 2, maxWidth: 300 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <MessageIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography 
+                                variant="body2" 
+                                noWrap
+                                sx={{ 
+                                  bgcolor: 'rgba(0,0,0,0.04)',
+                                  px: 1,
+                                  py: 0.5,
+                                  borderRadius: 1,
+                                  fontStyle: 'italic',
+                                }}
+                              >
+                                {inquiry.message}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Chip 
+                              label={inquiry.status} 
+                              color={inquiry.status === 'archived' ? 'info' : 'default'}
+                              size="small"
+                              sx={{ 
+                                fontWeight: 600,
+                                textTransform: 'capitalize',
+                                borderRadius: 2,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <CalendarIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                {new Date(inquiry.archivedAt || inquiry.createdAt).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 2 }}>
+                            <Stack direction="row" spacing={1}>
+                              <Tooltip title="View Details" arrow>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  startIcon={<ViewIcon />}
+                                  onClick={() => handleViewDetails(inquiry)}                                  sx={{ 
+                                    minWidth: 'auto',
+                                    px: 2,
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    backgroundColor: 'secondary.main',
+                                    '&:hover': {
+                                      backgroundColor: 'secondary.dark',
+                                      transform: 'translateY(-1px)',
+                                      boxShadow: 3,
+                                    },
+                                  }}
+                                >
+                                  View
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Restore Inquiry" arrow>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleRestoreInquiry(inquiry._id)}
+                                  sx={{
+                                    bgcolor: 'rgba(76, 175, 80, 0.1)',
+                                    color: '#4caf50',
+                                    '&:hover': {
+                                      bgcolor: 'rgba(76, 175, 80, 0.2)',
+                                      transform: 'translateY(-1px)',
+                                    },
+                                  }}
+                                >
+                                  <RestoreIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredInquiries.length}
+              rowsPerPage={inquiryRowsPerPage}
+              page={inquiryPage}
+              onPageChange={(event, newPage) => setInquiryPage(newPage)}
+              onRowsPerPageChange={(event) => {
+                setInquiryRowsPerPage(parseInt(event.target.value, 10));
+                setInquiryPage(0);
+              }}
+              sx={{
+                borderTop: '1px solid rgba(0,0,0,0.1)',
+                bgcolor: '#f8fafc',
+              }}
+            />
+          </>
+        )}
+      </Paper>
+    </Fade>
+  );  const renderDetailsDialog = () => (
+    <Dialog 
+      open={dialogOpen} 
+      onClose={handleCloseDialog} 
+      maxWidth="lg" 
+      fullWidth
+      TransitionComponent={Slide}
+      TransitionProps={{ direction: "up" }}
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          boxShadow: '0 24px 64px rgba(0,0,0,0.15)',
+          overflow: 'hidden',
+        }
+      }}
+    >      <DialogTitle 
+        sx={{ 
+          backgroundColor: activeTab === 0 ? 'primary.main' : 'secondary.main',
+          color: 'white',
+          py: 3,
+          px: 4,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}>
+            {activeTab === 0 ? <DocumentIcon /> : <InquiryIcon />}
+          </Avatar>
+          <Typography variant="h5" fontWeight="600">
+            {activeTab === 0 ? 'Document Request Details' : 'Inquiry Details'}
+          </Typography>
+        </Box>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ p: 0 }}>
         {selectedItem && (
-          <Grid container spacing={2}>
+          <Box sx={{ p: 4 }}>
             {activeTab === 0 ? (
-              // Document details
-              <>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Request ID</Typography>
-                  <Typography variant="body1">{selectedItem.requestId}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Student Name</Typography>
-                  <Typography variant="body1">{selectedItem.studentName}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Document Type</Typography>
-                  <Typography variant="body1">{selectedItem.documentType}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Status</Typography>
-                  <Chip label={selectedItem.status} color={selectedItem.status === 'completed' ? 'success' : 'default'} />
-                </Grid>
+              // Enhanced Document details
+              <Grid container spacing={3}>
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="textSecondary">Purpose</Typography>
-                  <Typography variant="body1">{selectedItem.purpose || 'Not specified'}</Typography>
+                  <Typography variant="h6" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
+                    Request Information
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
                 </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                      Request ID
+                    </Typography>
+                    <Chip
+                      label={selectedItem.requestId || selectedItem._id}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontFamily: 'monospace', fontWeight: 600 }}
+                    />
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                      Student Name
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PersonIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                      <Typography variant="body1" fontWeight={500}>
+                        {selectedItem.studentName || 
+                         (selectedItem.user ? `${selectedItem.user.firstName} ${selectedItem.user.lastName}` : 'N/A')}
+                      </Typography>
+                    </Box>
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                      Document Type
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500}>
+                      {selectedItem.documentType}
+                    </Typography>
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                      Status
+                    </Typography>
+                    <Chip 
+                      label={selectedItem.status} 
+                      color={selectedItem.status === 'completed' ? 'success' : 'default'} 
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </Card>
+                </Grid>
+                
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="textSecondary">Comments</Typography>
-                  <Typography variant="body1">{selectedItem.comments || 'No comments'}</Typography>
+                  <Card sx={{ p: 3, bgcolor: '#fff7ed', border: '1px solid #fed7aa' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                      Purpose
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedItem.purpose || 'Not specified'}
+                    </Typography>
+                  </Card>
                 </Grid>
-              </>
+                
+                <Grid item xs={12}>
+                  <Card sx={{ p: 3, bgcolor: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                      Comments
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedItem.comments || 'No comments'}
+                    </Typography>
+                  </Card>
+                </Grid>
+              </Grid>
             ) : (
-              // Inquiry details
-              <>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Name</Typography>
-                  <Typography variant="body1">{selectedItem.name}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Email</Typography>
-                  <Typography variant="body1">{selectedItem.email}</Typography>
-                </Grid>
+              // Enhanced Inquiry details
+              <Grid container spacing={3}>
+                {/* Header Section */}
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="textSecondary">Subject</Typography>
-                  <Typography variant="body1">{selectedItem.subject}</Typography>
+                  <Card sx={{ p: 3, bgcolor: '#fef3f2', border: '1px solid #fecaca' }}>
+                    <Typography variant="h6" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
+                      Inquiry Information
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                          <Avatar sx={{ bgcolor: 'primary.main' }}>
+                            <PersonIcon />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" color="textSecondary">
+                              Student Name
+                            </Typography>
+                            <Typography variant="body1" fontWeight={600}>
+                              {selectedItem.user ? `${selectedItem.user.firstName} ${selectedItem.user.lastName}` : 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={12} md={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                          <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                            <EmailIcon />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" color="textSecondary">
+                              Email Address
+                            </Typography>
+                            <Typography variant="body1" fontWeight={500}>
+                              {selectedItem.user ? selectedItem.user.email : 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Card>
                 </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="textSecondary">Message</Typography>
-                  <Typography variant="body1">{selectedItem.message}</Typography>
+                
+                {/* Status and Dates */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                      Inquiry ID
+                    </Typography>
+                    <Chip
+                      label={selectedItem._id}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontFamily: 'monospace', fontWeight: 600 }}
+                    />
+                  </Card>
                 </Grid>
-                {selectedItem.response && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="textSecondary">Response</Typography>
-                    <Typography variant="body1">{selectedItem.response}</Typography>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                      Status
+                    </Typography>
+                    <Chip 
+                      label={selectedItem.status} 
+                      color={selectedItem.status === 'archived' ? 'info' : 'default'}
+                      size="medium"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <CalendarIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                      <Typography variant="subtitle2" color="textSecondary">
+                        Submitted Date
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" fontWeight={500}>
+                      {new Date(selectedItem.createdAt).toLocaleString()}
+                    </Typography>
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <ArchiveIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                      <Typography variant="subtitle2" color="textSecondary">
+                        Archived Date
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" fontWeight={500}>
+                      {selectedItem.archivedAt ? new Date(selectedItem.archivedAt).toLocaleString() : 'N/A'}
+                    </Typography>
+                  </Card>
+                </Grid>
+                
+                {selectedItem.resolvedAt && (
+                  <Grid item xs={12} md={6}>
+                    <Card sx={{ p: 2, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                        <Typography variant="subtitle2" color="textSecondary">
+                          Resolved Date
+                        </Typography>
+                      </Box>
+                      <Typography variant="body1" fontWeight={500}>
+                        {new Date(selectedItem.resolvedAt).toLocaleString()}
+                      </Typography>
+                    </Card>
                   </Grid>
                 )}
-              </>
+                
+                {selectedItem.resolvedBy && (
+                  <Grid item xs={12} md={6}>
+                    <Card sx={{ p: 2, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                      <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                        Resolved By
+                      </Typography>
+                      <Typography variant="body1" fontWeight={500}>
+                        {selectedItem.resolvedBy}
+                      </Typography>
+                    </Card>
+                  </Grid>
+                )}
+                
+                {/* Message Section */}
+                <Grid item xs={12}>
+                  <Card sx={{ p: 3, bgcolor: '#fffbeb', border: '1px solid #fed7aa' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <MessageIcon sx={{ color: 'warning.main' }} />
+                      <Typography variant="h6" color="primary" fontWeight={600}>
+                        Original Message
+                      </Typography>
+                    </Box>
+                    <Paper sx={{ p: 3, bgcolor: 'white', borderRadius: 2, border: '1px solid #e5e7eb' }}>
+                      <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                        {selectedItem.message}
+                      </Typography>
+                    </Paper>
+                  </Card>
+                </Grid>
+                
+                {/* Replies Section */}
+                {selectedItem.replies && selectedItem.replies.length > 0 && (
+                  <Grid item xs={12}>
+                    <Card sx={{ p: 3, bgcolor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        <ReplyIcon sx={{ color: 'info.main' }} />
+                        <Typography variant="h6" color="primary" fontWeight={600}>
+                          Response History
+                        </Typography>
+                        <Chip 
+                          label={`${selectedItem.replies.length} ${selectedItem.replies.length === 1 ? 'reply' : 'replies'}`}
+                          size="small"
+                          color="info"
+                          sx={{ fontWeight: 600 }}
+                        />
+                      </Box>
+                      <Stack spacing={2}>
+                        {selectedItem.replies.map((reply, index) => (
+                          <Paper 
+                            key={index} 
+                            sx={{ 
+                              p: 3, 
+                              bgcolor: 'white',
+                              borderRadius: 2,
+                              border: '1px solid #e5e7eb',
+                              position: 'relative',
+                            }}
+                          >
+                            <Box sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              mb: 2,
+                              pb: 1,
+                              borderBottom: '1px solid #f3f4f6'
+                            }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Avatar sx={{ width: 28, height: 28, bgcolor: 'info.main', fontSize: 14 }}>
+                                  {(reply.repliedBy || 'Admin').charAt(0)}
+                                </Avatar>
+                                <Typography variant="subtitle1" fontWeight={600} color="primary">
+                                  {reply.repliedBy || 'Admin'}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <TimeIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="textSecondary" fontWeight={500}>
+                                  {new Date(reply.date).toLocaleString()}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                              {reply.message}
+                            </Typography>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    </Card>
+                  </Grid>
+                )}
+              </Grid>
             )}
-          </Grid>
+          </Box>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleCloseDialog}>Close</Button>
+      <DialogActions sx={{ p: 3, bgcolor: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+        <Button 
+          onClick={handleCloseDialog}
+          variant="contained"
+          sx={{ 
+            px: 4,
+            py: 1,
+            borderRadius: 2,
+            textTransform: 'none',
+            fontWeight: 600,
+          }}
+        >
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );
-
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <ArchiveIcon sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} />
-        <Typography variant="h4" component="h1">
-          Archive
-        </Typography>
-      </Box>
+    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      {/* Header Section */}
+      <Fade in timeout={600}>
+        <Card 
+          sx={{            mb: 4, 
+            backgroundColor: 'primary.main',
+            color: 'white',
+            borderRadius: 4,
+            boxShadow: 3,
+          }}
+        >
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Avatar sx={{ 
+                mr: 3, 
+                width: 56, 
+                height: 56, 
+                bgcolor: 'rgba(255,255,255,0.2)',
+                fontSize: 28 
+              }}>
+                <ArchiveIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h3" component="h1" fontWeight="700" gutterBottom>
+                  Archive Center
+                </Typography>
+                <Typography variant="h6" sx={{ opacity: 0.9 }}>
+                  Manage and view all archived documents and inquiries
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Fade>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Tabs value={activeTab} onChange={handleTabChange} aria-label="archive tabs">
-            <Tab 
-              icon={<DocumentIcon />} 
-              label="Document Requests" 
-              iconPosition="start"
-            />
-            <Tab 
-              icon={<InquiryIcon />} 
-              label="Inquiries" 
-              iconPosition="start"
-            />
-          </Tabs>
-        </CardContent>
-      </Card>
+      {/* Navigation and Bulk Actions */}
+      <Fade in timeout={800}>
+        <Card sx={{ 
+          mb: 4, 
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+          border: '1px solid rgba(0,0,0,0.05)',
+        }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 2,
+            }}>
+              <Tabs 
+                value={activeTab} 
+                onChange={handleTabChange} 
+                aria-label="archive tabs"
+                sx={{
+                  '& .MuiTabs-indicator': {
+                    height: 3,
+                    borderRadius: 2,
+                  },
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    minHeight: 48,
+                    px: 3,
+                  },
+                }}
+              >
+                <Tab 
+                  icon={<DocumentIcon />} 
+                  label={`Document Requests (${filteredDocuments.length})`}
+                  iconPosition="start"                  sx={{
+                    backgroundColor: activeTab === 0 ? 'primary.main' : 'transparent',
+                    color: activeTab === 0 ? 'white' : 'inherit',
+                    borderRadius: 2,
+                    mr: 1,
+                  }}
+                />
+                <Tab 
+                  icon={<InquiryIcon />} 
+                  label={`Inquiries (${filteredInquiries.length})`}
+                  iconPosition="start"                  sx={{
+                    backgroundColor: activeTab === 1 ? 'secondary.main' : 'transparent',
+                    color: activeTab === 1 ? 'white' : 'inherit',
+                    borderRadius: 2,
+                  }}
+                />
+              </Tabs>
+              
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {activeTab === 0 && (
+                  <Button
+                    variant="contained"
+                    startIcon={<ArchiveIcon />}                    onClick={handleBulkArchiveCompletedDocuments}
+                    disabled={documentLoading}
+                    sx={{
+                      backgroundColor: 'success.main',
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 3,
+                      '&:hover': {
+                        backgroundColor: 'success.dark',
+                        transform: 'translateY(-1px)',
+                        boxShadow: 3,
+                      },
+                    }}
+                  >
+                    Archive All Completed
+                  </Button>
+                )}
+                
+                {activeTab === 1 && (
+                  <Button
+                    variant="contained"
+                    startIcon={<ArchiveIcon />}
+                    onClick={handleBulkArchiveCompleted}
+                    disabled={inquiryLoading}
+                    sx={{                      backgroundColor: 'secondary.main',
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 3,
+                      '&:hover': {
+                        backgroundColor: 'secondary.dark',
+                        transform: 'translateY(-1px)',
+                        boxShadow: 3,
+                      },
+                    }}
+                  >
+                    Archive All Completed
+                  </Button>
+                )}
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Fade>
 
+      {/* Table Content */}
       {activeTab === 0 ? renderDocumentTable() : renderInquiryTable()}
       {renderDetailsDialog()}
     </Container>

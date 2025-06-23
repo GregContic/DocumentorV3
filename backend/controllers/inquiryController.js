@@ -171,3 +171,46 @@ exports.restoreInquiry = async (req, res) => {
     res.status(500).json({ message: 'Error restoring inquiry' });
   }
 };
+
+// Admin: Bulk archive completed inquiries
+exports.bulkArchiveCompletedInquiries = async (req, res) => {
+  try {
+    // Find all inquiries with status "completed"
+    const completedInquiries = await Inquiry.find({ status: 'completed' });
+    
+    if (completedInquiries.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No completed inquiries found to archive',
+        archivedCount: 0
+      });
+    }
+    
+    // Archive all completed inquiries
+    const result = await Inquiry.updateMany(
+      { status: 'completed' },
+      {
+        $set: {
+          status: 'archived',
+          archivedAt: new Date(),
+          resolvedAt: { $ifNull: ['$resolvedAt', new Date()] },
+          resolvedBy: { $ifNull: ['$resolvedBy', req.user.name || req.user.email || 'Admin'] }
+        }
+      }
+    );
+    
+    res.json({
+      success: true,
+      message: `Successfully archived ${result.modifiedCount} completed inquiries`,
+      archivedCount: result.modifiedCount,
+      totalFound: completedInquiries.length
+    });
+  } catch (error) {
+    console.error('Error bulk archiving completed inquiries:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error archiving completed inquiries',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};

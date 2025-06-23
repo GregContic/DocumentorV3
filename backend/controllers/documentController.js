@@ -230,3 +230,49 @@ exports.restoreArchivedRequest = async (req, res) => {
     });
   }
 };
+
+// Admin: Bulk archive completed document requests
+exports.bulkArchiveCompletedRequests = async (req, res) => {
+  try {
+    // Find all document requests with status "completed" that are not yet archived
+    const completedRequests = await DocumentRequest.find({ 
+      status: 'completed', 
+      archived: { $ne: true } 
+    });
+    
+    if (completedRequests.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No completed document requests found to archive',
+        archivedCount: 0
+      });
+    }
+    
+    // Archive all completed document requests
+    const result = await DocumentRequest.updateMany(
+      { status: 'completed', archived: { $ne: true } },
+      {
+        $set: {
+          archived: true,
+          archivedAt: new Date(),
+          archivedBy: req.user.email || req.user.name || 'Admin',
+          completedAt: { $ifNull: ['$completedAt', new Date()] }
+        }
+      }
+    );
+    
+    res.json({
+      success: true,
+      message: `Successfully archived ${result.modifiedCount} completed document requests`,
+      archivedCount: result.modifiedCount,
+      totalFound: completedRequests.length
+    });
+  } catch (error) {
+    console.error('Error bulk archiving completed document requests:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error archiving completed document requests',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};

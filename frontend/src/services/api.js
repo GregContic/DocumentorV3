@@ -51,6 +51,8 @@ export const documentService = {
     api.patch(`/api/documents/admin/documents/request/${requestId}/archive`),
   restoreDocument: (requestId) => 
     api.patch(`/api/documents/admin/documents/request/${requestId}/restore`),
+  bulkArchiveCompletedRequests: () =>
+    api.post('/api/documents/admin/documents/bulk-archive-completed'),
 };
 
 // Inquiry services
@@ -75,6 +77,8 @@ export const inquiryService = {
     api.patch(`/api/inquiries/admin/inquiries/${inquiryId}/archive`),
   restoreInquiry: (inquiryId) =>
     api.patch(`/api/inquiries/admin/inquiries/${inquiryId}/restore`),
+  bulkArchiveCompletedInquiries: () =>
+    api.post('/api/inquiries/admin/bulk-archive-completed'),
 };
 
 // Settings service

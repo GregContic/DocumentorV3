@@ -12,6 +12,7 @@ router.get('/request/:requestId', authenticate, documentController.getRequestByI
 router.get('/admin/documents/requests', authenticate, authorizeAdmin, documentController.getAllRequests);
 router.patch('/admin/documents/request/:requestId/status', authenticate, authorizeAdmin, documentController.updateRequestStatus);
 router.get('/admin/documents/archived-requests', authenticate, authorizeAdmin, documentController.getArchivedRequests);
+router.post('/admin/documents/bulk-archive-completed', authenticate, authorizeAdmin, documentController.bulkArchiveCompletedRequests);
 router.patch('/admin/documents/request/:requestId/archive', authenticate, authorizeAdmin, documentController.archiveRequest);
 router.patch('/admin/documents/request/:requestId/restore', authenticate, authorizeAdmin, documentController.restoreArchivedRequest);
 

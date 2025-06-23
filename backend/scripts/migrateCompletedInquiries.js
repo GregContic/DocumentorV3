@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Inquiry = require('../models/Inquiry');
+require('dotenv').config();
 
 // Migration script to move all completed inquiries to archived status
 const migrateCompletedInquiries = async () => {
@@ -41,13 +42,16 @@ const migrateCompletedInquiries = async () => {
 // Only run if this script is executed directly
 if (require.main === module) {
   // Connect to MongoDB
-  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/documentor')
+  const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/documentor';
+  console.log('Connecting to MongoDB at:', mongoURI);
+  
+  mongoose.connect(mongoURI)
     .then(() => {
       console.log('Connected to MongoDB');
       return migrateCompletedInquiries();
     })
     .then(() => {
-      console.log('Migration script completed');
+      console.log('Migration script completed successfully');
       process.exit(0);
     })
     .catch((error) => {
