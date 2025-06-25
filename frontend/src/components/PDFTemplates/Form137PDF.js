@@ -224,10 +224,12 @@ const styles = StyleSheet.create({
 });
 
 // Create Document Component matching official Form 137
-const Form137PDF = ({ formData, qrCode }) => (
+const Form137PDF = ({ formData = {}, qrCode }) => (
   <Document>
-    <Page size="A4" style={styles.page}>{/* Official Header */}
-      <View style={styles.headerRow}>        <View style={styles.headerLeft}>
+    <Page size="A4" style={styles.page}>
+      {/* Official Header */}
+      <View style={styles.headerRow}>
+        <View style={styles.headerLeft}>
           <View style={styles.logoPlaceholder}>
             <Image
               style={styles.logoImage}
@@ -241,7 +243,8 @@ const Form137PDF = ({ formData, qrCode }) => (
           <Text style={styles.formSubtitle}>Cordillera Administrative Region</Text>
           <Text style={styles.formSubtitle}>Schools Division of Benguet</Text>
           <Text style={styles.formSubtitle}>Eastern La Trinidad National High School</Text>
-        </View>        <View style={styles.headerRight}>
+        </View>
+        <View style={styles.headerRight}>
           <View style={styles.logoPlaceholder}>
             <Image
               style={styles.logoImage}

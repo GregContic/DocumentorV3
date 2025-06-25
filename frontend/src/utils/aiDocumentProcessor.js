@@ -33,13 +33,24 @@ export const extractTextFromImage = async (imageFile, onProgress = null) => {
 // AI-powered information extraction using pattern matching and NLP
 export const extractStudentInformation = (text) => {
   const extractedData = {
+    // Form 137 specific fields to match our form
     surname: '',
-    givenName: '',
-    dateOfBirth: null,
-    placeOfBirth: '',
+    firstName: '',
+    middleName: '',
     sex: '',
-    studentNumber: '',
+    dateOfBirth: null,
+    barangay: '',
+    city: '',
+    province: '',
+    learnerReferenceNumber: '',
     parentGuardianName: '',
+    parentGuardianAddress: '',
+    // Additional fields for PDF mapping
+    givenName: '', // alias for firstName
+    studentNumber: '', // alias for learnerReferenceNumber
+    town: '', // alias for city
+    barrio: '', // alias for barangay
+    placeOfBirth: '',
     elementarySchool: '',
     currentSchool: '',
     yearGraduated: ''
@@ -66,13 +77,21 @@ export const extractStudentInformation = (text) => {
     if (match) {
       const fullName = match[1].trim();
       if (fullName.includes(',')) {
-        const [surname, givenName] = fullName.split(',').map(n => n.trim());
+        const [surname, firstName] = fullName.split(',').map(n => n.trim());
         extractedData.surname = surname;
-        extractedData.givenName = givenName;
+        extractedData.firstName = firstName;
+        extractedData.givenName = firstName; // alias
       } else if (fullName.split(' ').length >= 2) {
         const nameParts = fullName.split(' ');
-        extractedData.givenName = nameParts.slice(0, -1).join(' ');
+        extractedData.firstName = nameParts.slice(0, -1).join(' ');
+        extractedData.givenName = extractedData.firstName; // alias
         extractedData.surname = nameParts[nameParts.length - 1];
+        // Extract middle name if present
+        if (nameParts.length >= 3) {
+          extractedData.middleName = nameParts[nameParts.length - 2];
+          extractedData.firstName = nameParts.slice(0, -2).join(' ');
+          extractedData.givenName = extractedData.firstName; // alias
+        }
       }
       break;
     }
@@ -120,17 +139,19 @@ export const extractStudentInformation = (text) => {
     }
   }
 
-  // Student number extraction
+  // Student number extraction (LRN)
   const studentNumberPatterns = [
-    /(?:student\s*(?:number|id|no)|id\s*number)[:\s]*([a-zA-Z0-9\-]+)/i,
     /(?:lrn|learner\s*reference\s*number)[:\s]*([0-9\-]+)/i,
+    /(?:student\s*(?:number|id|no)|id\s*number)[:\s]*([a-zA-Z0-9\-]+)/i,
+    /\b(\d{12})\b/g, // 12-digit LRN pattern
     /\b(\d{4,})\b/g // Generic number pattern
   ];
 
   for (const pattern of studentNumberPatterns) {
     const match = cleanText.match(pattern);
     if (match) {
-      extractedData.studentNumber = match[1];
+      extractedData.learnerReferenceNumber = match[1];
+      extractedData.studentNumber = match[1]; // alias for PDF
       break;
     }
   }
@@ -146,6 +167,35 @@ export const extractStudentInformation = (text) => {
     if (match) {
       extractedData.placeOfBirth = match[1].trim();
       break;
+    }
+  }
+
+  // Address component extraction
+  const addressPatterns = {
+    barangay: /(?:barangay|brgy\.?|brgy\s)[:\s]*([a-zA-Z\s]+)/i,
+    city: /(?:city|municipality)[:\s]*([a-zA-Z\s]+)/i,
+    province: /(?:province)[:\s]*([a-zA-Z\s]+)/i
+  };
+
+  Object.keys(addressPatterns).forEach(component => {
+    const match = cleanText.match(addressPatterns[component]);
+    if (match) {
+      extractedData[component] = match[1].trim();
+      // Set aliases for PDF
+      if (component === 'barangay') extractedData.barrio = extractedData[component];
+      if (component === 'city') extractedData.town = extractedData[component];
+    }
+  });
+
+  // Extract address from place of birth if available
+  if (extractedData.placeOfBirth && !extractedData.barangay) {
+    const placeParts = extractedData.placeOfBirth.split(',').map(p => p.trim());
+    if (placeParts.length >= 3) {
+      extractedData.barangay = placeParts[0];
+      extractedData.barrio = placeParts[0]; // alias
+      extractedData.city = placeParts[1];
+      extractedData.town = placeParts[1]; // alias
+      extractedData.province = placeParts[2];
     }
   }
 
@@ -198,6 +248,20 @@ export const extractStudentInformation = (text) => {
     const match = cleanText.match(pattern);
     if (match) {
       extractedData.parentGuardianName = match[1].trim();
+      break;
+    }
+  }
+
+  // Parent/Guardian address extraction
+  const parentAddressPatterns = [
+    /(?:parent\s*address|guardian\s*address)[:\s]*([a-zA-Z0-9\s,\.\-]+)/i,
+    /(?:address)[:\s]*([a-zA-Z0-9\s,\.\-]+)/i
+  ];
+
+  for (const pattern of parentAddressPatterns) {
+    const match = cleanText.match(pattern);
+    if (match && match[1].length > 10) { // Ensure it's a substantial address
+      extractedData.parentGuardianAddress = match[1].trim();
       break;
     }
   }

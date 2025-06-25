@@ -37,7 +37,7 @@ import {
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import Form137PDF from '../../components/PDFTemplates/Form137PDF';
 import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
-import { DatePickerWrapper, DatePicker } from '../../components/DatePickerWrapper';
+import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { documentService } from '../../services/api';
 import AIDocumentUploader from '../../components/AIDocumentUploader';
 import AIAssistantCard from '../../components/AIAssistantCard';
@@ -51,6 +51,7 @@ const Form137Request = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();const [formData, setFormData] = useState({
     documentType: 'Form 137',
+    purpose: '',
     // Learner's Personal Information
     surname: '',
     firstName: '',
@@ -64,6 +65,9 @@ const Form137Request = () => {
     // Parent/Guardian Information
     parentGuardianName: '',
     parentGuardianAddress: '',
+    // Pickup Information
+    pickupDate: null,
+    pickupTime: null,
   });  const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -77,11 +81,12 @@ const Form137Request = () => {
     'Request Form (will be provided)',
   ];
 
-  const steps = ['Learner Information', 'Parent/Guardian Info', 'Review & Submit'];  const validateStep = (stepIndex) => {
+  const steps = ['Learner Information', 'Parent/Guardian Info', 'Pickup Schedule', 'Review & Submit'];  const validateStep = (stepIndex) => {
     const newErrors = {};
 
     switch (stepIndex) {
       case 0: // Learner Information
+        if (!formData.purpose.trim()) newErrors.purpose = 'Purpose is required';
         if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
         if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
         if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
@@ -95,6 +100,10 @@ const Form137Request = () => {
         if (!formData.parentGuardianName.trim()) newErrors.parentGuardianName = 'Parent/Guardian name is required';
         if (!formData.parentGuardianAddress.trim()) newErrors.parentGuardianAddress = 'Parent/Guardian address is required';
         break;
+      case 2: // Pickup Schedule
+        if (!formData.pickupDate) newErrors.pickupDate = 'Pickup date is required';
+        if (!formData.pickupTime) newErrors.pickupTime = 'Pickup time is required';
+        break;
       default:
         break;
     }
@@ -104,10 +113,16 @@ const Form137Request = () => {
   };
 
   const handleNext = () => {
-    const isValid = validateStep(activeStep);
-    
-    if (isValid) {
-      setActiveStep((prev) => prev + 1);
+    try {
+      const isValid = validateStep(activeStep);
+      
+      if (isValid) {
+        setActiveStep((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error in handleNext:', error);
+      setErrorMessage('An error occurred while proceeding to the next step.');
+      setShowError(true);
     }
   };
 
@@ -135,6 +150,7 @@ const Form137Request = () => {
       setShowSuccess(true);      // Reset form
       setFormData({
         documentType: 'Form 137',
+        purpose: '',
         // Learner's Personal Information
         surname: '',
         firstName: '',
@@ -148,6 +164,9 @@ const Form137Request = () => {
         // Parent/Guardian Information
         parentGuardianName: '',
         parentGuardianAddress: '',
+        // Pickup Information
+        pickupDate: null,
+        pickupTime: null,
       });
       setActiveStep(0);
     } catch (error) {
@@ -172,7 +191,8 @@ const Form137Request = () => {
     }
   };
   const renderStepContent = (step) => {
-    switch (step) {      case 0: // Learner Information
+    try {
+      switch (step) {      case 0: // Learner Information
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -182,6 +202,22 @@ const Form137Request = () => {
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Fill out the learner's personal information below. You can use our AI assistant to automatically extract information from document images.
               </Typography>
+            </Grid>
+
+            {/* Purpose Field */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                required
+                label="Purpose of Request"
+                placeholder="e.g., For college enrollment, scholarship application, employment, etc."
+                value={formData.purpose}
+                onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
+                error={!!errors.purpose}
+                helperText={errors.purpose || "Please specify the reason for requesting this document"}
+                multiline
+                rows={2}
+              />
             </Grid>            
             
             {/* Form Assistant Chat Card */}
@@ -209,6 +245,24 @@ const Form137Request = () => {
                   onDataExtracted={(extractedData, confidence) => {
                     console.log('AI extracted data:', extractedData);
                     console.log('Confidence score:', confidence);
+                    // Map AI extracted data to form fields
+                    if (extractedData && setFormData) {
+                      setFormData(prev => ({
+                        ...prev,
+                        // Map AI fields to form fields
+                        surname: extractedData.surname || extractedData.lastName || prev.surname,
+                        firstName: extractedData.firstName || extractedData.givenName || prev.firstName,
+                        middleName: extractedData.middleName || prev.middleName,
+                        sex: extractedData.sex || extractedData.gender || prev.sex,
+                        dateOfBirth: extractedData.dateOfBirth || extractedData.birthDate || prev.dateOfBirth,
+                        barangay: extractedData.barangay || extractedData.barrio || prev.barangay,
+                        city: extractedData.city || extractedData.town || extractedData.municipality || prev.city,
+                        province: extractedData.province || prev.province,
+                        learnerReferenceNumber: extractedData.learnerReferenceNumber || extractedData.lrn || extractedData.studentNumber || prev.learnerReferenceNumber,
+                        parentGuardianName: extractedData.parentGuardianName || extractedData.guardianName || prev.parentGuardianName,
+                        parentGuardianAddress: extractedData.parentGuardianAddress || extractedData.guardianAddress || prev.parentGuardianAddress,
+                      }));
+                    }
                   }}
                 />
               </Grid>
@@ -368,7 +422,67 @@ const Form137Request = () => {
           </Grid>
         );
 
-      case 2: // Review & Submit
+      case 2: // Pickup Schedule
+        return (
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>
+                Schedule Your Document Pickup
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Please select your preferred date and time for document pickup. Note that pickup is only available during school hours.
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <DatePickerWrapper>
+                <DatePicker
+                  label="Pickup Date"
+                  value={formData.pickupDate}
+                  onChange={(newValue) => setFormData(prev => ({ ...prev, pickupDate: newValue }))}
+                  textFieldProps={{
+                    fullWidth: true,
+                    required: true,
+                    error: !!errors.pickupDate,
+                    helperText: errors.pickupDate || 'Select your preferred pickup date',
+                  }}
+                  minDate={new Date()}
+                />
+              </DatePickerWrapper>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <DatePickerWrapper>
+                <TimePicker
+                  label="Pickup Time"
+                  value={formData.pickupTime}
+                  onChange={(newValue) => setFormData(prev => ({ ...prev, pickupTime: newValue }))}
+                  textFieldProps={{
+                    fullWidth: true,
+                    required: true,
+                    error: !!errors.pickupTime,
+                    helperText: errors.pickupTime || 'Available: 8:00 AM - 12:00 PM, 1:00 PM - 3:00 PM',
+                  }}
+                />
+              </DatePickerWrapper>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                <Typography variant="body2">
+                  <strong>Pickup Guidelines:</strong>
+                  <br />• Documents can be picked up Monday to Friday during school hours
+                  <br />• Morning: 8:00 AM - 12:00 PM
+                  <br />• Afternoon: 1:00 PM - 3:00 PM
+                  <br />• Please bring a valid ID and authorization letter if not the student
+                  <br />• Processing time is typically 3-5 school days
+                </Typography>
+              </Alert>
+            </Grid>
+          </Grid>
+        );
+
+      case 3: // Review & Submit
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -387,15 +501,30 @@ const Form137Request = () => {
                     <Divider sx={{ my: 2 }} />
                   </Grid>
                   
+                  {/* Purpose */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Purpose of Request:</Typography>
+                    <Typography paragraph>
+                      <strong>Purpose:</strong> {formData.purpose || 'Not specified'}
+                    </Typography>
+                  </Grid>
+
                   {/* Learner Information */}
                   <Grid item xs={12}>
                     <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Learner's Personal Information:</Typography>
                     <Typography paragraph>
-                      <strong>Full Name:</strong> {formData.surname}, {formData.firstName} {formData.middleName}<br/>
-                      <strong>Sex:</strong> {formData.sex}<br/>
-                      <strong>Date of Birth:</strong> {formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : 'Not provided'}<br/>
-                      <strong>Place of Birth:</strong> {[formData.barangay, formData.city, formData.province].filter(Boolean).join(', ')}<br/>
-                      <strong>Learner Reference Number (LRN):</strong> {formData.learnerReferenceNumber}
+                      <strong>Full Name:</strong> {[formData.surname, formData.firstName, formData.middleName].filter(Boolean).join(', ') || 'Not provided'}<br/>
+                      <strong>Sex:</strong> {formData.sex || 'Not provided'}<br/>
+                      <strong>Date of Birth:</strong> {formData.dateOfBirth ? (() => {
+                        try {
+                          return new Date(formData.dateOfBirth).toLocaleDateString();
+                        } catch (e) {
+                          console.error('Date parsing error:', e);
+                          return 'Invalid date';
+                        }
+                      })() : 'Not provided'}<br/>
+                      <strong>Place of Birth:</strong> {[formData.barangay, formData.city, formData.province].filter(Boolean).join(', ') || 'Not provided'}<br/>
+                      <strong>Learner Reference Number (LRN):</strong> {formData.learnerReferenceNumber || 'Not provided'}
                     </Typography>
                   </Grid>
 
@@ -403,8 +532,31 @@ const Form137Request = () => {
                   <Grid item xs={12}>
                     <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Parent/Guardian Details:</Typography>
                     <Typography paragraph>
-                      <strong>Name:</strong> {formData.parentGuardianName}<br/>
-                      <strong>Address:</strong> {formData.parentGuardianAddress}
+                      <strong>Name:</strong> {formData.parentGuardianName || 'Not provided'}<br/>
+                      <strong>Address:</strong> {formData.parentGuardianAddress || 'Not provided'}
+                    </Typography>
+                  </Grid>
+
+                  {/* Pickup Schedule */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Pickup Schedule:</Typography>
+                    <Typography paragraph>
+                      <strong>Date:</strong> {formData.pickupDate ? (() => {
+                        try {
+                          return new Date(formData.pickupDate).toLocaleDateString();
+                        } catch (e) {
+                          console.error('Date parsing error:', e);
+                          return 'Invalid date';
+                        }
+                      })() : 'Not selected'}<br/>
+                      <strong>Time:</strong> {formData.pickupTime ? (() => {
+                        try {
+                          return new Date(formData.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        } catch (e) {
+                          console.error('Time parsing error:', e);
+                          return 'Invalid time';
+                        }
+                      })() : 'Not selected'}
                     </Typography>
                   </Grid>
                 </Grid>
@@ -432,6 +584,14 @@ const Form137Request = () => {
         );default:
         return null;
     }
+  } catch (error) {
+    console.error('Error in renderStepContent:', error);
+    return (
+      <Alert severity="error">
+        An error occurred while rendering this step. Please refresh the page and try again.
+      </Alert>
+    );
+  }
   };
 
   return (
@@ -440,7 +600,7 @@ const Form137Request = () => {
         elevation={3} 
         sx={{ 
           p: { xs: 2, md: 4 },
-          background: 'linear-gradient(to bottom, #ffffff, #f8f9fa)',
+          backgroundColor: '#ffffff',
           borderRadius: '16px',
           transition: 'transform 0.2s ease-in-out',
           '&:hover': {
@@ -451,7 +611,7 @@ const Form137Request = () => {
           display: 'flex', 
           alignItems: 'center', 
           mb: 4,
-          background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+          backgroundColor: '#1976d2',
           borderRadius: '12px',
           p: 2,
           color: 'white'
@@ -580,7 +740,7 @@ const Form137Request = () => {
               {activeStep === steps.length - 1 && (
                 <Form137PDFWithQR
                   formData={formData}
-                  fileName={`form137_request_${formData.learnerReferenceNumber || 'draft'}.pdf`}
+                  fileName={`form137_request_${(formData.learnerReferenceNumber || 'draft').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
                   variant="outlined"
                   color="primary"
                   sx={{
@@ -605,14 +765,15 @@ const Form137Request = () => {
                 sx={{
                   px: 4,
                   py: 1.5,
-                  background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                  backgroundColor: '#1976d2',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
                     transform: 'translateY(-1px)',
                     boxShadow: '0 4px 8px rgba(25, 118, 210, 0.3)',
+                    backgroundColor: '#1565c0',
                   },
                   '&:disabled': {
-                    background: '#ccc',
+                    backgroundColor: '#ccc',
                   }
                 }}
               >
