@@ -19,6 +19,7 @@ import Form138Request from './pages/user/Form138Request';
 import SF9Request from './pages/user/SF9Request';
 import SF10Request from './pages/user/SF10Request';
 import DiplomaRequest from './pages/user/DiplomaRequest';
+import Enrollment from './pages/user/Enrollment';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -95,6 +96,10 @@ function App() {
                   <DiplomaRequest />
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="/enrollment"
+              element={<Enrollment />}
             />
             <Route
               path="/my-requests"

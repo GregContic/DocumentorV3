@@ -51,15 +51,18 @@ const Navbar = () => {
 
   const navItems = !isAuthenticated 
     ? [
+        { text: 'Enrollment', path: '/enrollment', icon: <SchoolIcon /> },
         { text: 'Login', path: '/login', icon: <PersonIcon /> },
         { text: 'Register', path: '/register', icon: <PersonIcon /> }
-      ]    : user?.role === 'admin'
+      ]
+    : user?.role === 'admin'
     ? [
         { text: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon /> },
         { text: 'Archive', path: '/admin/archive', icon: <ArchiveIcon /> },
         { text: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> }
       ]
     : [
+        { text: 'Enrollment', path: '/enrollment', icon: <SchoolIcon /> },
         { text: 'Request Document', path: '/request-document', icon: <DescriptionIcon /> },
         { text: 'My Requests', path: '/my-requests', icon: <RequestsIcon /> },
         { text: 'Inquiries', path: '/inquiries', icon: <InquiryIcon /> }

@@ -716,6 +716,179 @@ const Home = () => {
         </Container>
       </Box>
 
+      {/* Services Section */}
+      <Box sx={{ 
+        py: 8,
+        background: 'linear-gradient(135deg, #f8f9ff 0%, #e8f5e8 100%)',
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(25,118,210,0.02) 0%, rgba(76,175,80,0.02) 100%)',
+        }
+      }}>
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
+            <Typography
+              variant="h3"
+              align="center"
+              gutterBottom
+              sx={{ 
+                mb: 2,
+                fontWeight: 700,
+                background: 'linear-gradient(45deg, #1976d2, #4caf50)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Our Services
+            </Typography>
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              sx={{ maxWidth: '600px', mx: 'auto', mb: 4 }}
+            >
+              Comprehensive educational services for students and families
+            </Typography>
+          </Box>
+          
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Card
+                sx={{
+                  height: '100%',
+                  transition: 'all 0.3s ease-in-out',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)',
+                  border: '1px solid',
+                  borderColor: 'rgba(25, 118, 210, 0.12)',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 20px 40px rgba(25, 118, 210, 0.15)',
+                    borderColor: 'primary.main',
+                  },
+                }}
+                onClick={() => navigate('/enrollment')}
+              >
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <Avatar
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      mx: 'auto',
+                      mb: 3,
+                      background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                    }}
+                  >
+                    <SchoolIcon sx={{ fontSize: 40 }} />
+                  </Avatar>
+                  <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
+                    Student Enrollment
+                  </Typography>
+                  <Typography variant="h6" color="primary" gutterBottom sx={{ mb: 3 }}>
+                    Eastern La Trinidad National High School
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+                    Complete your enrollment application online for School Year 2025-2026. 
+                    Multi-step process with AI-assisted document upload and real-time validation.
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: 3 }}>
+                    <Chip label="Grades 7-12" size="small" color="primary" variant="outlined" />
+                    <Chip label="Senior High School" size="small" color="primary" variant="outlined" />
+                    <Chip label="AI-Assisted" size="small" color="success" variant="outlined" />
+                  </Box>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    sx={{
+                      py: 1.5,
+                      background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                      borderRadius: '12px',
+                      fontWeight: 600,
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #1565c0 30%, #1e88e5 90%)',
+                      },
+                    }}
+                  >
+                    Start Enrollment
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Card
+                sx={{
+                  height: '100%',
+                  transition: 'all 0.3s ease-in-out',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #fff 0%, #f0f7ff 100%)',
+                  border: '1px solid',
+                  borderColor: 'rgba(25, 118, 210, 0.12)',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 20px 40px rgba(25, 118, 210, 0.15)',
+                    borderColor: 'primary.main',
+                  },
+                }}
+                onClick={() => navigate(isAuthenticated ? '/request-document' : '/login')}
+              >
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <Avatar
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      mx: 'auto',
+                      mb: 3,
+                      background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
+                    }}
+                  >
+                    <AssignmentIcon sx={{ fontSize: 40 }} />
+                  </Avatar>
+                  <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
+                    Document Requests
+                  </Typography>
+                  <Typography variant="h6" color="primary" gutterBottom sx={{ mb: 3 }}>
+                    Academic Records & Certificates
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+                    Request official academic documents including Form 137, Form 138, SF9, SF10, 
+                    diplomas, and transcripts with online tracking and pickup scheduling.
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: 3 }}>
+                    <Chip label="Form 137" size="small" color="secondary" variant="outlined" />
+                    <Chip label="Diploma" size="small" color="secondary" variant="outlined" />
+                    <Chip label="Transcripts" size="small" color="secondary" variant="outlined" />
+                  </Box>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    sx={{
+                      py: 1.5,
+                      background: 'linear-gradient(45deg, #ff9800 30%, #ffb74d 90%)',
+                      borderRadius: '12px',
+                      fontWeight: 600,
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #f57c00 30%, #ff9800 90%)',
+                      },
+                    }}
+                  >
+                    {isAuthenticated ? 'Request Documents' : 'Login to Request'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
       {/* QR Code Quick Access Section */}
       <Box
         sx={{
@@ -744,7 +917,38 @@ const Home = () => {
           </Box>
           
           <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card
+                sx={{
+                  height: '100%',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 24px rgba(25, 118, 210, 0.15)',
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ mb: 2 }}>
+                    <QRCodeDisplay
+                      data={`${window.location.origin}/enrollment`}
+                      size={120}
+                      title="Student Enrollment"
+                      description="Quick access to enrollment application"
+                    />
+                  </Box>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Student Enrollment
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Scan to start your enrollment application for ELTNHS
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
               <Card
                 sx={{
                   height: '100%',
@@ -775,7 +979,7 @@ const Home = () => {
               </Card>
             </Grid>
             
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <Card
                 sx={{
                   height: '100%',
@@ -806,7 +1010,7 @@ const Home = () => {
               </Card>
             </Grid>
             
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <Card
                 sx={{
                   height: '100%',
