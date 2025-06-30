@@ -409,21 +409,7 @@ const Enrollment = () => {
                   <AIDocumentUploader
                     formData={formData}
                     setFormData={setFormData}
-                    onDataExtracted={(extractedData, confidence) => {
-                      console.log('AI extracted enrollment data:', extractedData);
-                      if (extractedData && setFormData) {
-                        setFormData(prev => ({
-                          ...prev,
-                          surname: extractedData.surname || extractedData.lastName || prev.surname,
-                          firstName: extractedData.firstName || extractedData.givenName || prev.firstName,
-                          middleName: extractedData.middleName || prev.middleName,
-                          sex: extractedData.sex || extractedData.gender || prev.sex,
-                          dateOfBirth: extractedData.dateOfBirth || extractedData.birthDate || prev.dateOfBirth,
-                          placeOfBirth: extractedData.placeOfBirth || prev.placeOfBirth,
-                          learnerReferenceNumber: extractedData.learnerReferenceNumber || extractedData.lrn || extractedData.studentNumber || prev.learnerReferenceNumber,
-                        }));
-                      }
-                    }}
+                    onDataExtracted={handleAIDataExtracted}
                   />
                 </Grid>
               )}

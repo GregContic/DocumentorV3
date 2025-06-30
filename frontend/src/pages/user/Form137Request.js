@@ -264,28 +264,7 @@ const Form137Request = () => {
                 <AIDocumentUploader
                   formData={formData}
                   setFormData={setFormData}
-                  onDataExtracted={(extractedData, confidence) => {
-                    console.log('AI extracted data:', extractedData);
-                    console.log('Confidence score:', confidence);
-                    // Map AI extracted data to form fields
-                    if (extractedData && setFormData) {
-                      setFormData(prev => ({
-                        ...prev,
-                        // Map AI fields to form fields
-                        surname: extractedData.surname || extractedData.lastName || prev.surname,
-                        firstName: extractedData.firstName || extractedData.givenName || prev.firstName,
-                        middleName: extractedData.middleName || prev.middleName,
-                        sex: extractedData.sex || extractedData.gender || prev.sex,
-                        dateOfBirth: extractedData.dateOfBirth || extractedData.birthDate || prev.dateOfBirth,
-                        barangay: extractedData.barangay || extractedData.barrio || prev.barangay,
-                        city: extractedData.city || extractedData.town || extractedData.municipality || prev.city,
-                        province: extractedData.province || prev.province,
-                        learnerReferenceNumber: extractedData.learnerReferenceNumber || extractedData.lrn || extractedData.studentNumber || prev.learnerReferenceNumber,
-                        parentGuardianName: extractedData.parentGuardianName || extractedData.guardianName || prev.parentGuardianName,
-                        parentGuardianAddress: extractedData.parentGuardianAddress || extractedData.guardianAddress || prev.parentGuardianAddress,
-                      }));
-                    }
-                  }}
+                  onDataExtracted={handleAIDataExtracted}
                 />
               </Grid>
             )}

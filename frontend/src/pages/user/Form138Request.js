@@ -181,11 +181,7 @@ const Form138Request = () => {
                 <AIDocumentUploader
                   formData={formData}
                   setFormData={setFormData}
-                  onDataExtracted={(extractedData, confidence) => {
-                    console.log('AI extracted data:', extractedData);
-                    console.log('Confidence score:', confidence);
-                    // You can add additional logic here for handling the extracted data
-                  }}
+                  onDataExtracted={handleAIDataExtracted}
                 />
               </Grid>
             )}
