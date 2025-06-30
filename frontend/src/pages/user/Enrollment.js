@@ -45,7 +45,8 @@ import {
 } from '@mui/icons-material';
 import { DatePickerWrapper, DatePicker } from '../../components/DatePickerWrapper';
 import { enrollmentService } from '../../services/api';
-import FormAssistantChatCard from '../../components/FormAssistantChatCard';
+import AIDocumentUploader from '../../components/AIDocumentUploader';
+import AIAssistantCard from '../../components/AIAssistantCard';
 import { useAuth } from '../../context/AuthContext';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
@@ -121,6 +122,47 @@ const Enrollment = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showAIUploader, setShowAIUploader] = useState(false);
+
+  // AI Document Assistant handler
+  const handleAIDataExtracted = (extractedData) => {
+    if (extractedData) {
+      const updatedFormData = { ...formData };
+      
+      // Map extracted data to form fields
+      if (extractedData.personalInfo) {
+        if (extractedData.personalInfo.firstName) updatedFormData.firstName = extractedData.personalInfo.firstName;
+        if (extractedData.personalInfo.lastName) updatedFormData.surname = extractedData.personalInfo.lastName;
+        if (extractedData.personalInfo.middleName) updatedFormData.middleName = extractedData.personalInfo.middleName;
+        if (extractedData.personalInfo.lrn) updatedFormData.learnerReferenceNumber = extractedData.personalInfo.lrn;
+        if (extractedData.personalInfo.dateOfBirth) updatedFormData.dateOfBirth = new Date(extractedData.personalInfo.dateOfBirth);
+        if (extractedData.personalInfo.sex) updatedFormData.sex = extractedData.personalInfo.sex;
+        if (extractedData.personalInfo.placeOfBirth) updatedFormData.placeOfBirth = extractedData.personalInfo.placeOfBirth;
+      }
+      
+      if (extractedData.address) {
+        if (extractedData.address.street) updatedFormData.street = extractedData.address.street;
+        if (extractedData.address.city) updatedFormData.city = extractedData.address.city;
+        if (extractedData.address.province) updatedFormData.province = extractedData.address.province;
+        if (extractedData.address.barangay) updatedFormData.barangay = extractedData.address.barangay;
+      }
+      
+      if (extractedData.academicInfo) {
+        if (extractedData.academicInfo.lastSchool) updatedFormData.lastSchoolAttended = extractedData.academicInfo.lastSchool;
+        if (extractedData.academicInfo.gradeLevel) updatedFormData.gradeLevel = extractedData.academicInfo.gradeLevel;
+        if (extractedData.academicInfo.schoolYear) updatedFormData.schoolYear = extractedData.academicInfo.schoolYear;
+      }
+      
+      if (extractedData.parentInfo) {
+        if (extractedData.parentInfo.fatherName) updatedFormData.fatherName = extractedData.parentInfo.fatherName;
+        if (extractedData.parentInfo.motherName) updatedFormData.motherName = extractedData.parentInfo.motherName;
+        if (extractedData.parentInfo.guardianName) updatedFormData.guardianName = extractedData.parentInfo.guardianName;
+      }
+      
+      setFormData(updatedFormData);
+      setShowAIUploader(false);
+    }
+  };
 
   const steps = [
     'Student Information', 
@@ -355,10 +397,36 @@ const Enrollment = () => {
 
               {/* AI Assistant Cards */}
               <Grid item xs={12}>
-                <FormAssistantChatCard
-                  formType="Enrollment Application"
+                <AIAssistantCard
+                  show={!showAIUploader}
+                  onStartAIProcessing={() => setShowAIUploader(true)}
                 />
               </Grid>
+              
+              {/* AI Document Uploader */}
+              {showAIUploader && (
+                <Grid item xs={12}>
+                  <AIDocumentUploader
+                    formData={formData}
+                    setFormData={setFormData}
+                    onDataExtracted={(extractedData, confidence) => {
+                      console.log('AI extracted enrollment data:', extractedData);
+                      if (extractedData && setFormData) {
+                        setFormData(prev => ({
+                          ...prev,
+                          surname: extractedData.surname || extractedData.lastName || prev.surname,
+                          firstName: extractedData.firstName || extractedData.givenName || prev.firstName,
+                          middleName: extractedData.middleName || prev.middleName,
+                          sex: extractedData.sex || extractedData.gender || prev.sex,
+                          dateOfBirth: extractedData.dateOfBirth || extractedData.birthDate || prev.dateOfBirth,
+                          placeOfBirth: extractedData.placeOfBirth || prev.placeOfBirth,
+                          learnerReferenceNumber: extractedData.learnerReferenceNumber || extractedData.lrn || extractedData.studentNumber || prev.learnerReferenceNumber,
+                        }));
+                      }
+                    }}
+                  />
+                </Grid>
+              )}
 
               <Grid item xs={12}>
                 <TextField
@@ -1451,6 +1519,45 @@ const Enrollment = () => {
           </Alert>
         </Snackbar>
       </Paper>
+
+      {showAIUploader && (
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          bgcolor: 'rgba(0, 0, 0, 0.5)', 
+          zIndex: 1100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2
+        }}>
+          <Box sx={{ 
+            maxWidth: 800, 
+            width: '100%', 
+            maxHeight: '90vh', 
+            overflow: 'auto',
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            p: 3
+          }}>
+            <AIDocumentUploader
+              onDataExtracted={handleAIDataExtracted}
+              formData={formData}
+              setFormData={setFormData}
+            />
+            <Button
+              onClick={() => setShowAIUploader(false)}
+              sx={{ mt: 2 }}
+              variant="outlined"
+            >
+              Close
+            </Button>
+          </Box>
+        </Box>
+      )}
     </Container>
   );
 };

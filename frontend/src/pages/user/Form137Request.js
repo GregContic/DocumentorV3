@@ -39,7 +39,8 @@ import Form137PDF from '../../components/PDFTemplates/Form137PDF';
 import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
 import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { documentService } from '../../services/api';
-import FormAssistantChatCard from '../../components/FormAssistantChatCard';
+import AIDocumentUploader from '../../components/AIDocumentUploader';
+import AIAssistantCard from '../../components/AIAssistantCard';
 import { useAuth } from '../../context/AuthContext';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
@@ -70,6 +71,38 @@ const Form137Request = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showAIUploader, setShowAIUploader] = useState(false);
+
+  // AI Document Assistant handler
+  const handleAIDataExtracted = (extractedData) => {
+    if (extractedData) {
+      const updatedFormData = { ...formData };
+      
+      // Map extracted data to form fields
+      if (extractedData.personalInfo) {
+        if (extractedData.personalInfo.firstName) updatedFormData.firstName = extractedData.personalInfo.firstName;
+        if (extractedData.personalInfo.lastName) updatedFormData.surname = extractedData.personalInfo.lastName;
+        if (extractedData.personalInfo.middleName) updatedFormData.middleName = extractedData.personalInfo.middleName;
+        if (extractedData.personalInfo.lrn) updatedFormData.learnerReferenceNumber = extractedData.personalInfo.lrn;
+        if (extractedData.personalInfo.dateOfBirth) updatedFormData.dateOfBirth = new Date(extractedData.personalInfo.dateOfBirth);
+        if (extractedData.personalInfo.sex) updatedFormData.sex = extractedData.personalInfo.sex;
+      }
+      
+      if (extractedData.address) {
+        if (extractedData.address.city) updatedFormData.city = extractedData.address.city;
+        if (extractedData.address.province) updatedFormData.province = extractedData.address.province;
+        if (extractedData.address.barangay) updatedFormData.barangay = extractedData.address.barangay;
+      }
+      
+      if (extractedData.parentInfo) {
+        if (extractedData.parentInfo.guardianName) updatedFormData.parentGuardianName = extractedData.parentInfo.guardianName;
+        if (extractedData.parentInfo.guardianContact) updatedFormData.parentGuardianContact = extractedData.parentInfo.guardianContact;
+      }
+      
+      setFormData(updatedFormData);
+      setShowAIUploader(false);
+    }
+  };
 
   const requirements = [
     'Valid School ID or Any Valid Government ID',
@@ -217,12 +250,45 @@ const Form137Request = () => {
               />
             </Grid>            
             
-            {/* Form Assistant Chat Card */}
+            {/* AI Assistant Card */}
             <Grid item xs={12}>
-              <FormAssistantChatCard
-                formType="Form 137"
+              <AIAssistantCard
+                show={!showAIUploader}
+                onStartAIProcessing={() => setShowAIUploader(true)}
               />
             </Grid>
+            
+            {/* AI Document Uploader */}
+            {showAIUploader && (
+              <Grid item xs={12}>
+                <AIDocumentUploader
+                  formData={formData}
+                  setFormData={setFormData}
+                  onDataExtracted={(extractedData, confidence) => {
+                    console.log('AI extracted data:', extractedData);
+                    console.log('Confidence score:', confidence);
+                    // Map AI extracted data to form fields
+                    if (extractedData && setFormData) {
+                      setFormData(prev => ({
+                        ...prev,
+                        // Map AI fields to form fields
+                        surname: extractedData.surname || extractedData.lastName || prev.surname,
+                        firstName: extractedData.firstName || extractedData.givenName || prev.firstName,
+                        middleName: extractedData.middleName || prev.middleName,
+                        sex: extractedData.sex || extractedData.gender || prev.sex,
+                        dateOfBirth: extractedData.dateOfBirth || extractedData.birthDate || prev.dateOfBirth,
+                        barangay: extractedData.barangay || extractedData.barrio || prev.barangay,
+                        city: extractedData.city || extractedData.town || extractedData.municipality || prev.city,
+                        province: extractedData.province || prev.province,
+                        learnerReferenceNumber: extractedData.learnerReferenceNumber || extractedData.lrn || extractedData.studentNumber || prev.learnerReferenceNumber,
+                        parentGuardianName: extractedData.parentGuardianName || extractedData.guardianName || prev.parentGuardianName,
+                        parentGuardianAddress: extractedData.parentGuardianAddress || extractedData.guardianAddress || prev.parentGuardianAddress,
+                      }));
+                    }
+                  }}
+                />
+              </Grid>
+            )}
             
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, color: 'primary.main' }}>
@@ -771,6 +837,44 @@ const Form137Request = () => {
           </Alert>
         </Snackbar>
       </Paper>
+      {showAIUploader && (
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          bgcolor: 'rgba(0, 0, 0, 0.5)', 
+          zIndex: 1100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2
+        }}>
+          <Box sx={{ 
+            maxWidth: 800, 
+            width: '100%', 
+            maxHeight: '90vh', 
+            overflow: 'auto',
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            p: 3
+          }}>
+            <AIDocumentUploader
+              onDataExtracted={handleAIDataExtracted}
+              formData={formData}
+              setFormData={setFormData}
+            />
+            <Button
+              onClick={() => setShowAIUploader(false)}
+              sx={{ mt: 2 }}
+              variant="outlined"
+            >
+              Close
+            </Button>
+          </Box>
+        </Box>
+      )}
     </Container>
   );
 };

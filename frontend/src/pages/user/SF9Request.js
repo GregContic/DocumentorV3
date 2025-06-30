@@ -31,7 +31,8 @@ import {
 import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { formatDate, addDaysToDate, isWeekendDay } from '../../utils/dateUtils';
 import { documentService } from '../../services/api';
-import FormAssistantChatCard from '../../components/FormAssistantChatCard';
+import AIDocumentUploader from '../../components/AIDocumentUploader';
+import AIAssistantCard from '../../components/AIAssistantCard';
 
 const SF9Request = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -50,6 +51,25 @@ const SF9Request = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showAIUploader, setShowAIUploader] = useState(false);
+
+  // AI Document Assistant handler
+  const handleAIDataExtracted = (extractedData) => {
+    if (extractedData) {
+      const updatedFormData = { ...formData };
+      
+      // Map extracted data to form fields
+      if (extractedData.academicInfo) {
+        if (extractedData.academicInfo.studentNumber) updatedFormData.studentNumber = extractedData.academicInfo.studentNumber;
+        if (extractedData.academicInfo.schoolYear) updatedFormData.schoolYear = extractedData.academicInfo.schoolYear;
+        if (extractedData.academicInfo.gradeLevel) updatedFormData.gradeLevel = extractedData.academicInfo.gradeLevel;
+        if (extractedData.academicInfo.semester) updatedFormData.semester = extractedData.academicInfo.semester;
+      }
+      
+      setFormData(updatedFormData);
+      setShowAIUploader(false);
+    }
+  };
 
   const requirements = [
     'Valid School ID or Any Valid Government ID',
@@ -143,12 +163,28 @@ const SF9Request = () => {
               </Typography>
             </Grid>
             
-            {/* Form Assistant Chat Card */}
+            {/* AI Assistant Card */}
             <Grid item xs={12}>
-              <FormAssistantChatCard
-                formType="School Form 9"
+              <AIAssistantCard
+                show={!showAIUploader}
+                onStartAIProcessing={() => setShowAIUploader(true)}
               />
             </Grid>
+            
+            {/* AI Document Uploader */}
+            {showAIUploader && (
+              <Grid item xs={12}>
+                <AIDocumentUploader
+                  formData={formData}
+                  setFormData={setFormData}
+                  onDataExtracted={(extractedData, confidence) => {
+                    console.log('AI extracted data:', extractedData);
+                    console.log('Confidence score:', confidence);
+                    // You can add additional logic here for handling the extracted data
+                  }}
+                />
+              </Grid>
+            )}
             
             <Grid item xs={12}>
               <TextField
@@ -441,6 +477,45 @@ const SF9Request = () => {
           {errorMessage}
         </Alert>
       </Snackbar>
+
+      {showAIUploader && (
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          bgcolor: 'rgba(0, 0, 0, 0.5)', 
+          zIndex: 1100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2
+        }}>
+          <Box sx={{ 
+            maxWidth: 800, 
+            width: '100%', 
+            maxHeight: '90vh', 
+            overflow: 'auto',
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            p: 3
+          }}>
+            <AIDocumentUploader
+              onDataExtracted={handleAIDataExtracted}
+              formData={formData}
+              setFormData={setFormData}
+            />
+            <Button
+              onClick={() => setShowAIUploader(false)}
+              sx={{ mt: 2 }}
+              variant="outlined"
+            >
+              Close
+            </Button>
+          </Box>
+        </Box>
+      )}
     </Container>
   );
 };
