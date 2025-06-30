@@ -76,6 +76,12 @@ export const documentService = {
     api.post('/api/documents/admin/documents/bulk-archive-completed'),
 };
 
+// Enrollment services
+export const enrollmentService = {
+  submitEnrollment: (data) => api.post('/api/enrollments', data),
+  getAllEnrollments: () => api.get('/api/enrollments/admin'),
+};
+
 // Inquiry services
 export const inquiryService = {
   // Student endpoints

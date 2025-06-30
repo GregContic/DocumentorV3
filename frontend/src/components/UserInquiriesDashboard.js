@@ -17,8 +17,12 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
+import { AdminPanelSettings as AdminIcon, Block as BlockIcon } from '@mui/icons-material';
 import { inquiryService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import InquiryForm from './InquiryForm';
 
 const statusColors = {
@@ -33,10 +37,15 @@ const UserInquiriesDashboard = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
+  const { user, isAdmin } = useAuth();
 
+  // Always call hooks first before any conditional returns
   useEffect(() => {
-    fetchInquiries();
-  }, []);
+    // Only fetch inquiries if user is not an admin
+    if (!isAdmin) {
+      fetchInquiries();
+    }
+  }, [isAdmin]);
 
   const fetchInquiries = async () => {
     try {
@@ -60,6 +69,50 @@ const UserInquiriesDashboard = () => {
     setSelectedInquiry(inquiry);
   };
 
+  // Check if current user is admin - render restriction message
+  if (isAdmin) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Alert 
+          severity="info" 
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            p: 4,
+            borderRadius: 2,
+            boxShadow: 2
+          }}
+          icon={<AdminIcon sx={{ fontSize: 40 }} />}
+        >
+          <AlertTitle sx={{ fontSize: '1.5rem', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <BlockIcon />
+              Admin Access Restricted
+            </Box>
+          </AlertTitle>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Admins are not allowed to submit or view personal inquiries through this interface.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            As an administrator, please use the <strong>Admin Dashboard</strong> to manage all user inquiries, 
+            view system-wide inquiry statistics, and respond to user questions.
+          </Typography>
+          <Box sx={{ mt: 3 }}>
+            <Button
+              variant="contained"
+              href="/admin/dashboard"
+              startIcon={<AdminIcon />}
+              size="large"
+            >
+              Go to Admin Dashboard
+            </Button>
+          </Box>
+        </Alert>
+      </Container>
+    );
+  }
+
+  // Main component render for regular users
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>

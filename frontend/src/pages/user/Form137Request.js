@@ -39,8 +39,6 @@ import Form137PDF from '../../components/PDFTemplates/Form137PDF';
 import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
 import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { documentService } from '../../services/api';
-import AIDocumentUploader from '../../components/AIDocumentUploader';
-import AIAssistantCard from '../../components/AIAssistantCard';
 import FormAssistantChatCard from '../../components/FormAssistantChatCard';
 import { useAuth } from '../../context/AuthContext';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -72,7 +70,6 @@ const Form137Request = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showAIUploader, setShowAIUploader] = useState(false);
 
   const requirements = [
     'Valid School ID or Any Valid Government ID',
@@ -223,50 +220,9 @@ const Form137Request = () => {
             {/* Form Assistant Chat Card */}
             <Grid item xs={12}>
               <FormAssistantChatCard
-                onAIUpload={() => setShowAIUploader(true)}
                 formType="Form 137"
               />
             </Grid>
-            
-            {/* AI Assistant Card */}
-            <Grid item xs={12}>
-              <AIAssistantCard
-                show={!showAIUploader}
-                onStartAIProcessing={() => setShowAIUploader(true)}
-              />
-            </Grid>
-            
-            {/* AI Document Uploader */}
-            {showAIUploader && (
-              <Grid item xs={12}>
-                <AIDocumentUploader
-                  formData={formData}
-                  setFormData={setFormData}
-                  onDataExtracted={(extractedData, confidence) => {
-                    console.log('AI extracted data:', extractedData);
-                    console.log('Confidence score:', confidence);
-                    // Map AI extracted data to form fields
-                    if (extractedData && setFormData) {
-                      setFormData(prev => ({
-                        ...prev,
-                        // Map AI fields to form fields
-                        surname: extractedData.surname || extractedData.lastName || prev.surname,
-                        firstName: extractedData.firstName || extractedData.givenName || prev.firstName,
-                        middleName: extractedData.middleName || prev.middleName,
-                        sex: extractedData.sex || extractedData.gender || prev.sex,
-                        dateOfBirth: extractedData.dateOfBirth || extractedData.birthDate || prev.dateOfBirth,
-                        barangay: extractedData.barangay || extractedData.barrio || prev.barangay,
-                        city: extractedData.city || extractedData.town || extractedData.municipality || prev.city,
-                        province: extractedData.province || prev.province,
-                        learnerReferenceNumber: extractedData.learnerReferenceNumber || extractedData.lrn || extractedData.studentNumber || prev.learnerReferenceNumber,
-                        parentGuardianName: extractedData.parentGuardianName || extractedData.guardianName || prev.parentGuardianName,
-                        parentGuardianAddress: extractedData.parentGuardianAddress || extractedData.guardianAddress || prev.parentGuardianAddress,
-                      }));
-                    }
-                  }}
-                />
-              </Grid>
-            )}
             
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom sx={{ mt: 2, color: 'primary.main' }}>

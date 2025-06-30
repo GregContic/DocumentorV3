@@ -4,10 +4,40 @@ const Inquiry = require('../models/Inquiry');
 exports.createInquiry = async (req, res) => {
   try {
     const userId = req.user.userId;
+    const userRole = req.user.role;
     const { message } = req.body;
-    const inquiry = new Inquiry({ user: userId, message });
+
+    // Additional safety check - should be caught by middleware but extra protection
+    if (userRole === 'admin') {
+      return res.status(403).json({ 
+        message: 'Admins are not allowed to submit inquiries. Please use the admin dashboard to manage inquiries instead.',
+        error: 'ADMIN_SUBMISSION_FORBIDDEN'
+      });
+    }
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ 
+        message: 'Inquiry message is required',
+        error: 'MISSING_MESSAGE'
+      });
+    }
+
+    const inquiry = new Inquiry({ 
+      user: userId, 
+      message: message.trim(),
+      userRole: userRole // Store user role for audit purposes
+    });
+    
     await inquiry.save();
-    res.status(201).json({ message: 'Inquiry submitted successfully', inquiry });
+    res.status(201).json({ 
+      message: 'Inquiry submitted successfully', 
+      inquiry: {
+        _id: inquiry._id,
+        message: inquiry.message,
+        status: inquiry.status,
+        createdAt: inquiry.createdAt
+      }
+    });
   } catch (error) {
     console.error('Error creating inquiry:', error);
     res.status(500).json({ message: 'Error creating inquiry' });
@@ -18,7 +48,18 @@ exports.createInquiry = async (req, res) => {
 exports.getMyInquiries = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const inquiries = await Inquiry.find({ user: userId }).sort({ createdAt: -1 });
+    const userRole = req.user.role;
+
+    // Additional safety check - should be caught by middleware but extra protection
+    if (userRole === 'admin') {
+      return res.status(403).json({ 
+        message: 'Admins cannot access user inquiry dashboard. Please use the admin dashboard instead.',
+        error: 'ADMIN_ACCESS_FORBIDDEN'
+      });
+    }
+
+    const inquiries = await Inquiry.find({ user: userId, status: { $ne: 'archived' } })
+      .sort({ createdAt: -1 });
     res.json(inquiries);
   } catch (error) {
     console.error('Error fetching inquiries:', error);

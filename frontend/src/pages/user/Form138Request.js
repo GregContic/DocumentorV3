@@ -31,8 +31,6 @@ import {
 import { DatePickerWrapper, DatePicker, TimePicker } from '../../components/DatePickerWrapper';
 import { formatDate, addDaysToDate, isWeekendDay } from '../../utils/dateUtils';
 import { documentService } from '../../services/api';
-import AIDocumentUploader from '../../components/AIDocumentUploader';
-import AIAssistantCard from '../../components/AIAssistantCard';
 import FormAssistantChatCard from '../../components/FormAssistantChatCard';
 
 const Form138Request = () => {
@@ -51,7 +49,6 @@ const Form138Request = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showAIUploader, setShowAIUploader] = useState(false);
 
   const requirements = [
     'Valid School ID or Any Valid Government ID',
@@ -154,33 +151,15 @@ const Form138Request = () => {
             {/* Form Assistant Chat Card */}
             <Grid item xs={12}>
               <FormAssistantChatCard
-                onAIUpload={() => setShowAIUploader(true)}
                 formType="Form 138"
               />
             </Grid>
             
-            {/* AI Assistant Card */}
             <Grid item xs={12}>
-              <AIAssistantCard
-                show={!showAIUploader}
-                onStartAIProcessing={() => setShowAIUploader(true)}
-              />
+              <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main' }}>
+                Full Name
+              </Typography>
             </Grid>
-            
-            {/* AI Document Uploader */}
-            {showAIUploader && (
-              <Grid item xs={12}>
-                <AIDocumentUploader
-                  formData={formData}
-                  setFormData={setFormData}
-                  onDataExtracted={(extractedData, confidence) => {
-                    console.log('AI extracted data:', extractedData);
-                    console.log('Confidence score:', confidence);
-                    // You can add additional logic here for handling the extracted data
-                  }}
-                />
-              </Grid>
-            )}
             
             <Grid item xs={12}>
               <TextField

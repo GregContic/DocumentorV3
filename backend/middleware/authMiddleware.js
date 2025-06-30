@@ -22,3 +22,13 @@ exports.authorizeAdmin = (req, res, next) => {
   }
   next();
 };
+
+exports.preventAdminSubmission = (req, res, next) => {
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ 
+      message: 'Admins are not allowed to submit inquiries. Please use the admin dashboard to manage inquiries instead.',
+      error: 'ADMIN_SUBMISSION_FORBIDDEN'
+    });
+  }
+  next();
+};

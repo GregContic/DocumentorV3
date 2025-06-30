@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const documentController = require('../controllers/documentController');
-const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware');
+const { authenticate, authorizeAdmin, preventAdminSubmission } = require('../middleware/authMiddleware');
 
-// User routes
-router.post('/request', authenticate, documentController.createRequest);
-router.get('/my-requests', authenticate, documentController.getMyRequests);
+// User routes (prevent admin access)
+router.post('/request', authenticate, preventAdminSubmission, documentController.createRequest);
+router.get('/my-requests', authenticate, preventAdminSubmission, documentController.getMyRequests);
 router.get('/request/:requestId', authenticate, documentController.getRequestById);
 
 // Admin routes

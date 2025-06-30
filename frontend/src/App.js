@@ -24,6 +24,7 @@ import Enrollment from './pages/user/Enrollment';
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import Archive from './admin/Archive';
+import EnrollmentDashboard from './admin/EnrollmentDashboard';
 import Settings from './admin/Settings';
 
 // Protected Route
@@ -137,6 +138,14 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <Archive />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/enrollments"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <EnrollmentDashboard />
                 </ProtectedRoute>
               }
             />

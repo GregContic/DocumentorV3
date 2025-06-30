@@ -44,9 +44,7 @@ import {
   UploadFile as UploadIcon,
 } from '@mui/icons-material';
 import { DatePickerWrapper, DatePicker } from '../../components/DatePickerWrapper';
-import { documentService } from '../../services/api';
-import AIDocumentUploader from '../../components/AIDocumentUploader';
-import AIAssistantCard from '../../components/AIAssistantCard';
+import { enrollmentService } from '../../services/api';
 import FormAssistantChatCard from '../../components/FormAssistantChatCard';
 import { useAuth } from '../../context/AuthContext';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -123,7 +121,6 @@ const Enrollment = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showAIUploader, setShowAIUploader] = useState(false);
 
   const steps = [
     'Student Information', 
@@ -263,26 +260,12 @@ const Enrollment = () => {
   const handleSubmit = async () => {
     if (!validateStep(activeStep)) return;
 
-    if (!isAuthenticated) {
-      setErrorMessage('Please log in to submit your enrollment application.');
-      setShowError(true);
-      return;
-    }
-
     setLoading(true);
     try {
       console.log('Submitting enrollment data:', formData);
       
-      // Create enrollment data object
-      const enrollmentData = {
-        ...formData,
-        documentType: 'Enrollment Application',
-        school: 'Eastern La Trinidad National High School',
-        submissionDate: new Date().toISOString(),
-        status: 'Pending Review'
-      };
-
-      const response = await documentService.createRequest(enrollmentData);
+      // Submit enrollment to backend
+      const response = await enrollmentService.submitEnrollment(formData);
       console.log('Enrollment submission response:', response);
       setShowSuccess(true);
 
@@ -342,9 +325,7 @@ const Enrollment = () => {
     } catch (error) {
       console.error('Enrollment submission error:', error);
       let errorMsg = 'Failed to submit enrollment application. Please try again.';
-      if (error.response?.status === 401) {
-        errorMsg = 'You need to be logged in to submit an enrollment application.';
-      } else if (error.response?.status === 400) {
+      if (error.response?.status === 400) {
         errorMsg = 'Invalid enrollment data. Please check your inputs and try again.';
       } else if (error.response?.data?.message) {
         errorMsg = error.response.data.message;
@@ -375,42 +356,9 @@ const Enrollment = () => {
               {/* AI Assistant Cards */}
               <Grid item xs={12}>
                 <FormAssistantChatCard
-                  onAIUpload={() => setShowAIUploader(true)}
                   formType="Enrollment Application"
                 />
               </Grid>
-              
-              <Grid item xs={12}>
-                <AIAssistantCard
-                  show={!showAIUploader}
-                  onStartAIProcessing={() => setShowAIUploader(true)}
-                />
-              </Grid>
-              
-              {/* AI Document Uploader */}
-              {showAIUploader && (
-                <Grid item xs={12}>
-                  <AIDocumentUploader
-                    formData={formData}
-                    setFormData={setFormData}
-                    onDataExtracted={(extractedData, confidence) => {
-                      console.log('AI extracted enrollment data:', extractedData);
-                      if (extractedData && setFormData) {
-                        setFormData(prev => ({
-                          ...prev,
-                          surname: extractedData.surname || extractedData.lastName || prev.surname,
-                          firstName: extractedData.firstName || extractedData.givenName || prev.firstName,
-                          middleName: extractedData.middleName || prev.middleName,
-                          sex: extractedData.sex || extractedData.gender || prev.sex,
-                          dateOfBirth: extractedData.dateOfBirth || extractedData.birthDate || prev.dateOfBirth,
-                          placeOfBirth: extractedData.placeOfBirth || prev.placeOfBirth,
-                          learnerReferenceNumber: extractedData.learnerReferenceNumber || extractedData.lrn || extractedData.studentNumber || prev.learnerReferenceNumber,
-                        }));
-                      }
-                    }}
-                  />
-                </Grid>
-              )}
 
               <Grid item xs={12}>
                 <TextField
@@ -1399,28 +1347,7 @@ const Enrollment = () => {
             <Typography variant="body1" sx={{ opacity: 0.8 }}>
               School Year 2025-2026 • Complete your enrollment application online
             </Typography>
-            {!isAuthenticated && (
-              <Typography variant="body2" sx={{ mt: 2, opacity: 0.9 }}>
-                Please log in to submit your enrollment application
-              </Typography>
-            )}
           </Box>
-          {!isAuthenticated && (
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => navigate('/login')}
-              startIcon={<LoginIcon />}
-              sx={{
-                bgcolor: 'rgba(255, 255, 255, 0.2)',
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.3)',
-                }
-              }}
-            >
-              Login
-            </Button>
-          )}
         </Box>
 
         <Stepper 
@@ -1441,24 +1368,6 @@ const Enrollment = () => {
             </Step>
           ))}
         </Stepper>
-
-        {!isAuthenticated && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              You need to be logged in to submit your enrollment application. You can still fill out the form, 
-              but you'll need to{' '}
-              <Button 
-                component={RouterLink} 
-                to="/login" 
-                color="inherit" 
-                sx={{ textDecoration: 'underline', p: 0, minWidth: 'auto' }}
-              >
-                log in
-              </Button>
-              {' '}to submit it.
-            </Typography>
-          </Alert>
-        )}
 
         <form onSubmit={handleFormSubmit} noValidate>
           <Box sx={{ mt: 4, mb: 4 }}>
@@ -1492,7 +1401,7 @@ const Enrollment = () => {
               color="primary"
               onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}
               endIcon={activeStep === steps.length - 1 ? (loading ? <CircularProgress size={24} /> : <SendIcon />) : undefined}
-              disabled={loading || (activeStep === steps.length - 1 && !isAuthenticated)}
+              disabled={loading}
               sx={{
                 px: 4,
                 py: 1.5,
@@ -1506,7 +1415,7 @@ const Enrollment = () => {
               }}
             >
               {activeStep === steps.length - 1 
-                ? (isAuthenticated ? 'Submit Enrollment' : 'Login Required') 
+                ? 'Submit Enrollment' 
                 : 'Next'}
             </Button>
           </Box>

@@ -195,7 +195,38 @@ const Dashboard = () => {
           }}
         >
           Verify Document QR Code
-        </Button>        <Button
+        </Button>
+
+        <Button
+          component={RouterLink}
+          to="/admin/enrollments"
+          variant="outlined"
+          size="large"
+          startIcon={<ArchiveIcon />}
+          sx={{
+            borderColor: '#8b5cf6',
+            color: '#8b5cf6',
+            backgroundColor: 'white',
+            borderWidth: 2,
+            borderRadius: 2,
+            px: 4,
+            py: 1.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '1rem',
+            '&:hover': {
+              borderColor: '#7c3aed',
+              backgroundColor: '#f3f4f6',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 6px -1px rgba(139, 92, 246, 0.2)',
+            },
+            transition: 'all 0.2s ease-in-out',
+          }}
+        >
+          Student Enrollments
+        </Button>
+
+        <Button
           component={RouterLink}
           to="/admin/archive"
           variant="outlined"
