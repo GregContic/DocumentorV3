@@ -28,6 +28,7 @@ import Settings from './admin/Settings';
 
 // Protected Route
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import SessionManager from './components/Auth/SessionManager';
 
 // Chatbot
 import EnhancedFloatingChatbot from './components/Chatbot/EnhancedFloatingChatbot';
@@ -99,7 +100,11 @@ function App() {
             />
             <Route
               path="/enrollment"
-              element={<Enrollment />}
+              element={
+                <ProtectedRoute>
+                  <Enrollment />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/my-requests"
@@ -149,6 +154,9 @@ function App() {
           
           {/* Enhanced Floating Chatbot - Available on all pages */}
           <EnhancedFloatingChatbot />
+          
+          {/* Session Manager for authentication warnings */}
+          <SessionManager />
         </Router>
       </AuthProvider>
     </ThemeProvider>

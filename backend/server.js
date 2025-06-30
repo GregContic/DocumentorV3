@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const chatbotRoutes = require('./routes/chatbotRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {

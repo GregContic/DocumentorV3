@@ -63,34 +63,33 @@ const EnhancedFloatingChatbot = () => {
           color="error"
           variant="dot"
           invisible={!hasNewMessage}
-        >
-          <Fab
-            color="primary"
-            aria-label="chat with DocuBot"
-            onClick={handleToggle}
-            sx={{
-              background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-              boxShadow: '0 8px 16px rgba(25, 118, 210, 0.3)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
-                transform: 'scale(1.1)',
-                boxShadow: '0 12px 24px rgba(25, 118, 210, 0.4)',
-              },
-              transition: 'all 0.3s ease',
-              animation: hasNewMessage ? 'pulse 2s infinite' : 'none',
-              '@keyframes pulse': {
-                '0%': {
-                  boxShadow: '0 8px 16px rgba(25, 118, 210, 0.3)',
+        >            <Fab
+              color="primary"
+              aria-label="chat with DocuBot"
+              onClick={handleToggle}
+              sx={{
+                backgroundColor: 'primary.main',
+                boxShadow: '0 8px 16px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                  transform: 'scale(1.1)',
+                  boxShadow: '0 12px 24px rgba(25, 118, 210, 0.4)',
                 },
-                '50%': {
-                  boxShadow: '0 8px 16px rgba(25, 118, 210, 0.6), 0 0 0 4px rgba(25, 118, 210, 0.1)',
+                transition: 'all 0.3s ease',
+                animation: hasNewMessage ? 'pulse 2s infinite' : 'none',
+                '@keyframes pulse': {
+                  '0%': {
+                    boxShadow: '0 8px 16px rgba(25, 118, 210, 0.3)',
+                  },
+                  '50%': {
+                    boxShadow: '0 8px 16px rgba(25, 118, 210, 0.6), 0 0 0 4px rgba(25, 118, 210, 0.1)',
+                  },
+                  '100%': {
+                    boxShadow: '0 8px 16px rgba(25, 118, 210, 0.3)',
+                  },
                 },
-                '100%': {
-                  boxShadow: '0 8px 16px rgba(25, 118, 210, 0.3)',
-                },
-              },
-            }}
-          >
+              }}
+            >
             {open ? <Close /> : <SmartToy />}
           </Fab>
         </Badge>
@@ -124,7 +123,7 @@ const EnhancedFloatingChatbot = () => {
       >
         <DialogTitle
           sx={{
-            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            backgroundColor: 'primary.main',
             color: 'white',
             padding: '12px 16px',
             display: 'flex',

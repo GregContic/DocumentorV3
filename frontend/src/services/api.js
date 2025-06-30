@@ -26,6 +26,27 @@ api.interceptors.request.use(
   }
 );
 
+// Add a response interceptor to handle authentication errors
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // Handle authentication errors
+    if (error.response?.status === 401) {
+      // Token is invalid or expired
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Redirect to login if not already there
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth services
 export const authService = {
   login: (credentials) => api.post('/auth/login', credentials),
@@ -87,6 +108,13 @@ export const settingsService = {
   updateSettings: (settings) => api.put('/api/settings', settings),
   resetSettings: () => api.post('/api/settings/reset'),
   getPublicSettings: () => api.get('/api/settings/public'),
+};
+
+// Chatbot service
+export const chatbotService = {
+  sendMessage: (message, pageContext) => api.post('/api/chatbot/message', { message, pageContext }),
+  getConversationHistory: () => api.get('/api/chatbot/conversation-history'),
+  clearConversationHistory: () => api.delete('/api/chatbot/conversation-history'),
 };
 
 export default api;

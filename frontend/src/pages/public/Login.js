@@ -101,11 +101,19 @@ const Login = () => {
 
       await login(user, token);
       
-      // Redirect based on user role
-      if (user.role === 'admin') {
-        navigate('/admin/dashboard');
+      // Redirect to intended destination or default based on user role
+      const from = location.state?.from?.pathname || null;
+      
+      if (from && from !== '/login') {
+        // Redirect to the originally requested page
+        navigate(from, { replace: true });
       } else {
-        navigate('/request-document');
+        // Redirect based on user role
+        if (user.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/request-document');
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
