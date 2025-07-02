@@ -18,12 +18,14 @@ import UserForm137Dashboard from './user/UserForm137Dashboard';
 import Form137Request from './pages/user/Form137Request';
 import Form138Request from './pages/user/Form138Request';
 import Enrollment from './pages/user/Enrollment';
+import EnrollmentStatus from './user/EnrollmentStatus';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import Archive from './admin/Archive';
 import EnrollmentDashboard from './admin/EnrollmentDashboard';
 import Form137StubDashboard from './admin/Form137StubDashboard';
+import InquiriesDashboard from './admin/InquiriesDashboard';
 import Settings from './admin/Settings';
 
 // Protected Route
@@ -99,6 +101,14 @@ function App() {
               }
             />
             <Route
+              path="/enrollment-status"
+              element={
+                <ProtectedRoute>
+                  <EnrollmentStatus />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/my-requests"
               element={
                 <ProtectedRoute>
@@ -153,6 +163,14 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <Form137StubDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/inquiries"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <InquiriesDashboard />
                 </ProtectedRoute>
               }
             />

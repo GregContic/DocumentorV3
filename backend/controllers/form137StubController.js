@@ -5,9 +5,21 @@ const form137StubController = {
   // Create a new Form 137 stub
   createStub: async (req, res) => {
     try {
+      console.log('Create stub request received');
+      console.log('req.user:', req.user);
+      console.log('req.body:', req.body);
+      
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated or user ID missing',
+          debug: { user: req.user }
+        });
+      }
+
       const stubData = {
         ...req.body,
-        user: req.user.id,
+        user: req.user.userId,
         stubCode: Form137Stub.generateStubCode()
       };
 
@@ -44,7 +56,7 @@ const form137StubController = {
   // Get user's stubs
   getUserStubs: async (req, res) => {
     try {
-      const stubs = await Form137Stub.find({ user: req.user.id })
+      const stubs = await Form137Stub.find({ user: req.user.userId })
         .sort({ createdAt: -1 });
 
       res.json({
@@ -74,7 +86,7 @@ const form137StubController = {
       }
 
       // Check if user owns this stub or is an admin
-      if (stub.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      if (stub.user.toString() !== req.user.userId && req.user.role !== 'admin') {
         return res.status(403).json({
           success: false,
           message: 'Access denied'
@@ -151,7 +163,7 @@ const form137StubController = {
           break;
         case 'verified-by-registrar':
           updateData.verifiedAt = new Date();
-          updateData.verifiedBy = req.user.id;
+          updateData.verifiedBy = req.user.userId;
           break;
         case 'ready-for-pickup':
           updateData.readyAt = new Date();

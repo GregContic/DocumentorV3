@@ -106,7 +106,7 @@ const Form138PDF = ({ formData, qrCode }) => {
           <View style={styles.headerText}>
             <Text style={styles.title}>Republic of the Philippines</Text>
             <Text style={styles.subtitle}>Department of Education</Text>
-            <Text style={styles.subtitle}>Region I</Text>
+            <Text style={styles.subtitle}>Cordillera Administrative Region</Text>
             <Text style={styles.subtitle}>Schools Division of Benguet</Text>
             <Text style={styles.subtitle}>EASTERN LA TRINIDAD NATIONAL HIGH SCHOOL</Text>
             <Text style={styles.subtitle}>La Trinidad, Benguet</Text>

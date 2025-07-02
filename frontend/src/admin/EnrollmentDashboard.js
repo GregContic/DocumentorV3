@@ -30,7 +30,11 @@ import {
   School as SchoolIcon,
   FamilyRestroom as FamilyIcon,
   LocalHospital as MedicalIcon,
+  CheckCircle as ApproveIcon,
+  Cancel as RejectIcon,
+  Pending as PendingIcon,
 } from '@mui/icons-material';
+import AdminLayout from '../components/AdminLayout';
 
 const EnrollmentDashboard = () => {
   const [enrollments, setEnrollments] = useState([]);
@@ -38,6 +42,7 @@ const EnrollmentDashboard = () => {
   const [error, setError] = useState('');
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   const handleViewDetails = (enrollment) => {
     setSelectedEnrollment(enrollment);
@@ -47,6 +52,33 @@ const EnrollmentDashboard = () => {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setSelectedEnrollment(null);
+  };
+
+  const handleStatusUpdate = async (enrollmentId, status) => {
+    setUpdating(true);
+    try {
+      await enrollmentService.updateEnrollmentStatus(enrollmentId, { status });
+      // Refresh the enrollments list
+      const res = await enrollmentService.getAllEnrollments();
+      setEnrollments(res.data);
+      // Update the selected enrollment if it's still open
+      if (selectedEnrollment && selectedEnrollment._id === enrollmentId) {
+        const updatedEnrollment = res.data.find(e => e._id === enrollmentId);
+        setSelectedEnrollment(updatedEnrollment);
+      }
+    } catch (err) {
+      setError('Failed to update enrollment status');
+    }
+    setUpdating(false);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'success';
+      case 'rejected': return 'error';
+      case 'pending': return 'warning';
+      default: return 'default';
+    }
   };
 
   useEffect(() => {
@@ -62,11 +94,12 @@ const EnrollmentDashboard = () => {
   }, []);
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4 }}>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Student Enrollment Dashboard
-        </Typography>
+    <AdminLayout title="Student Enrollment Dashboard">
+      <Container maxWidth="xl">
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h4" gutterBottom>
+            Student Enrollment Dashboard
+          </Typography>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <CircularProgress />
@@ -98,7 +131,16 @@ const EnrollmentDashboard = () => {
                     <TableCell>{e.strand}</TableCell>
                     <TableCell>{new Date(e.createdAt).toLocaleString()}</TableCell>
                     <TableCell>
-                      <Chip label="Submitted" color="primary" size="small" />
+                      <Chip 
+                        label={e.status || 'pending'} 
+                        color={getStatusColor(e.status || 'pending')} 
+                        size="small" 
+                        icon={
+                          (e.status === 'approved' && <ApproveIcon />) ||
+                          (e.status === 'rejected' && <RejectIcon />) ||
+                          <PendingIcon />
+                        }
+                      />
                     </TableCell>
                     <TableCell>
                       <Button
@@ -464,12 +506,35 @@ const EnrollmentDashboard = () => {
         </DialogContent>
         
         <DialogActions sx={{ p: 3 }}>
+          {selectedEnrollment && (
+            <Box sx={{ display: 'flex', gap: 2, mr: 'auto' }}>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<ApproveIcon />}
+                onClick={() => handleStatusUpdate(selectedEnrollment._id, 'approved')}
+                disabled={updating || selectedEnrollment.status === 'approved'}
+              >
+                {updating ? 'Updating...' : 'Approve'}
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<RejectIcon />}
+                onClick={() => handleStatusUpdate(selectedEnrollment._id, 'rejected')}
+                disabled={updating || selectedEnrollment.status === 'rejected'}
+              >
+                {updating ? 'Updating...' : 'Reject'}
+              </Button>
+            </Box>
+          )}
           <Button onClick={handleCloseDialog} variant="contained">
             Close
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+      </Container>
+    </AdminLayout>
   );
 };
 

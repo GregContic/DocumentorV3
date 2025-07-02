@@ -32,10 +32,14 @@ import {
   Visibility as ViewIcon,
   Search as SearchIcon,
   Assignment as Form137Icon,
+  Assignment as AssignmentIcon,
+  CheckCircle as CheckIcon,
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { documentService } from '../services/api';
 import QRVerificationDialog from '../components/QRVerificationDialog';
+import AdminLayout from '../components/AdminLayout';
+import StatsCard from '../components/StatsCard';
 
 const statusColors = {
   pending: 'warning',
@@ -148,55 +152,86 @@ const Dashboard = () => {
     return matchesSearch && matchesStatus;
   });
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>      {/* Modern Header */}
-      <Box sx={{ 
-        mb: 4,
-        p: 4,
-        backgroundColor: '#ffffff',
-        borderRadius: 3,
-        border: '1px solid #e5e7eb',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      }}>        <Typography variant="h3" component="h1" gutterBottom fontWeight="600" sx={{ color: '#1f2937' }}>
-          Document Requests Dashboard
-        </Typography>
-        <Typography variant="h6" sx={{ color: '#6b7280' }}>
-          Manage and process all document requests efficiently
-        </Typography>
-      </Box>
+    <AdminLayout title="Document Requests Dashboard">
+      <Container maxWidth="xl">
+        {/* Modern Header Card */}
+        <Box sx={{ 
+          mb: 4,
+          p: 4,
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: 4,
+          border: '1px solid rgba(255,255,255,0.3)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.1)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%)',
+            zIndex: 0
+          }
+        }}>
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Typography variant="h3" component="h1" gutterBottom fontWeight="700" sx={{ 
+              color: '#1f2937',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              backgroundClip: 'text',
+              textFillColor: 'transparent',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              Document Requests Dashboard
+            </Typography>
+            <Typography variant="h6" sx={{ 
+              color: '#6b7280',
+              fontWeight: 500,
+              opacity: 0.9
+            }}>
+              Manage and process all document requests efficiently
+            </Typography>
+          </Box>
+        </Box>
 
-      {/* Action Buttons */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 4,
-        gap: 2,
-        flexWrap: 'wrap'
-      }}>        <Button
-          variant="contained"
-          size="large"
-          startIcon={<QrIcon />}
-          onClick={() => setQrVerificationOpen(true)}
-          sx={{
-            backgroundColor: '#10b981',
-            color: 'white',
-            borderRadius: 2,
-            px: 4,
-            py: 1.5,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '1rem',
-            boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)',
-            '&:hover': {
-              backgroundColor: '#059669',
-              transform: 'translateY(-1px)',
-              boxShadow: '0 6px 8px -1px rgba(16, 185, 129, 0.3)',
-            },
-            transition: 'all 0.2s ease-in-out',
-          }}
-        >
-          Verify Document QR Code
-        </Button>
+        {/* Enhanced Action Buttons */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: 4,
+          gap: 2,
+          flexWrap: 'wrap'
+        }}>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<QrIcon />}
+            onClick={() => setQrVerificationOpen(true)}
+            sx={{
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: 'white',
+              borderRadius: 3,
+              px: 4,
+              py: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+              boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 32px rgba(16, 185, 129, 0.4)',
+              },
+              transition: 'all 0.3s ease-in-out',
+            }}
+          >
+            Verify Document QR Code
+          </Button>
 
         <Button
           component={RouterLink}
@@ -374,37 +409,111 @@ const Dashboard = () => {
             </Grid>
           </Paper>          {/* Modern Requests Table */}
           <Paper sx={{ 
-            backgroundColor: '#ffffff',
-            borderRadius: 3,
-            border: '1px solid #e5e7eb',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            background: 'rgba(255,255,255,0.9)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: 4,
+            border: '1px solid rgba(255,255,255,0.3)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.1)',
             overflow: 'hidden',
           }}>
             <TableContainer>
               <Table stickyHeader>
                 <TableHead>
-                  <TableRow>                    <TableCell sx={{ fontWeight: 600, bgcolor: '#f8fafc', py: 3, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>
+                  <TableRow>
+                    <TableCell sx={{ 
+                      fontWeight: 700, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      py: 3, 
+                      borderBottom: 'none',
+                      fontSize: '0.95rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
                       Student Name
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: '#f8fafc', py: 3, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>
+                    <TableCell sx={{ 
+                      fontWeight: 700, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      py: 3, 
+                      borderBottom: 'none',
+                      fontSize: '0.95rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
                       Email
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: '#f8fafc', py: 3, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>
+                    <TableCell sx={{ 
+                      fontWeight: 700, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      py: 3, 
+                      borderBottom: 'none',
+                      fontSize: '0.95rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
                       Document Type
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: '#f8fafc', py: 3, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>
+                    <TableCell sx={{ 
+                      fontWeight: 700, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      py: 3, 
+                      borderBottom: 'none',
+                      fontSize: '0.95rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
                       Purpose
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: '#f8fafc', py: 3, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>
+                    <TableCell sx={{ 
+                      fontWeight: 700, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      py: 3, 
+                      borderBottom: 'none',
+                      fontSize: '0.95rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
                       Request Date
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: '#f8fafc', py: 3, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>
+                    <TableCell sx={{ 
+                      fontWeight: 700, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      py: 3, 
+                      borderBottom: 'none',
+                      fontSize: '0.95rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
                       Status
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: '#f8fafc', py: 3, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>
+                    <TableCell sx={{ 
+                      fontWeight: 700, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      py: 3, 
+                      borderBottom: 'none',
+                      fontSize: '0.95rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
                       Details
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: '#f8fafc', py: 3, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>
+                    <TableCell sx={{ 
+                      fontWeight: 700, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      py: 3, 
+                      borderBottom: 'none',
+                      fontSize: '0.95rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
                       Actions
                     </TableCell>
                   </TableRow>
@@ -416,49 +525,88 @@ const Dashboard = () => {
                       const email = request.user ? request.user.email : '';                      return (
                         <TableRow key={request._id} sx={{
                           '&:hover': {
-                            backgroundColor: '#f8fafc',
+                            background: 'linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%)',
+                            transform: 'scale(1.005)',
+                            transition: 'all 0.2s ease-in-out',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
                           },
                           '&:nth-of-type(even)': {
-                            backgroundColor: '#fafbfc',
+                            backgroundColor: 'rgba(248,250,252,0.3)',
                           },
-                        }}>                          <TableCell sx={{ py: 2, color: '#374151' }}>{studentName}</TableCell>
-                          <TableCell sx={{ py: 2, color: '#374151' }}>{email}</TableCell>
-                          <TableCell sx={{ py: 2, color: '#374151' }}>{request.documentType}</TableCell>
-                          <TableCell sx={{ py: 2, color: '#374151' }}>{request.purpose}</TableCell>
-                          <TableCell sx={{ py: 2, color: '#374151' }}>{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : ''}</TableCell>                          <TableCell sx={{ py: 2 }}>
+                          transition: 'all 0.2s ease-in-out',
+                          borderBottom: '1px solid rgba(229,231,235,0.3)'
+                        }}>
+
+                          <TableCell sx={{ 
+                            py: 2.5, 
+                            fontWeight: 600,
+                            color: '#1f2937',
+                            borderBottom: 'none'
+                          }}>{studentName}</TableCell>
+                          <TableCell sx={{ 
+                            py: 2.5, 
+                            color: '#6b7280',
+                            borderBottom: 'none'
+                          }}>{email}</TableCell>
+                          <TableCell sx={{ 
+                            py: 2.5, 
+                            fontWeight: 500,
+                            color: '#374151',
+                            borderBottom: 'none'
+                          }}>{request.documentType}</TableCell>
+                          <TableCell sx={{ 
+                            py: 2.5, 
+                            color: '#6b7280',
+                            borderBottom: 'none'
+                          }}>{request.purpose}</TableCell>
+                          <TableCell sx={{ 
+                            py: 2.5, 
+                            color: '#6b7280',
+                            borderBottom: 'none'
+                          }}>{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : ''}</TableCell>                          <TableCell sx={{ py: 2.5, borderBottom: 'none' }}>
                             <Chip
                               label={request.status}
                               color={statusColors[request.status]}
                               size="small"
                               sx={{ 
-                                fontWeight: 600,
-                                borderRadius: 2,
+                                fontWeight: 700,
+                                borderRadius: 4,
+                                px: 1,
+                                textTransform: 'uppercase',
+                                fontSize: '0.75rem',
+                                letterSpacing: '0.5px',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                               }}
                             />
                           </TableCell>
-                          <TableCell sx={{ py: 2 }}>                            <Button
+                          <TableCell sx={{ py: 2.5, borderBottom: 'none' }}>
+                            <Button
                               size="small"
                               variant="contained"
-                              startIcon={<ViewIcon />}                              onClick={() => handleViewDetails(request)}
+                              startIcon={<ViewIcon />}
+                              onClick={() => handleViewDetails(request)}
                               sx={{ 
                                 minWidth: 'auto',
                                 px: 3,
                                 py: 1,
-                                borderRadius: 2,
+                                borderRadius: 3,
                                 textTransform: 'none',
-                                backgroundColor: '#3b82f6',
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                                 color: 'white',
-                                fontWeight: 500,
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
                                 '&:hover': {
-                                  backgroundColor: '#2563eb',
-                                  transform: 'translateY(-1px)',
-                                  boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)',
+                                  background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: '0 6px 16px rgba(59, 130, 246, 0.4)',
                                 },
                                 transition: 'all 0.2s ease-in-out',
                               }}
                             >
                               View
-                            </Button>                          </TableCell>
+                            </Button>
+                          </TableCell>
                           <TableCell sx={{ py: 2 }}>
                             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                               {request.status === 'pending' && (
@@ -861,7 +1009,8 @@ const Dashboard = () => {
           {successMessage}
         </Alert>
       </Snackbar>
-    </Container>
+      </Container>
+    </AdminLayout>
   );
 };
 

@@ -78,8 +78,18 @@ export const documentService = {
 
 // Enrollment services
 export const enrollmentService = {
-  submitEnrollment: (data) => api.post('/api/enrollments', data),
+  submitEnrollment: (data) => {
+    // Handle both FormData and regular objects
+    const config = data instanceof FormData ? {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    } : {};
+    return api.post('/api/enrollments', data, config);
+  },
+  getMyEnrollmentStatus: () => api.get('/api/enrollments/my-status'),
   getAllEnrollments: () => api.get('/api/enrollments/admin'),
+  updateEnrollmentStatus: (id, statusData) => api.put(`/api/enrollments/${id}/status`, statusData),
 };
 
 // Inquiry services

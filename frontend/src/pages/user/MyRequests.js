@@ -25,9 +25,11 @@ import {
   Visibility as ViewIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
+  AccountCircle as AccountCircleIcon,
 } from '@mui/icons-material';
 import { documentService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
 import Form138PDFWithQR from '../../components/PDFTemplates/Form138PDFWithQR';
 import SF9PDFWithQR from '../../components/PDFTemplates/SF9PDFWithQR';
@@ -37,7 +39,9 @@ const MyRequests = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);  const { user } = useAuth();  // Function to render PDF download component based on document type
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();  // Function to render PDF download component based on document type
   const renderPDFDownload = (request) => {
     if (!request) return null;
 
@@ -238,6 +242,24 @@ const MyRequests = () => {
           disabled={loading}
         >
           Refresh
+        </Button>
+      </Box>
+
+      {/* Enrollment Status Quick Access */}
+      <Box sx={{ mb: 3 }}>
+        <Button
+          variant="contained"
+          onClick={() => navigate('/enrollment-status')}
+          startIcon={<AccountCircleIcon />}
+          sx={{
+            bgcolor: 'primary.main',
+            color: 'white',
+            '&:hover': {
+              bgcolor: 'primary.dark',
+            }
+          }}
+        >
+          Check My Enrollment Status
         </Button>
       </Box>
 

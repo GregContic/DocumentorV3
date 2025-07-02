@@ -53,6 +53,7 @@ import {
   AccessTime as TimeIcon,
 } from '@mui/icons-material';
 import { documentService, inquiryService } from '../services/api';
+import AdminLayout from '../components/AdminLayout';
 
 const Archive = () => {
   const theme = useTheme();
@@ -1042,21 +1043,23 @@ const Archive = () => {
     </Dialog>
   );
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      {/* Header Section */}
-      <Fade in timeout={600}>
-        <Card 
-          sx={{            mb: 4, 
-            backgroundColor: 'primary.main',
-            color: 'white',
-            borderRadius: 4,
-            boxShadow: 3,
-          }}
-        >
-          <CardContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Avatar sx={{ 
-                mr: 3, 
+    <AdminLayout title="Archive Dashboard">
+      <Container maxWidth="xl">
+        {/* Header Section */}
+        <Fade in timeout={600}>
+          <Card 
+            sx={{
+              mb: 4, 
+              backgroundColor: 'primary.main',
+              color: 'white',
+              borderRadius: 4,
+              boxShadow: 3,
+            }}
+          >
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ 
+                  mr: 3, 
                 width: 56, 
                 height: 56, 
                 bgcolor: 'rgba(255,255,255,0.2)',
@@ -1185,7 +1188,8 @@ const Archive = () => {
       {/* Table Content */}
       {activeTab === 0 ? renderDocumentTable() : renderInquiryTable()}
       {renderDetailsDialog()}
-    </Container>
+      </Container>
+    </AdminLayout>
   );
 };
 

@@ -37,6 +37,7 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { form137StubService } from '../services/api';
+import AdminLayout from '../components/AdminLayout';
 
 const Form137StubDashboard = () => {
   const [stubs, setStubs] = useState([]);
@@ -146,21 +147,22 @@ const Form137StubDashboard = () => {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" component="h1">
-            Form 137 Stub Management
-          </Typography>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchStubs}
-            disabled={loading}
-          >
-            Refresh
-          </Button>
-        </Box>
+    <AdminLayout title="Form 137 Stub Management">
+      <Container maxWidth="xl">
+        <Paper elevation={3} sx={{ p: 3 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+            <Typography variant="h4" component="h1">
+              Form 137 Stub Management
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={fetchStubs}
+              disabled={loading}
+            >
+              Refresh
+            </Button>
+          </Box>
 
         {/* Filters */}
         <Grid container spacing={2} mb={3}>
@@ -413,8 +415,9 @@ const Form137StubDashboard = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </AdminLayout>
   );
 };
 

@@ -1,6 +1,18 @@
 const mongoose = require('mongoose');
 
 const EnrollmentSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  status: { 
+    type: String, 
+    enum: ['pending', 'under-review', 'approved', 'rejected', 'enrolled'], 
+    default: 'pending' 
+  },
+  enrollmentNumber: { type: String, unique: true },
+  enrollmentType: { 
+    type: String, 
+    enum: ['new', 'old', 'transferee'], 
+    required: true 
+  },
   learnerReferenceNumber: { type: String, required: true },
   surname: { type: String, required: true },
   firstName: { type: String, required: true },
@@ -41,6 +53,13 @@ const EnrollmentSchema = new mongoose.Schema({
   gradeToEnroll: String,
   strand: String,
   track: String,
+  // Document file paths
+  form137File: String,
+  form138File: String,
+  goodMoralFile: String,
+  medicalCertificateFile: String,
+  parentIdFile: String,
+  idPicturesFile: String,
   birthCertificate: Boolean,
   form137: Boolean,
   form138: Boolean,
@@ -50,7 +69,27 @@ const EnrollmentSchema = new mongoose.Schema({
   allergies: String,
   medications: String,
   agreementAccepted: Boolean,
-  createdAt: { type: Date, default: Date.now }
+  reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  reviewedAt: Date,
+  reviewNotes: String,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Generate enrollment number
+EnrollmentSchema.statics.generateEnrollmentNumber = function() {
+  const year = new Date().getFullYear();
+  const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `ENR-${year}-${randomNum}`;
+};
+
+// Update the updatedAt field before saving
+EnrollmentSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  if (this.isNew && !this.enrollmentNumber) {
+    this.enrollmentNumber = this.constructor.generateEnrollmentNumber();
+  }
+  next();
 });
 
 module.exports = mongoose.model('Enrollment', EnrollmentSchema);

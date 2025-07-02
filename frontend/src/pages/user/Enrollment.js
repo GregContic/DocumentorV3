@@ -42,6 +42,7 @@ import {
   Info as InfoIcon,
   Login as LoginIcon,
   UploadFile as UploadIcon,
+  CloudUpload as CloudUploadIcon,
 } from '@mui/icons-material';
 import { DatePickerWrapper, DatePicker } from '../../components/DatePickerWrapper';
 import { enrollmentService } from '../../services/api';
@@ -57,6 +58,8 @@ const Enrollment = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    // Enrollment Type
+    enrollmentType: '', // 'new', 'old', 'transferee'
     // Student Information
     learnerReferenceNumber: '',
     surname: '',
@@ -104,12 +107,20 @@ const Enrollment = () => {
     gradeToEnroll: '',
     strand: '', // For SHS
     track: '', // For SHS
-    // Documents
-    birthCertificate: false,
+    // Documents (file uploads)
+    form137File: null,
+    form138File: null,
+    goodMoralFile: null,
+    medicalCertificateFile: null,
+    parentIdFile: null,
+    idPicturesFile: null,
+    // Document status tracking
     form137: false,
     form138: false,
     goodMoral: false,
     medicalCertificate: false,
+    parentId: false,
+    idPictures: false,
     // Additional Information
     specialNeeds: '',
     allergies: '',
@@ -165,12 +176,13 @@ const Enrollment = () => {
   };
 
   const steps = [
+    'Enrollment Type',
     'Student Information', 
     'Address & Contact', 
     'Previous School', 
     'Family Information', 
     'Enrollment Details', 
-    'Documents & Medical', 
+    'Upload Documents', 
     'Review & Submit'
   ];
 
@@ -201,21 +213,31 @@ const Enrollment = () => {
   ];
 
   const requirements = [
-    'Original and Photocopy of Birth Certificate (PSA)',
     'Form 137 (Permanent Record)',
     'Form 138 (Report Card)',
     'Certificate of Good Moral Character',
     'Medical Certificate',
     'Recent 2x2 ID Pictures (4 pieces)',
-    'Barangay Certificate of Residency',
     'Parent/Guardian Valid ID (Photocopy)'
   ];
+
+  // File upload handler
+  const handleFileUpload = (field, file) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: file,
+      [field.replace('File', '')]: !!file
+    }));
+  };
 
   const validateStep = (stepIndex) => {
     const newErrors = {};
 
     switch (stepIndex) {
-      case 0: // Student Information
+      case 0: // Enrollment Type
+        if (!formData.enrollmentType) newErrors.enrollmentType = 'Please select enrollment type';
+        break;
+      case 1: // Student Information
         if (!formData.learnerReferenceNumber.trim()) newErrors.learnerReferenceNumber = 'LRN is required';
         if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
         if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
@@ -225,7 +247,7 @@ const Enrollment = () => {
         if (!formData.religion.trim()) newErrors.religion = 'Religion is required';
         if (!formData.citizenship.trim()) newErrors.citizenship = 'Citizenship is required';
         break;
-      case 1: // Address & Contact
+      case 2: // Address & Contact
         if (!formData.houseNumber.trim()) newErrors.houseNumber = 'House number is required';
         if (!formData.barangay.trim()) newErrors.barangay = 'Barangay is required';
         if (!formData.city.trim()) newErrors.city = 'City/Municipality is required';
@@ -235,19 +257,19 @@ const Enrollment = () => {
           newErrors.emailAddress = 'Invalid email address';
         }
         break;
-      case 2: // Previous School
+      case 3: // Previous School
         if (!formData.lastSchoolAttended.trim()) newErrors.lastSchoolAttended = 'Last school attended is required';
         if (!formData.schoolAddress.trim()) newErrors.schoolAddress = 'School address is required';
         if (!formData.gradeLevel.trim()) newErrors.gradeLevel = 'Grade level is required';
         if (!formData.schoolYear.trim()) newErrors.schoolYear = 'School year is required';
         break;
-      case 3: // Family Information
+      case 4: // Family Information
         if (!formData.fatherName.trim()) newErrors.fatherName = 'Father\'s name is required';
         if (!formData.motherName.trim()) newErrors.motherName = 'Mother\'s name is required';
         if (!formData.emergencyContactName.trim()) newErrors.emergencyContactName = 'Emergency contact name is required';
         if (!formData.emergencyContactNumber.trim()) newErrors.emergencyContactNumber = 'Emergency contact number is required';
         break;
-      case 4: // Enrollment Details
+      case 5: // Enrollment Details
         if (!formData.gradeToEnroll) newErrors.gradeToEnroll = 'Grade to enroll is required';
         if ((formData.gradeToEnroll === 'Grade 11' || formData.gradeToEnroll === 'Grade 12')) {
           if (!formData.track) newErrors.track = 'Track is required for Senior High School';
@@ -259,14 +281,15 @@ const Enrollment = () => {
           }
         }
         break;
-      case 5: // Documents & Medical
-        if (!formData.birthCertificate) newErrors.birthCertificate = 'Birth certificate confirmation is required';
-        if (!formData.form137) newErrors.form137 = 'Form 137 confirmation is required';
-        if (!formData.form138) newErrors.form138 = 'Form 138 confirmation is required';
-        if (!formData.goodMoral) newErrors.goodMoral = 'Good moral certificate confirmation is required';
-        if (!formData.medicalCertificate) newErrors.medicalCertificate = 'Medical certificate confirmation is required';
+      case 6: // Upload Documents
+        if (!formData.form137File) newErrors.form137File = 'Form 137 document is required';
+        if (!formData.form138File) newErrors.form138File = 'Form 138 document is required';
+        if (!formData.goodMoralFile) newErrors.goodMoralFile = 'Good moral certificate is required';
+        if (!formData.medicalCertificateFile) newErrors.medicalCertificateFile = 'Medical certificate is required';
+        if (!formData.parentIdFile) newErrors.parentIdFile = 'Parent/Guardian ID is required';
+        if (!formData.idPicturesFile) newErrors.idPicturesFile = 'ID pictures are required';
         break;
-      case 6: // Review & Submit
+      case 7: // Review & Submit
         if (!formData.agreementAccepted) newErrors.agreementAccepted = 'You must accept the enrollment agreement';
         break;
       default:
@@ -306,13 +329,36 @@ const Enrollment = () => {
     try {
       console.log('Submitting enrollment data:', formData);
       
-      // Submit enrollment to backend
-      const response = await enrollmentService.submitEnrollment(formData);
+      // Create FormData for file upload
+      const formDataToSubmit = new FormData();
+      
+      // Add all text fields
+      Object.keys(formData).forEach(key => {
+        if (formData[key] && !key.includes('File')) {
+          if (key === 'dateOfBirth' && formData[key]) {
+            formDataToSubmit.append(key, formData[key].toISOString());
+          } else {
+            formDataToSubmit.append(key, formData[key]);
+          }
+        }
+      });
+      
+      // Add file uploads
+      if (formData.form137File) formDataToSubmit.append('form137File', formData.form137File);
+      if (formData.form138File) formDataToSubmit.append('form138File', formData.form138File);
+      if (formData.goodMoralFile) formDataToSubmit.append('goodMoralFile', formData.goodMoralFile);
+      if (formData.medicalCertificateFile) formDataToSubmit.append('medicalCertificateFile', formData.medicalCertificateFile);
+      if (formData.parentIdFile) formDataToSubmit.append('parentIdFile', formData.parentIdFile);
+      if (formData.idPicturesFile) formDataToSubmit.append('idPicturesFile', formData.idPicturesFile);
+      
+      // Submit enrollment to backend with FormData
+      const response = await enrollmentService.submitEnrollment(formDataToSubmit);
       console.log('Enrollment submission response:', response);
       setShowSuccess(true);
 
       // Reset form
       setFormData({
+        enrollmentType: '',
         learnerReferenceNumber: '',
         surname: '',
         firstName: '',
@@ -383,7 +429,71 @@ const Enrollment = () => {
   const renderStepContent = (step) => {
     try {
       switch (step) {
-        case 0: // Student Information
+        case 0: // Enrollment Type
+          return (
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Select Enrollment Type
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Please select the type of enrollment that applies to you.
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControl component="fieldset" error={!!errors.enrollmentType}>
+                  <FormLabel component="legend">Enrollment Type</FormLabel>
+                  <RadioGroup
+                    value={formData.enrollmentType}
+                    onChange={(e) => setFormData(prev => ({ ...prev, enrollmentType: e.target.value }))}
+                  >
+                    <FormControlLabel 
+                      value="new" 
+                      control={<Radio />} 
+                      label={
+                        <Box>
+                          <Typography variant="subtitle1">New Student</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            First time enrolling at Eastern La Trinidad National High School
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <FormControlLabel 
+                      value="old" 
+                      control={<Radio />} 
+                      label={
+                        <Box>
+                          <Typography variant="subtitle1">Continuing Student</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Previously enrolled at Eastern La Trinidad National High School
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <FormControlLabel 
+                      value="transferee" 
+                      control={<Radio />} 
+                      label={
+                        <Box>
+                          <Typography variant="subtitle1">Transferee</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Transferring from another school
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </RadioGroup>
+                  {errors.enrollmentType && (
+                    <FormHelperText>{errors.enrollmentType}</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+            </Grid>
+          );
+
+        case 1: // Student Information
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -538,7 +648,7 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 1: // Address & Contact
+        case 2: // Address & Contact
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -648,7 +758,7 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 2: // Previous School
+        case 3: // Previous School
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -710,7 +820,7 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 3: // Family Information
+        case 4: // Family Information
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -874,7 +984,7 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 4: // Enrollment Details
+        case 5: // Enrollment Details
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -983,120 +1093,227 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 5: // Documents & Medical
+        case 6: // Upload Documents
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Required Documents & Medical Information
+                  Upload Required Documents
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Please confirm that you have all required documents and provide medical information.
+                  Please upload all required documents. Files should be in PDF, JPG, or PNG format.
                 </Typography>
               </Grid>
 
               <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main' }}>
-                  Required Documents Checklist
-                </Typography>
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  Please ensure you have all these documents ready before submitting your enrollment.
-                </Alert>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Card sx={{ p: 2 }}>
-                  <List>
-                    {requirements.map((requirement, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <AssignmentIcon color="primary" />
-                        </ListItemIcon>
-                        <ListItemText primary={requirement} />
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>Required Documents:</Typography>
+                  <List dense>
+                    {requirements.map((req, index) => (
+                      <ListItem key={index} sx={{ py: 0 }}>
+                        <ListItemText primary={`• ${req}`} />
                       </ListItem>
                     ))}
                   </List>
+                </Alert>
+              </Grid>
+
+              {/* Form 137 Upload */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ p: 2, border: formData.form137File ? '2px solid green' : '1px solid #ddd' }}>
+                  <Typography variant="subtitle2" gutterBottom>Form 137 (Permanent Record)</Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                    sx={{ mb: 1 }}
+                  >
+                    {formData.form137File ? 'Change File' : 'Upload Form 137'}
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload('form137File', e.target.files[0])}
+                    />
+                  </Button>
+                  {formData.form137File && (
+                    <Typography variant="body2" color="success.main">
+                      ✓ {formData.form137File.name}
+                    </Typography>
+                  )}
+                  {errors.form137File && (
+                    <Typography variant="body2" color="error">
+                      {errors.form137File}
+                    </Typography>
+                  )}
                 </Card>
               </Grid>
 
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main', mt: 2 }}>
-                  Document Confirmation
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Please check each document that you have ready for submission.
-                </Typography>
+              {/* Form 138 Upload */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ p: 2, border: formData.form138File ? '2px solid green' : '1px solid #ddd' }}>
+                  <Typography variant="subtitle2" gutterBottom>Form 138 (Report Card)</Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                    sx={{ mb: 1 }}
+                  >
+                    {formData.form138File ? 'Change File' : 'Upload Form 138'}
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload('form138File', e.target.files[0])}
+                    />
+                  </Button>
+                  {formData.form138File && (
+                    <Typography variant="body2" color="success.main">
+                      ✓ {formData.form138File.name}
+                    </Typography>
+                  )}
+                  {errors.form138File && (
+                    <Typography variant="body2" color="error">
+                      {errors.form138File}
+                    </Typography>
+                  )}
+                </Card>
               </Grid>
 
+              {/* Good Moral Upload */}
               <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formData.birthCertificate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, birthCertificate: e.target.checked }))}
-                      color="primary"
+                <Card sx={{ p: 2, border: formData.goodMoralFile ? '2px solid green' : '1px solid #ddd' }}>
+                  <Typography variant="subtitle2" gutterBottom>Certificate of Good Moral Character</Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                    sx={{ mb: 1 }}
+                  >
+                    {formData.goodMoralFile ? 'Change File' : 'Upload Good Moral'}
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload('goodMoralFile', e.target.files[0])}
                     />
-                  }
-                  label="Birth Certificate (PSA)"
-                />
-                {errors.birthCertificate && <FormHelperText error>{errors.birthCertificate}</FormHelperText>}
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formData.form137}
-                      onChange={(e) => setFormData(prev => ({ ...prev, form137: e.target.checked }))}
-                      color="primary"
-                    />
-                  }
-                  label="Form 137 (Permanent Record)"
-                />
-                {errors.form137 && <FormHelperText error>{errors.form137}</FormHelperText>}
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formData.form138}
-                      onChange={(e) => setFormData(prev => ({ ...prev, form138: e.target.checked }))}
-                      color="primary"
-                    />
-                  }
-                  label="Form 138 (Report Card)"
-                />
-                {errors.form138 && <FormHelperText error>{errors.form138}</FormHelperText>}
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formData.goodMoral}
-                      onChange={(e) => setFormData(prev => ({ ...prev, goodMoral: e.target.checked }))}
-                      color="primary"
-                    />
-                  }
-                  label="Certificate of Good Moral Character"
-                />
-                {errors.goodMoral && <FormHelperText error>{errors.goodMoral}</FormHelperText>}
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formData.medicalCertificate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, medicalCertificate: e.target.checked }))}
-                      color="primary"
-                    />
-                  }
-                  label="Medical Certificate"
-                />
-                {errors.medicalCertificate && <FormHelperText error>{errors.medicalCertificate}</FormHelperText>}
+                  </Button>
+                  {formData.goodMoralFile && (
+                    <Typography variant="body2" color="success.main">
+                      ✓ {formData.goodMoralFile.name}
+                    </Typography>
+                  )}
+                  {errors.goodMoralFile && (
+                    <Typography variant="body2" color="error">
+                      {errors.goodMoralFile}
+                    </Typography>
+                  )}
+                </Card>
               </Grid>
 
+              {/* Medical Certificate Upload */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ p: 2, border: formData.medicalCertificateFile ? '2px solid green' : '1px solid #ddd' }}>
+                  <Typography variant="subtitle2" gutterBottom>Medical Certificate</Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                    sx={{ mb: 1 }}
+                  >
+                    {formData.medicalCertificateFile ? 'Change File' : 'Upload Medical Certificate'}
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload('medicalCertificateFile', e.target.files[0])}
+                    />
+                  </Button>
+                  {formData.medicalCertificateFile && (
+                    <Typography variant="body2" color="success.main">
+                      ✓ {formData.medicalCertificateFile.name}
+                    </Typography>
+                  )}
+                  {errors.medicalCertificateFile && (
+                    <Typography variant="body2" color="error">
+                      {errors.medicalCertificateFile}
+                    </Typography>
+                  )}
+                </Card>
+              </Grid>
+
+              {/* Parent ID Upload */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ p: 2, border: formData.parentIdFile ? '2px solid green' : '1px solid #ddd' }}>
+                  <Typography variant="subtitle2" gutterBottom>Parent/Guardian Valid ID</Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                    sx={{ mb: 1 }}
+                  >
+                    {formData.parentIdFile ? 'Change File' : 'Upload Parent ID'}
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload('parentIdFile', e.target.files[0])}
+                    />
+                  </Button>
+                  {formData.parentIdFile && (
+                    <Typography variant="body2" color="success.main">
+                      ✓ {formData.parentIdFile.name}
+                    </Typography>
+                  )}
+                  {errors.parentIdFile && (
+                    <Typography variant="body2" color="error">
+                      {errors.parentIdFile}
+                    </Typography>
+                  )}
+                </Card>
+              </Grid>
+
+              {/* ID Pictures Upload */}
+              <Grid item xs={12} md={6}>
+                <Card sx={{ p: 2, border: formData.idPicturesFile ? '2px solid green' : '1px solid #ddd' }}>
+                  <Typography variant="subtitle2" gutterBottom>2x2 ID Pictures (4 pieces)</Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                    sx={{ mb: 1 }}
+                  >
+                    {formData.idPicturesFile ? 'Change File' : 'Upload ID Pictures'}
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload('idPicturesFile', e.target.files[0])}
+                    />
+                  </Button>
+                  {formData.idPicturesFile && (
+                    <Typography variant="body2" color="success.main">
+                      ✓ {formData.idPicturesFile.name}
+                    </Typography>
+                  )}
+                  {errors.idPicturesFile && (
+                    <Typography variant="body2" color="error">
+                      {errors.idPicturesFile}
+                    </Typography>
+                  )}
+                </Card>
+              </Grid>
+
+              {/* Medical Information */}
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main', mt: 3 }}>
-                  Medical Information
+                  Medical Information (Optional)
                 </Typography>
               </Grid>
               <Grid item xs={12}>
@@ -1135,7 +1352,7 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 6: // Review & Submit
+        case 7: // Review & Submit
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
