@@ -27,7 +27,8 @@ import {
   QuestionAnswer as InquiryIcon,
   Assignment as RequestsIcon,
   School as SchoolIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Receipt as ReceiptIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -65,7 +66,8 @@ const Navbar = () => {
         { text: 'Enrollment', path: '/enrollment', icon: <SchoolIcon /> },
         { text: 'Request Document', path: '/request-document', icon: <DescriptionIcon /> },
         { text: 'My Requests', path: '/my-requests', icon: <RequestsIcon /> },
-        { text: 'Inquiries', path: '/inquiries', icon: <InquiryIcon /> }
+        { text: 'My Form 137 Stubs', path: '/my-form137-requests', icon: <ReceiptIcon /> },
+
       ];
 
   const renderDrawerContent = () => (

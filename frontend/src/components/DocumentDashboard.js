@@ -1,77 +1,41 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Container,
   Typography,
-  Paper,
   Grid,
-  TextField,
   Button,
   Box,
-  MenuItem,
   Card,
   CardContent,
   CardActions,
-  CircularProgress,
   List,
   ListItem,
-  ListItemIcon,
   ListItemText,
-  FormControl,
-  InputLabel,
-  Select,
-  Alert,
-  Snackbar,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
-  Send as SendIcon,
-  CheckCircle as SuccessIcon,
-  School as SchoolIcon,
-  Description as DescriptionIcon,
   AccessTime as AccessTimeIcon,
   FormatListBulleted as ListIcon,
+  Description as DescriptionIcon,
+  Send as SendIcon,
 } from '@mui/icons-material';
 
 const DOCUMENT_TYPES = [
   {
-    id: 'form137',
-    name: 'Form 137 (Permanent Record)',
-    description: 'Official permanent record of grades and academic performance throughout high school.',
+    id: 'sf10',
+    name: 'School Form 10 (SF10) / Form 137',
+    description: 'Learner\'s permanent academic record - comprehensive record of grades and academic performance.',
     requirements: ['Valid ID', 'Request Form', 'Authorization Letter (if not the student)'],
     processingTime: '5-7 working days',
     route: '/request-form137'
   },
   {
-    id: 'form138',
-    name: 'Form 138 (Report Card)',
-    description: 'Official report card showing grades for each grading period.',
+    id: 'sf9',
+    name: 'School Form 9 (SF9) / Form 138',
+    description: 'Current school year\'s report card showing grades for each grading period.',
     requirements: ['Valid ID', 'Request Form'],
     processingTime: '3-5 working days',
     route: '/request-form138'
-  },
-  {
-    id: 'diploma',
-    name: 'High School Diploma',
-    description: 'Official certificate of high school graduation.',
-    requirements: ['Valid ID', 'Request Form', 'Clearance Form'],
-    processingTime: '7-10 working days',
-    route: '/request-diploma'
-  },
-  {
-    id: 'sf10',
-    name: 'School Form 10 (SF10)',
-    description: 'Learner\'s permanent academic record in the K to 12 Basic Education Program.',
-    requirements: ['Valid ID', 'Request Form', 'Previous School Records (if transferee)'],
-    processingTime: '5-7 working days',
-    route: '/request-sf10'
-  },
-  {
-    id: 'sf9',
-    name: 'School Form 9 (SF9)',
-    description: 'Current school year\'s report card in the K to 12 Basic Education Program.',
-    requirements: ['Valid ID', 'Request Form'],
-    processingTime: '3-5 working days',
-    route: '/request-sf9'
   },
   {
     id: 'goodMoral',

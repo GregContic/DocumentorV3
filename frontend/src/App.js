@@ -14,17 +14,16 @@ import Register from './pages/public/Register';
 import DocumentRequest from './components/DocumentDashboard';
 import MyRequests from './pages/user/MyRequests';
 import UserInquiriesDashboard from './components/UserInquiriesDashboard';
+import UserForm137Dashboard from './user/UserForm137Dashboard';
 import Form137Request from './pages/user/Form137Request';
 import Form138Request from './pages/user/Form138Request';
-import SF9Request from './pages/user/SF9Request';
-import SF10Request from './pages/user/SF10Request';
-import DiplomaRequest from './pages/user/DiplomaRequest';
 import Enrollment from './pages/user/Enrollment';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import Archive from './admin/Archive';
 import EnrollmentDashboard from './admin/EnrollmentDashboard';
+import Form137StubDashboard from './admin/Form137StubDashboard';
 import Settings from './admin/Settings';
 
 // Protected Route
@@ -79,7 +78,7 @@ function App() {
               path="/request-sf9"
               element={
                 <ProtectedRoute>
-                  <SF9Request />
+                  <Form138Request />
                 </ProtectedRoute>
               }
             />
@@ -87,15 +86,7 @@ function App() {
               path="/request-sf10"
               element={
                 <ProtectedRoute>
-                  <SF10Request />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/request-diploma"
-              element={
-                <ProtectedRoute>
-                  <DiplomaRequest />
+                  <Form137Request />
                 </ProtectedRoute>
               }
             />
@@ -123,6 +114,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/my-form137-requests"
+              element={
+                <ProtectedRoute>
+                  <UserForm137Dashboard />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Admin Routes */}
             <Route
@@ -146,6 +145,14 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <EnrollmentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/form137-stubs"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <Form137StubDashboard />
                 </ProtectedRoute>
               }
             />

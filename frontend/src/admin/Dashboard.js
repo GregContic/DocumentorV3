@@ -31,6 +31,7 @@ import {
   Archive as ArchiveIcon,
   Visibility as ViewIcon,
   Search as SearchIcon,
+  Assignment as Form137Icon,
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { documentService } from '../services/api';
@@ -253,6 +254,35 @@ const Dashboard = () => {
           }}
         >
           View Archive
+        </Button>
+
+        <Button
+          component={RouterLink}
+          to="/admin/form137-stubs"
+          variant="outlined"
+          size="large"
+          startIcon={<Form137Icon />}
+          sx={{
+            borderColor: '#f59e0b',
+            color: '#f59e0b',
+            backgroundColor: 'white',
+            borderWidth: 2,
+            borderRadius: 2,
+            px: 4,
+            py: 1.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '1rem',
+            '&:hover': {
+              borderColor: '#d97706',
+              backgroundColor: '#fffbeb',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.2)',
+            },
+            transition: 'all 0.2s ease-in-out',
+          }}
+        >
+          Form 137 Stubs
         </Button>
       </Box>      {error && (
         <Alert 

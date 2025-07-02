@@ -16,7 +16,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Divider,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -38,7 +37,7 @@ const Form138Request = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    documentType: 'Form 138',
+    documentType: 'Form 138 / SF9',
     purpose: '',
     studentNumber: '',
     schoolYear: '',
@@ -127,7 +126,7 @@ const Form138Request = () => {
       setShowSuccess(true);
       // Reset form
       setFormData({
-        documentType: 'Form 138',
+        documentType: 'Form 138 / SF9',
         purpose: '',
         studentNumber: '',
         schoolYear: '',
@@ -408,12 +407,12 @@ const Form138Request = () => {
         }}>
           <SchoolIcon sx={{ fontSize: 40, mr: 2 }} />
           <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-            Form 138 Request
+            Form 138 / SF9 Request
           </Typography>
         </Box>
 
         <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-          Fill out the form below to request your Form 138 (Report Card)
+          Fill out the form below to request your Form 138 / SF9 (Report Card)
         </Typography>
 
         <Stepper 

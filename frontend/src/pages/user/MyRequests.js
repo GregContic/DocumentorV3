@@ -45,6 +45,8 @@ const MyRequests = () => {
     
     switch (request.documentType) {
       case 'Form 137':
+      case 'Form 137 / SF10':
+      case 'School Form 10 (SF10) / Form 137':
         return (
           <Form137PDFWithQR
             formData={request}
@@ -58,6 +60,8 @@ const MyRequests = () => {
         );
       
       case 'Form 138':
+      case 'Form 138 / SF9':
+      case 'School Form 9 (SF9) / Form 138':
         return (
           <Form138PDFWithQR
             formData={request}

@@ -116,6 +116,17 @@ export const settingsService = {
   getPublicSettings: () => api.get('/api/settings/public'),
 };
 
+// Form 137 Stub service
+export const form137StubService = {
+  createStub: (stubData) => api.post('/api/form137-stubs/create', stubData),
+  getUserStubs: () => api.get('/api/form137-stubs/my-stubs'),
+  getStubById: (id) => api.get(`/api/form137-stubs/${id}`),
+  // Admin methods
+  getAllStubs: (params) => api.get('/api/form137-stubs', { params }),
+  updateStubStatus: (id, statusData) => api.put(`/api/form137-stubs/${id}/status`, statusData),
+  verifyStubByCode: (stubCode) => api.get(`/api/form137-stubs/verify/${stubCode}`),
+};
+
 // Chatbot service
 export const chatbotService = {
   sendMessage: (message, pageContext) => api.post('/api/chatbot/message', { message, pageContext }),
