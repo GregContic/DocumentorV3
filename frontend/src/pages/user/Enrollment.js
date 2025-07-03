@@ -141,6 +141,25 @@ const Enrollment = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Auto-populate school info for continuing students
+  useEffect(() => {
+    if (formData.enrollmentType === 'old') {
+      // For continuing students, auto-fill school information
+      setFormData(prev => ({
+        ...prev,
+        lastSchoolAttended: 'Eastern La Trinidad National High School',
+        schoolAddress: 'La Trinidad, Benguet'
+      }));
+    } else if (formData.enrollmentType !== '') {
+      // Clear school info for new students and transferees
+      setFormData(prev => ({
+        ...prev,
+        lastSchoolAttended: '',
+        schoolAddress: ''
+      }));
+    }
+  }, [formData.enrollmentType]);
+
   // Don't render if not authenticated
   if (!isAuthenticated) {
     return null;
@@ -254,8 +273,11 @@ const Enrollment = () => {
         }
         break;
       case 3: // Previous School
-        if (!formData.lastSchoolAttended.trim()) newErrors.lastSchoolAttended = 'Last school attended is required';
-        if (!formData.schoolAddress.trim()) newErrors.schoolAddress = 'School address is required';
+        // For continuing students, school info is auto-filled and not required
+        if (formData.enrollmentType !== 'old') {
+          if (!formData.lastSchoolAttended.trim()) newErrors.lastSchoolAttended = 'Last school attended is required';
+          if (!formData.schoolAddress.trim()) newErrors.schoolAddress = 'School address is required';
+        }
         if (!formData.gradeLevel.trim()) newErrors.gradeLevel = 'Grade level is required';
         if (!formData.schoolYear.trim()) newErrors.schoolYear = 'School year is required';
         break;
@@ -758,57 +780,122 @@ const Enrollment = () => {
                   Previous School Information
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Provide details about your last attended school.
+                  {formData.enrollmentType === 'old' 
+                    ? 'Provide details about your last completed grade level at Eastern La Trinidad National High School.'
+                    : 'Provide details about your last attended school.'}
                 </Typography>
               </Grid>
 
-              <Grid item xs={12} md={8}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Last School Attended"
-                  value={formData.lastSchoolAttended}
-                  onChange={(e) => setFormData(prev => ({ ...prev, lastSchoolAttended: e.target.value }))}
-                  error={!!errors.lastSchoolAttended}
-                  helperText={errors.lastSchoolAttended}
-                  placeholder="e.g., La Trinidad Elementary School"
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Grade Level Completed"
-                  value={formData.gradeLevel}
-                  onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
-                  error={!!errors.gradeLevel}
-                  helperText={errors.gradeLevel}
-                  placeholder="e.g., Grade 6"
-                />
-              </Grid>
-              <Grid item xs={12} md={8}>
-                <TextField
-                  fullWidth
-                  required
-                  label="School Address"
-                  value={formData.schoolAddress}
-                  onChange={(e) => setFormData(prev => ({ ...prev, schoolAddress: e.target.value }))}
-                  error={!!errors.schoolAddress}
-                  helperText={errors.schoolAddress}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  required
-                  label="School Year Completed"
-                  value={formData.schoolYear}
-                  onChange={(e) => setFormData(prev => ({ ...prev, schoolYear: e.target.value }))}
-                  error={!!errors.schoolYear}
-                  helperText={errors.schoolYear}
-                  placeholder="e.g., 2024-2025"
-                />
-              </Grid>
+              {/* Show school info for new students and transferees only */}
+              {formData.enrollmentType !== 'old' && (
+                <>
+                  <Grid item xs={12} md={8}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Last School Attended"
+                      value={formData.lastSchoolAttended}
+                      onChange={(e) => setFormData(prev => ({ ...prev, lastSchoolAttended: e.target.value }))}
+                      error={!!errors.lastSchoolAttended}
+                      helperText={errors.lastSchoolAttended}
+                      placeholder="e.g., La Trinidad Elementary School"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Grade Level Completed"
+                      value={formData.gradeLevel}
+                      onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
+                      error={!!errors.gradeLevel}
+                      helperText={errors.gradeLevel}
+                      placeholder="e.g., Grade 6"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={8}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="School Address"
+                      value={formData.schoolAddress}
+                      onChange={(e) => setFormData(prev => ({ ...prev, schoolAddress: e.target.value }))}
+                      error={!!errors.schoolAddress}
+                      helperText={errors.schoolAddress}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="School Year Completed"
+                      value={formData.schoolYear}
+                      onChange={(e) => setFormData(prev => ({ ...prev, schoolYear: e.target.value }))}
+                      error={!!errors.schoolYear}
+                      helperText={errors.schoolYear}
+                      placeholder="e.g., 2024-2025"
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Show simplified form for continuing students */}
+              {formData.enrollmentType === 'old' && (
+                <>
+                  <Grid item xs={12}>
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Continuing Student Information
+                      </Typography>
+                      <Typography variant="body2">
+                        Since you're a continuing student at Eastern La Trinidad National High School, 
+                        you only need to provide your last completed grade level and school year.
+                      </Typography>
+                    </Alert>
+                  </Grid>
+                  
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Grade Level Completed"
+                      value={formData.gradeLevel}
+                      onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
+                      error={!!errors.gradeLevel}
+                      helperText={errors.gradeLevel}
+                      placeholder="e.g., Grade 7"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="School Year Completed"
+                      value={formData.schoolYear}
+                      onChange={(e) => setFormData(prev => ({ ...prev, schoolYear: e.target.value }))}
+                      error={!!errors.schoolYear}
+                      helperText={errors.schoolYear}
+                      placeholder="e.g., 2024-2025"
+                    />
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <Card sx={{ p: 2, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
+                      <CardContent>
+                        <Typography variant="h6" color="primary" gutterBottom>
+                          School Information
+                        </Typography>
+                        <Typography variant="body1">
+                          <strong>Last School Attended:</strong> Eastern La Trinidad National High School
+                        </Typography>
+                        <Typography variant="body1">
+                          <strong>School Address:</strong> La Trinidad, Benguet
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </>
+              )}
             </Grid>
           );
 

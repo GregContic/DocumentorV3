@@ -387,69 +387,6 @@ const Home = () => {
           ))}        </Grid>
       </Container>
 
-      {/* Statistics Section */}
-      <Box sx={{ 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        py: 6,
-        color: 'white',
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'url("https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.1,
-        },
-      }}>
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={4} justifyContent="center">
-            {[
-              { number: '10,000+', label: 'Happy Students', icon: '🎓' },
-              { number: '50,000+', label: 'Documents Processed', icon: '📄' },
-              { number: '99.9%', label: 'Success Rate', icon: '✅' },
-              { number: '24/7', label: 'Support Available', icon: '💬' },
-            ].map((stat, index) => (
-              <Grid item xs={6} md={3} key={index}>
-                <Box sx={{ 
-                  textAlign: 'center',
-                  animation: `countUp 2s ease-out ${index * 0.2}s both`,
-                  '@keyframes countUp': {
-                    '0%': { opacity: 0, transform: 'translateY(30px)' },
-                    '100%': { opacity: 1, transform: 'translateY(0)' },
-                  },
-                }}>
-                  <Typography variant="h6" sx={{ fontSize: '2rem', mb: 1 }}>
-                    {stat.icon}
-                  </Typography>
-                  <Typography 
-                    variant="h3" 
-                    sx={{ 
-                      fontWeight: 700, 
-                      mb: 1,
-                      background: 'linear-gradient(45deg, #fff, #e3f2fd)',
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                    }}
-                  >
-                    {stat.number}
-                  </Typography>
-                  <Typography variant="h6" sx={{ opacity: 0.9, fontWeight: 300 }}>
-                    {stat.label}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-
       {/* How It Works Section */}
       <Box sx={{ 
         bgcolor: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', 

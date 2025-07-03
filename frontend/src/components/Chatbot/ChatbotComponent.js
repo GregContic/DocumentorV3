@@ -445,7 +445,9 @@ const MessageBubble = ({ message, user }) => {
             minute: '2-digit',
           })}
           {message.intent && message.intent !== 'unknown' && (
-            <span style={{ marginLeft: '4px' }}>• {message.intent}</span>
+            <span style={{ marginLeft: '4px' }}>
+              • {typeof message.intent === 'string' ? message.intent : message.intent.type || message.intent.category}
+            </span>
           )}
         </Typography>
       </Paper>

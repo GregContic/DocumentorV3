@@ -115,7 +115,6 @@ const EnrollmentDashboard = () => {
                   <TableCell>Name</TableCell>
                   <TableCell>Grade to Enroll</TableCell>
                   <TableCell>Track</TableCell>
-                  <TableCell>Strand</TableCell>
                   <TableCell>Date Submitted</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Actions</TableCell>
@@ -128,7 +127,6 @@ const EnrollmentDashboard = () => {
                     <TableCell>{e.surname}, {e.firstName} {e.middleName}</TableCell>
                     <TableCell>{e.gradeToEnroll}</TableCell>
                     <TableCell>{e.track}</TableCell>
-                    <TableCell>{e.strand}</TableCell>
                     <TableCell>{new Date(e.createdAt).toLocaleString()}</TableCell>
                     <TableCell>
                       <Chip 
@@ -309,10 +307,6 @@ const EnrollmentDashboard = () => {
                   <Grid item xs={12} md={6}>
                     <Typography variant="body2" color="text.secondary">Track</Typography>
                     <Typography variant="body1" fontWeight={500}>{selectedEnrollment.track || 'N/A'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="body2" color="text.secondary">Strand</Typography>
-                    <Typography variant="body1" fontWeight={500}>{selectedEnrollment.strand || 'N/A'}</Typography>
                   </Grid>
                 </Grid>
               </Grid>
