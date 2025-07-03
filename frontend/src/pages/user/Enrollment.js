@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -105,7 +105,6 @@ const Enrollment = () => {
     emergencyContactAddress: '',
     // Enrollment Details
     gradeToEnroll: '',
-    strand: '', // For SHS
     track: '', // For SHS
     // Documents (file uploads)
     form137File: null,
@@ -134,6 +133,18 @@ const Enrollment = () => {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showAIUploader, setShowAIUploader] = useState(false);
+
+  // Authentication guard
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // AI Document Assistant handler
   const handleAIDataExtracted = (extractedData) => {
@@ -192,24 +203,9 @@ const Enrollment = () => {
   ];
 
   const tracks = [
-    'Academic Track',
-    'Technical-Vocational-Livelihood (TVL) Track',
-    'Sports Track',
-    'Arts and Design Track'
-  ];
-
-  const academicStrands = [
-    'Science, Technology, Engineering and Mathematics (STEM)',
-    'Accountancy, Business and Management (ABM)',
-    'Humanities and Social Sciences (HUMSS)',
-    'General Academic Strand (GAS)'
-  ];
-
-  const tvlStrands = [
-    'Information and Communications Technology (ICT)',
-    'Home Economics (HE)',
-    'Agricultural-Fishery Arts (AFA)',
-    'Industrial Arts (IA)'
+    'Technical-Vocational-Livelihood',
+    'Accountancy and Business Management',
+    'Science-Technology-Engineering-Mathematics'
   ];
 
   const requirements = [
@@ -273,21 +269,11 @@ const Enrollment = () => {
         if (!formData.gradeToEnroll) newErrors.gradeToEnroll = 'Grade to enroll is required';
         if ((formData.gradeToEnroll === 'Grade 11' || formData.gradeToEnroll === 'Grade 12')) {
           if (!formData.track) newErrors.track = 'Track is required for Senior High School';
-          if (formData.track === 'Academic Track' && !formData.strand) {
-            newErrors.strand = 'Strand is required for Academic Track';
-          }
-          if (formData.track === 'Technical-Vocational-Livelihood (TVL) Track' && !formData.strand) {
-            newErrors.strand = 'Strand is required for TVL Track';
-          }
         }
         break;
       case 6: // Upload Documents
-        if (!formData.form137File) newErrors.form137File = 'Form 137 document is required';
-        if (!formData.form138File) newErrors.form138File = 'Form 138 document is required';
-        if (!formData.goodMoralFile) newErrors.goodMoralFile = 'Good moral certificate is required';
-        if (!formData.medicalCertificateFile) newErrors.medicalCertificateFile = 'Medical certificate is required';
-        if (!formData.parentIdFile) newErrors.parentIdFile = 'Parent/Guardian ID is required';
-        if (!formData.idPicturesFile) newErrors.idPicturesFile = 'ID pictures are required';
+        // Documents are now optional - no validation required
+        // Users can proceed without uploading documents
         break;
       case 7: // Review & Submit
         if (!formData.agreementAccepted) newErrors.agreementAccepted = 'You must accept the enrollment agreement';
@@ -397,13 +383,19 @@ const Enrollment = () => {
         emergencyContactNumber: '',
         emergencyContactAddress: '',
         gradeToEnroll: '',
-        strand: '',
         track: '',
-        birthCertificate: false,
+        form137File: null,
+        form138File: null,
+        goodMoralFile: null,
+        medicalCertificateFile: null,
+        parentIdFile: null,
+        idPicturesFile: null,
         form137: false,
         form138: false,
         goodMoral: false,
         medicalCertificate: false,
+        parentId: false,
+        idPictures: false,
         specialNeeds: '',
         allergies: '',
         medications: '',
@@ -1002,7 +994,7 @@ const Enrollment = () => {
                   <Select
                     value={formData.gradeToEnroll}
                     label="Grade Level to Enroll"
-                    onChange={(e) => setFormData(prev => ({ ...prev, gradeToEnroll: e.target.value, track: '', strand: '' }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, gradeToEnroll: e.target.value, track: '' }))}
                   >
                     {gradeLevels.map((grade) => (
                       <MenuItem key={grade} value={grade}>{grade}</MenuItem>
@@ -1020,7 +1012,7 @@ const Enrollment = () => {
                       Senior High School Program
                     </Typography>
                     <Alert severity="info" sx={{ mb: 2 }}>
-                      Senior High School students must choose a track and strand.
+                      Senior High School students must choose a track.
                     </Alert>
                   </Grid>
                   
@@ -1030,7 +1022,7 @@ const Enrollment = () => {
                       <Select
                         value={formData.track}
                         label="Track"
-                        onChange={(e) => setFormData(prev => ({ ...prev, track: e.target.value, strand: '' }))}
+                        onChange={(e) => setFormData(prev => ({ ...prev, track: e.target.value }))}
                       >
                         {tracks.map((track) => (
                           <MenuItem key={track} value={track}>{track}</MenuItem>
@@ -1041,34 +1033,6 @@ const Enrollment = () => {
                   </Grid>
 
                   {formData.track && (
-                    <Grid item xs={12} md={6}>
-                      <FormControl fullWidth required error={!!errors.strand}>
-                        <InputLabel>Strand</InputLabel>
-                        <Select
-                          value={formData.strand}
-                          label="Strand"
-                          onChange={(e) => setFormData(prev => ({ ...prev, strand: e.target.value }))}
-                        >
-                          {formData.track === 'Academic Track' && 
-                            academicStrands.map((strand) => (
-                              <MenuItem key={strand} value={strand}>{strand}</MenuItem>
-                            ))
-                          }
-                          {formData.track === 'Technical-Vocational-Livelihood (TVL) Track' && 
-                            tvlStrands.map((strand) => (
-                              <MenuItem key={strand} value={strand}>{strand}</MenuItem>
-                            ))
-                          }
-                          {(formData.track === 'Sports Track' || formData.track === 'Arts and Design Track') && (
-                            <MenuItem value={formData.track}>{formData.track}</MenuItem>
-                          )}
-                        </Select>
-                        {errors.strand && <FormHelperText>{errors.strand}</FormHelperText>}
-                      </FormControl>
-                    </Grid>
-                  )}
-
-                  {formData.track && formData.strand && (
                     <Grid item xs={12}>
                       <Card sx={{ p: 2, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
                         <CardContent>
@@ -1080,9 +1044,6 @@ const Enrollment = () => {
                           </Typography>
                           <Typography variant="body1">
                             <strong>Track:</strong> {formData.track}
-                          </Typography>
-                          <Typography variant="body1">
-                            <strong>Strand:</strong> {formData.strand}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -1098,16 +1059,19 @@ const Enrollment = () => {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Upload Required Documents
+                  Upload Documents (Optional)
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Please upload all required documents. Files should be in PDF, JPG, or PNG format.
+                  You can upload documents now or submit them later. Files should be in PDF, JPG, or PNG format.
                 </Typography>
               </Grid>
 
               <Grid item xs={12}>
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>Required Documents:</Typography>
+                  <Typography variant="subtitle2" gutterBottom>Recommended Documents:</Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    While not required to proceed, having these documents ready will speed up your enrollment process:
+                  </Typography>
                   <List dense>
                     {requirements.map((req, index) => (
                       <ListItem key={index} sx={{ py: 0 }}>
@@ -1142,11 +1106,6 @@ const Enrollment = () => {
                       ✓ {formData.form137File.name}
                     </Typography>
                   )}
-                  {errors.form137File && (
-                    <Typography variant="body2" color="error">
-                      {errors.form137File}
-                    </Typography>
-                  )}
                 </Card>
               </Grid>
 
@@ -1172,11 +1131,6 @@ const Enrollment = () => {
                   {formData.form138File && (
                     <Typography variant="body2" color="success.main">
                       ✓ {formData.form138File.name}
-                    </Typography>
-                  )}
-                  {errors.form138File && (
-                    <Typography variant="body2" color="error">
-                      {errors.form138File}
                     </Typography>
                   )}
                 </Card>
@@ -1206,11 +1160,6 @@ const Enrollment = () => {
                       ✓ {formData.goodMoralFile.name}
                     </Typography>
                   )}
-                  {errors.goodMoralFile && (
-                    <Typography variant="body2" color="error">
-                      {errors.goodMoralFile}
-                    </Typography>
-                  )}
                 </Card>
               </Grid>
 
@@ -1236,11 +1185,6 @@ const Enrollment = () => {
                   {formData.medicalCertificateFile && (
                     <Typography variant="body2" color="success.main">
                       ✓ {formData.medicalCertificateFile.name}
-                    </Typography>
-                  )}
-                  {errors.medicalCertificateFile && (
-                    <Typography variant="body2" color="error">
-                      {errors.medicalCertificateFile}
                     </Typography>
                   )}
                 </Card>
@@ -1270,11 +1214,6 @@ const Enrollment = () => {
                       ✓ {formData.parentIdFile.name}
                     </Typography>
                   )}
-                  {errors.parentIdFile && (
-                    <Typography variant="body2" color="error">
-                      {errors.parentIdFile}
-                    </Typography>
-                  )}
                 </Card>
               </Grid>
 
@@ -1300,11 +1239,6 @@ const Enrollment = () => {
                   {formData.idPicturesFile && (
                     <Typography variant="body2" color="success.main">
                       ✓ {formData.idPicturesFile.name}
-                    </Typography>
-                  )}
-                  {errors.idPicturesFile && (
-                    <Typography variant="body2" color="error">
-                      {errors.idPicturesFile}
                     </Typography>
                   )}
                 </Card>
@@ -1435,16 +1369,10 @@ const Enrollment = () => {
                       <Typography variant="body1">{formData.gradeToEnroll || 'Not selected'}</Typography>
                     </Grid>
                     {(formData.gradeToEnroll === 'Grade 11' || formData.gradeToEnroll === 'Grade 12') && (
-                      <>
-                        <Grid item xs={12} md={4}>
-                          <Typography variant="body2" color="text.secondary">Track:</Typography>
-                          <Typography variant="body1">{formData.track || 'Not selected'}</Typography>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                          <Typography variant="body2" color="text.secondary">Strand:</Typography>
-                          <Typography variant="body1">{formData.strand || 'Not selected'}</Typography>
-                        </Grid>
-                      </>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">Track:</Typography>
+                        <Typography variant="body1">{formData.track || 'Not selected'}</Typography>
+                      </Grid>
                     )}
                   </Grid>
                 </Card>

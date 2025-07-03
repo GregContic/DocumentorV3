@@ -6,9 +6,11 @@ exports.createEnrollment = async (req, res) => {
   try {
     const enrollmentData = { ...req.body };
     
-    // If user is authenticated, link the enrollment to the user
+    // Link the enrollment to the authenticated user
     if (req.user && req.user.userId) {
       enrollmentData.user = req.user.userId;
+    } else {
+      return res.status(401).json({ message: 'Authentication required to submit enrollment' });
     }
     
     // Handle uploaded files

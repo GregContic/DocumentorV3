@@ -4,8 +4,8 @@ const enrollmentController = require('../controllers/enrollmentController');
 const { authenticate, authorizeAdmin, preventAdminSubmission } = require('../middleware/authMiddleware');
 const { uploadEnrollmentDocs } = require('../middleware/uploadMiddleware');
 
-// Public/Student: Submit enrollment with file uploads
-router.post('/', uploadEnrollmentDocs, enrollmentController.createEnrollment);
+// Student: Submit enrollment with file uploads (requires authentication)
+router.post('/', authenticate, uploadEnrollmentDocs, enrollmentController.createEnrollment);
 
 // Student: Get my enrollment status
 router.get('/my-status', authenticate, enrollmentController.getMyEnrollmentStatus);
