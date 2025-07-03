@@ -21,6 +21,7 @@ import {
   Grid,
   Divider,
   IconButton,
+  TextField,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -43,6 +44,9 @@ const EnrollmentDashboard = () => {
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [enrollmentToReject, setEnrollmentToReject] = useState(null);
 
   const handleViewDetails = (enrollment) => {
     setSelectedEnrollment(enrollment);
@@ -54,7 +58,58 @@ const EnrollmentDashboard = () => {
     setSelectedEnrollment(null);
   };
 
+  const handleRejectClick = (enrollment) => {
+    setEnrollmentToReject(enrollment);
+    setRejectionDialogOpen(true);
+  };
+
+  const handleRejectCancel = () => {
+    setRejectionDialogOpen(false);
+    setEnrollmentToReject(null);
+    setRejectionReason('');
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectionReason.trim()) {
+      setError('Please provide a reason for rejection');
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      await enrollmentService.updateEnrollmentStatus(enrollmentToReject._id, { 
+        status: 'rejected',
+        rejectionReason: rejectionReason.trim()
+      });
+      
+      // Refresh the enrollments list
+      const res = await enrollmentService.getAllEnrollments();
+      setEnrollments(res.data);
+      
+      // Update the selected enrollment if it's still open
+      if (selectedEnrollment && selectedEnrollment._id === enrollmentToReject._id) {
+        const updatedEnrollment = res.data.find(e => e._id === enrollmentToReject._id);
+        setSelectedEnrollment(updatedEnrollment);
+      }
+      
+      // Close dialogs and reset state
+      setRejectionDialogOpen(false);
+      setEnrollmentToReject(null);
+      setRejectionReason('');
+    } catch (err) {
+      setError('Failed to reject enrollment');
+    }
+    setUpdating(false);
+  };
+
   const handleStatusUpdate = async (enrollmentId, status) => {
+    // If status is rejected, open the rejection dialog instead
+    if (status === 'rejected') {
+      const enrollment = enrollments.find(e => e._id === enrollmentId) || selectedEnrollment;
+      handleRejectClick(enrollment);
+      return;
+    }
+
     setUpdating(true);
     try {
       await enrollmentService.updateEnrollmentStatus(enrollmentId, { status });
@@ -492,6 +547,56 @@ const EnrollmentDashboard = () => {
                       size="small"
                     />
                   </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" color="text.secondary">Current Status</Typography>
+                    <Chip 
+                      label={selectedEnrollment.status || 'pending'} 
+                      color={getStatusColor(selectedEnrollment.status || 'pending')} 
+                      size="small" 
+                    />
+                  </Grid>
+                  {selectedEnrollment.reviewedAt && (
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Reviewed Date</Typography>
+                      <Typography variant="body1" fontWeight={500}>
+                        {new Date(selectedEnrollment.reviewedAt).toLocaleString()}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {selectedEnrollment.rejectionReason && (
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">Rejection Reason</Typography>
+                      <Typography variant="body1" fontWeight={500} color="error.main" 
+                        sx={{ 
+                          bgcolor: 'error.50', 
+                          p: 2, 
+                          borderRadius: 1, 
+                          mt: 1,
+                          border: '1px solid',
+                          borderColor: 'error.200'
+                        }}
+                      >
+                        {selectedEnrollment.rejectionReason}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {selectedEnrollment.reviewNotes && (
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">Review Notes</Typography>
+                      <Typography variant="body1" fontWeight={500} 
+                        sx={{ 
+                          bgcolor: 'grey.50', 
+                          p: 2, 
+                          borderRadius: 1, 
+                          mt: 1,
+                          border: '1px solid',
+                          borderColor: 'grey.200'
+                        }}
+                      >
+                        {selectedEnrollment.reviewNotes}
+                      </Typography>
+                    </Grid>
+                  )}
                 </Grid>
               </Grid>
 
@@ -524,6 +629,76 @@ const EnrollmentDashboard = () => {
           )}
           <Button onClick={handleCloseDialog} variant="contained">
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Rejection Reason Dialog */}
+      <Dialog
+        open={rejectionDialogOpen}
+        onClose={handleRejectCancel}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          bgcolor: 'error.main', 
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <Typography variant="h6">
+            Reject Enrollment
+          </Typography>
+          <IconButton 
+            edge="end" 
+            color="inherit" 
+            onClick={handleRejectCancel}
+            sx={{ color: 'white' }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body1" gutterBottom>
+            Please provide a reason for rejecting this enrollment application:
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Rejection Reason"
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            placeholder="Enter the reason for rejection..."
+            required
+            sx={{ mt: 2 }}
+          />
+          {enrollmentToReject && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Student: {enrollmentToReject.firstName} {enrollmentToReject.surname}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                LRN: {enrollmentToReject.learnerReferenceNumber}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={handleRejectCancel} variant="outlined">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleRejectConfirm} 
+            variant="contained" 
+            color="error"
+            disabled={updating || !rejectionReason.trim()}
+            startIcon={<RejectIcon />}
+          >
+            {updating ? 'Rejecting...' : 'Reject Enrollment'}
           </Button>
         </DialogActions>
       </Dialog>

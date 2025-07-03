@@ -44,10 +44,23 @@ const documentRequestSchema = new mongoose.Schema({
   preferredPickupDate: String,
   preferredPickupTime: String,
   additionalNotes: String,
-    status: {
+  status: {
     type: String,
     enum: ['pending', 'approved', 'rejected', 'completed', 'processing', 'submitted'],
     default: 'pending'
+  },
+  rejectionReason: {
+    type: String
+  },
+  reviewNotes: {
+    type: String
+  },
+  reviewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  reviewedAt: {
+    type: Date
   },
   archived: {
     type: Boolean,

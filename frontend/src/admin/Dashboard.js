@@ -59,8 +59,12 @@ const Dashboard = () => {
   const [qrVerificationOpen, setQrVerificationOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [requestDetails, setRequestDetails] = useState(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     fetchRequests();
@@ -89,6 +93,13 @@ const Dashboard = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };  const handleStatusChange = async (requestId, newStatus) => {
+    if (newStatus === 'rejected') {
+      // Open rejection dialog instead of immediate update
+      setSelectedRequest(requests.find(req => req._id === requestId));
+      setRejectDialogOpen(true);
+      return;
+    }
+    
     try {
       const response = await documentService.updateRequestStatus(requestId, newStatus);
       
@@ -109,6 +120,36 @@ const Dashboard = () => {
       // Refresh the list anyway to ensure consistency
       fetchRequests();
     }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!rejectionReason.trim()) {
+      setError('Please provide a rejection reason.');
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      await documentService.updateRequestStatus(selectedRequest._id, 'rejected', {
+        rejectionReason: rejectionReason.trim()
+      });
+      
+      setSuccessMessage('Request rejected successfully');
+      setShowSuccessMessage(true);
+      fetchRequests();
+      handleCloseRejectDialog();
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      setError('Failed to reject request. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCloseRejectDialog = () => {
+    setRejectDialogOpen(false);
+    setSelectedRequest(null);
+    setRejectionReason('');
   };
 
   const handleOpenQrDialog = (request) => {
@@ -807,6 +848,22 @@ const Dashboard = () => {
                         sx={{ fontWeight: 600 }}
                       />
                     </Box>
+                    {requestDetails.status === 'rejected' && requestDetails.rejectionReason && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                          Rejection Reason
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500} sx={{ 
+                          color: '#dc2626',
+                          backgroundColor: '#fef2f2',
+                          p: 2,
+                          borderRadius: 1,
+                          border: '1px solid #fecaca'
+                        }}>
+                          {requestDetails.rejectionReason}
+                        </Typography>
+                      </Box>
+                    )}
                     <Box>
                       <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                         Request ID
@@ -990,6 +1047,102 @@ const Dashboard = () => {
             }}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Rejection Dialog */}
+      <Dialog
+        open={rejectDialogOpen}
+        onClose={handleCloseRejectDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            Reject Document Request
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            Please provide a reason for rejecting this document request:
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Rejection Reason"
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            placeholder="Enter the reason for rejection..."
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.7)',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(255, 255, 255, 0.8)',
+              },
+              '& .MuiInputBase-input': {
+                color: 'white',
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ 
+          p: 3, 
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <Button 
+            onClick={handleCloseRejectDialog}
+            sx={{ 
+              color: 'rgba(255, 255, 255, 0.8)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleRejectRequest}
+            variant="contained"
+            disabled={updating || !rejectionReason.trim()}
+            sx={{ 
+              ml: 2,
+              background: 'linear-gradient(45deg, #ff6b6b, #ee5a24)',
+              '&:hover': {
+                background: 'linear-gradient(45deg, #ee5a24, #ff6b6b)',
+              },
+              '&:disabled': {
+                background: 'rgba(255, 255, 255, 0.2)',
+              },
+            }}
+          >
+            {updating ? <CircularProgress size={20} color="inherit" /> : 'Reject Request'}
           </Button>
         </DialogActions>
       </Dialog>

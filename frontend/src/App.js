@@ -17,6 +17,7 @@ import UserInquiriesDashboard from './components/UserInquiriesDashboard';
 import UserForm137Dashboard from './user/UserForm137Dashboard';
 import Form137Request from './pages/user/Form137Request';
 import Form138Request from './pages/user/Form138Request';
+import GoodMoralRequest from './pages/user/GoodMoralRequest';
 import Enrollment from './pages/user/Enrollment';
 import EnrollmentStatus from './user/EnrollmentStatus';
 
@@ -73,6 +74,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Form138Request />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/request-good-moral"
+              element={
+                <ProtectedRoute>
+                  <GoodMoralRequest />
                 </ProtectedRoute>
               }
             />

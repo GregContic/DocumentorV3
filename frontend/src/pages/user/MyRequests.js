@@ -362,6 +362,25 @@ const MyRequests = () => {
                 />
               </Grid>
 
+              {/* Rejection Reason */}
+              {selectedRequest.status === 'rejected' && selectedRequest.rejectionReason && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Rejection Reason:
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    color: '#dc2626',
+                    backgroundColor: '#fef2f2',
+                    p: 2,
+                    borderRadius: 1,
+                    border: '1px solid #fecaca',
+                    mt: 1
+                  }}>
+                    {selectedRequest.rejectionReason}
+                  </Typography>
+                </Grid>
+              )}
+
               <Grid item xs={12}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Purpose:

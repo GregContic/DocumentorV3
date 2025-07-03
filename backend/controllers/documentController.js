@@ -105,9 +105,13 @@ exports.getAllRequests = async (req, res) => {
 exports.updateRequestStatus = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const { status } = req.body;
+    const { status, rejectionReason, reviewNotes } = req.body;
     
-    const updateData = { status };
+    const updateData = { 
+      status,
+      reviewedBy: req.user.userId,
+      reviewedAt: new Date()
+    };
     
     // If status is being set to completed, also set completedAt and auto-archive
     if (status === 'completed') {
@@ -115,6 +119,16 @@ exports.updateRequestStatus = async (req, res) => {
       updateData.archived = true;
       updateData.archivedAt = new Date();
       updateData.archivedBy = req.user.email || 'Admin';
+    }
+    
+    // If status is being set to rejected, store rejection reason
+    if (status === 'rejected' && rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+    }
+    
+    // Store review notes if provided
+    if (reviewNotes) {
+      updateData.reviewNotes = reviewNotes;
     }
     
     const request = await DocumentRequest.findByIdAndUpdate(

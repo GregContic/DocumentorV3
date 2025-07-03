@@ -220,14 +220,21 @@ const EnrollmentStatus = () => {
           </Card>
 
           {/* Status Details */}
-          {enrollmentData.status === 'rejected' && enrollmentData.reviewNotes && (
+          {enrollmentData.status === 'rejected' && (enrollmentData.rejectionReason || enrollmentData.reviewNotes) && (
             <Alert severity="error" sx={{ mb: 4 }}>
               <Typography variant="subtitle2" gutterBottom>
                 Application Rejected
               </Typography>
-              <Typography variant="body2">
-                {enrollmentData.reviewNotes}
-              </Typography>
+              {enrollmentData.rejectionReason && (
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Reason:</strong> {enrollmentData.rejectionReason}
+                </Typography>
+              )}
+              {enrollmentData.reviewNotes && (
+                <Typography variant="body2">
+                  <strong>Additional Notes:</strong> {enrollmentData.reviewNotes}
+                </Typography>
+              )}
               {enrollmentData.reviewedAt && (
                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                   Reviewed on {new Date(enrollmentData.reviewedAt).toLocaleString()}
@@ -326,7 +333,7 @@ const EnrollmentStatus = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary="Grade to Enroll"
-                        secondary={`Grade ${enrollmentData.gradeToEnroll} - ${enrollmentData.strand || 'N/A'}`}
+                        secondary={`Grade ${enrollmentData.gradeToEnroll} - ${enrollmentData.track || 'N/A'}`}
                       />
                     </ListItem>
                   </List>

@@ -63,8 +63,8 @@ export const documentService = {
   getRequestById: (id) => api.get(`/api/documents/request/${id}`),
   // Admin specific endpoints
   getAllRequests: () => api.get('/api/documents/admin/documents/requests'),
-  updateRequestStatus: (requestId, status) => 
-    api.patch(`/api/documents/admin/documents/request/${requestId}/status`, { status }),
+  updateRequestStatus: (requestId, status, additionalData = {}) => 
+    api.patch(`/api/documents/admin/documents/request/${requestId}/status`, { status, ...additionalData }),
   getRequestStats: () => api.get('/api/documents/admin/documents/stats'),
   // Archive endpoints
   getArchivedDocuments: () => api.get('/api/documents/admin/documents/archived-requests'),

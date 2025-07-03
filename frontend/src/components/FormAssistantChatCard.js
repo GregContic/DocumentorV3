@@ -206,7 +206,7 @@ const FormAssistantChatCard = ({ onAIUpload, formType = 'Form 137', formData, se
       'Enrollment': {
         'LRN': 'Your 12-digit Learner Reference Number from DepEd',
         'Grade to Enroll': 'Select the grade level you want to enroll in',
-        'Track/Strand': 'For Senior High School, choose your academic track and strand',
+        'Track': 'For Senior High School, choose your academic track',
         'Previous School': 'Complete name and address of your last school'
       },
       'School Form 9': {

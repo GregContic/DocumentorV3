@@ -29,6 +29,7 @@ const statusColors = {
   pending: 'warning',
   inProgress: 'info',
   resolved: 'success',
+  rejected: 'error',
   closed: 'default',
 };
 
@@ -189,6 +190,36 @@ const UserInquiriesDashboard = () => {
                 <Typography variant="body1" paragraph>
                   {selectedInquiry.message}
                 </Typography>
+                
+                {/* Status Display */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Status:
+                  </Typography>
+                  <Chip 
+                    label={selectedInquiry.status || 'pending'} 
+                    color={statusColors[selectedInquiry.status] || 'default'} 
+                    size="small" 
+                  />
+                </Box>
+
+                {/* Rejection Reason */}
+                {selectedInquiry.status === 'rejected' && selectedInquiry.rejectionReason && (
+                  <Alert severity="error" sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Inquiry Rejected
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Reason:</strong> {selectedInquiry.rejectionReason}
+                    </Typography>
+                    {selectedInquiry.reviewedAt && (
+                      <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                        Reviewed on {new Date(selectedInquiry.reviewedAt).toLocaleString()}
+                      </Typography>
+                    )}
+                  </Alert>
+                )}
+
                 {selectedInquiry.replies && selectedInquiry.replies.length > 0 && (
                   <Box sx={{ mt: 3 }}>
                     <Typography variant="h6" gutterBottom>

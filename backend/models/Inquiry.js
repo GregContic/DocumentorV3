@@ -18,7 +18,7 @@ const inquirySchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'inProgress', 'resolved', 'closed', 'archived'],
+    enum: ['pending', 'inProgress', 'resolved', 'rejected', 'closed', 'archived'],
     default: 'pending'
   },
   createdAt: {
@@ -32,6 +32,19 @@ const inquirySchema = new mongoose.Schema({
     type: String
   },
   archivedAt: {
+    type: Date
+  },
+  rejectionReason: {
+    type: String
+  },
+  reviewNotes: {
+    type: String
+  },
+  reviewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  reviewedAt: {
     type: Date
   },
   replies: [

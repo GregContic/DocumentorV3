@@ -89,14 +89,23 @@ exports.getAllEnrollments = async (req, res) => {
 exports.updateEnrollmentStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, reviewNotes } = req.body;
+    const { status, reviewNotes, rejectionReason } = req.body;
     
     const updateData = {
       status,
-      reviewNotes,
       reviewedBy: req.user.userId,
       reviewedAt: new Date()
     };
+
+    // Add rejection reason if status is rejected
+    if (status === 'rejected' && rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+    }
+
+    // Add review notes if provided
+    if (reviewNotes) {
+      updateData.reviewNotes = reviewNotes;
+    }
     
     const enrollment = await Enrollment.findByIdAndUpdate(id, updateData, { new: true })
       .populate('user', 'firstName lastName email')
@@ -109,7 +118,7 @@ exports.updateEnrollmentStatus = async (req, res) => {
     // Send email notification for approved or rejected status
     if (status === 'approved' || status === 'rejected') {
       try {
-        await sendEnrollmentStatusEmail(enrollment, status, reviewNotes);
+        await sendEnrollmentStatusEmail(enrollment, status, reviewNotes || rejectionReason);
         console.log(`Email sent for enrollment ${enrollment._id} with status ${status}`);
       } catch (emailError) {
         console.error('Failed to send email notification:', emailError);

@@ -36,7 +36,6 @@ const enrollmentApprovedTemplate = (enrollmentData) => {
             <p><strong>LRN:</strong> ${enrollmentData.learnerReferenceNumber}</p>
             <p><strong>Grade Level:</strong> ${enrollmentData.gradeToEnroll}</p>
             <p><strong>Track:</strong> ${enrollmentData.track || 'N/A'}</p>
-            <p><strong>Strand:</strong> ${enrollmentData.strand || 'N/A'}</p>
             <p><strong>Enrollment Number:</strong> ${enrollmentData.enrollmentNumber}</p>
           </div>
           

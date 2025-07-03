@@ -125,12 +125,24 @@ exports.archiveInquiry = async (req, res) => {
 exports.updateInquiryStatus = async (req, res) => {
   try {
     const { inquiryId } = req.params;
-    const { status } = req.body;
+    const { status, rejectionReason, reviewNotes } = req.body;
     const currentDate = new Date();
     
     let update = {
-      status
+      status,
+      reviewedBy: req.user.userId,
+      reviewedAt: currentDate
     };
+
+    // Add rejection reason if status is rejected
+    if (status === 'rejected' && rejectionReason) {
+      update.rejectionReason = rejectionReason;
+    }
+
+    // Add review notes if provided
+    if (reviewNotes) {
+      update.reviewNotes = reviewNotes;
+    }
     
     // Handle different status updates
     if (status === 'resolved') {
@@ -154,7 +166,8 @@ exports.updateInquiryStatus = async (req, res) => {
       inquiryId,
       update,
       { new: true }
-    ).populate('user', 'firstName lastName email');
+    ).populate('user', 'firstName lastName email')
+     .populate('reviewedBy', 'firstName lastName');
     
     if (!inquiry) return res.status(404).json({ message: 'Inquiry not found' });
     
