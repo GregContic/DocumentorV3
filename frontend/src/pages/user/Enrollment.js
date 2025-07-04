@@ -1503,14 +1503,6 @@ const Enrollment = () => {
                   <Grid container spacing={1}>
                     <Grid item xs={12} md={6}>
                       <Chip 
-                        label="Birth Certificate" 
-                        color={formData.birthCertificate ? "success" : "default"}
-                        icon={formData.birthCertificate ? <CheckIcon /> : undefined}
-                        variant={formData.birthCertificate ? "filled" : "outlined"}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Chip 
                         label="Form 137" 
                         color={formData.form137 ? "success" : "default"}
                         icon={formData.form137 ? <CheckIcon /> : undefined}

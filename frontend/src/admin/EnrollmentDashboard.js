@@ -471,17 +471,6 @@ const EnrollmentDashboard = () => {
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Typography variant="body2">Birth Certificate:</Typography>
-                      <Chip 
-                        label={selectedEnrollment.birthCertificate ? 'Submitted' : 'Not Submitted'} 
-                        color={selectedEnrollment.birthCertificate ? 'success' : 'error'}
-                        size="small"
-                        sx={{ ml: 1 }}
-                      />
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Typography variant="body2">Form 137:</Typography>
                       <Chip 
                         label={selectedEnrollment.form137 ? 'Submitted' : 'Not Submitted'} 

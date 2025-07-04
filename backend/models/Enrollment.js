@@ -59,7 +59,6 @@ const EnrollmentSchema = new mongoose.Schema({
   medicalCertificateFile: String,
   parentIdFile: String,
   idPicturesFile: String,
-  birthCertificate: Boolean,
   form137: Boolean,
   form138: Boolean,
   goodMoral: Boolean,
