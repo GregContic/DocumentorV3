@@ -13,6 +13,14 @@ exports.createEnrollment = async (req, res) => {
       return res.status(401).json({ message: 'Authentication required to submit enrollment' });
     }
     
+    // Remove any fields that don't exist in the model schema
+    delete enrollmentData.birthCertificate; // We removed this field from the model
+    
+    // Handle empty strings for age field
+    if (enrollmentData.age === '') {
+      enrollmentData.age = null;
+    }
+    
     // Handle uploaded files
     if (req.files) {
       if (req.files.form137File) {
@@ -35,8 +43,15 @@ exports.createEnrollment = async (req, res) => {
       }
     }
     
+    console.log('Creating enrollment with data:', enrollmentData);
+    
+    // Log the keys being sent to identify any extra fields
+    console.log('Fields being sent:', Object.keys(enrollmentData));
+    
     const enrollment = new Enrollment(enrollmentData);
+    console.log('Enrollment created, attempting to save...');
     await enrollment.save();
+    console.log('Enrollment saved successfully');
     
     res.status(201).json({ 
       message: 'Enrollment submitted successfully', 
@@ -45,7 +60,34 @@ exports.createEnrollment = async (req, res) => {
     });
   } catch (error) {
     console.error('Enrollment submission error:', error);
-    res.status(400).json({ message: 'Failed to submit enrollment', error: error.message });
+    
+    // Handle validation errors specifically
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message
+      }));
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validationErrors,
+        details: error.message 
+      });
+    }
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: 'Duplicate enrollment number. Please try again.',
+        error: 'Duplicate key error'
+      });
+    }
+    
+    // Generic error handling
+    res.status(500).json({ 
+      message: 'Failed to submit enrollment', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

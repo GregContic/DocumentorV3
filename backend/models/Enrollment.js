@@ -63,6 +63,8 @@ const EnrollmentSchema = new mongoose.Schema({
   form138: Boolean,
   goodMoral: Boolean,
   medicalCertificate: Boolean,
+  parentId: Boolean,
+  idPictures: Boolean,
   specialNeeds: String,
   allergies: String,
   medications: String,

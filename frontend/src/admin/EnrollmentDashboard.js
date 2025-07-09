@@ -34,6 +34,8 @@ import {
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
   Pending as PendingIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import AdminLayout from '../components/AdminLayout';
 
@@ -47,6 +49,7 @@ const EnrollmentDashboard = () => {
   const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [enrollmentToReject, setEnrollmentToReject] = useState(null);
+  const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
 
   const handleViewDetails = (enrollment) => {
     setSelectedEnrollment(enrollment);
@@ -56,6 +59,33 @@ const EnrollmentDashboard = () => {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setSelectedEnrollment(null);
+  };
+
+  const handleViewDocuments = () => {
+    setDocumentsDialogOpen(true);
+  };
+
+  const handleCloseDocumentsDialog = () => {
+    setDocumentsDialogOpen(false);
+  };
+
+  // Helper function to get the correct file URL
+  const getFileUrl = (filePath) => {
+    if (!filePath) return null;
+    
+    // Extract filename from the full path
+    // The path might be something like: "uploads/enrollments/form137File-1234567890-filename.pdf"
+    // We need to get everything after "uploads/"
+    const pathParts = filePath.split('uploads');
+    if (pathParts.length > 1) {
+      // Remove the leading slash if it exists
+      const relativePath = pathParts[1].startsWith('/') ? pathParts[1].substring(1) : pathParts[1];
+      return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${relativePath}`;
+    }
+    
+    // If the path doesn't contain "uploads", assume it's just the filename
+    const filename = filePath.split('/').pop() || filePath.split('\\').pop();
+    return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/enrollments/${filename}`;
   };
 
   const handleRejectClick = (enrollment) => {
@@ -616,9 +646,20 @@ const EnrollmentDashboard = () => {
               </Button>
             </Box>
           )}
-          <Button onClick={handleCloseDialog} variant="contained">
-            Close
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {selectedEnrollment && (
+              <Button 
+                variant="outlined" 
+                onClick={handleViewDocuments}
+                startIcon={<VisibilityIcon />}
+              >
+                View Documents
+              </Button>
+            )}
+            <Button onClick={handleCloseDialog} variant="contained">
+              Close
+            </Button>
+          </Box>
         </DialogActions>
       </Dialog>
 
@@ -688,6 +729,433 @@ const EnrollmentDashboard = () => {
             startIcon={<RejectIcon />}
           >
             {updating ? 'Rejecting...' : 'Reject Enrollment'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Documents Viewing Dialog */}
+      <Dialog
+        open={documentsDialogOpen}
+        onClose={handleCloseDocumentsDialog}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            Student Documents - {selectedEnrollment ? `${selectedEnrollment.firstName} ${selectedEnrollment.surname}` : ''}
+          </Typography>
+          <IconButton onClick={handleCloseDocumentsDialog} sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+          {selectedEnrollment && (
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="body1" sx={{ mb: 3, color: 'rgba(255, 255, 255, 0.9)' }}>
+                  Below are the documents uploaded by the student. Click on any document to view or download it.
+                </Typography>
+              </Grid>
+
+              {/* Form 137 */}
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: 2, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 2
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <SchoolIcon sx={{ mr: 1, color: 'white' }} />
+                    <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                      Form 137 (Permanent Record)
+                    </Typography>
+                  </Box>
+                  {selectedEnrollment.form137File ? (
+                    <Box>
+                      <Chip 
+                        label="✓ Uploaded" 
+                        color="success" 
+                        size="small" 
+                        sx={{ mb: 2, backgroundColor: '#4ade80', color: 'white' }}
+                      />
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                          const fileUrl = getFileUrl(selectedEnrollment.form137File);
+                          if (fileUrl) {
+                            window.open(fileUrl, '_blank');
+                          } else {
+                            alert('File not found');
+                          }
+                        }}
+                        sx={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
+                        }}
+                      >
+                        View Document
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Chip 
+                      label="Not Uploaded" 
+                      color="error" 
+                      size="small" 
+                      sx={{ backgroundColor: '#ef4444', color: 'white' }}
+                    />
+                  )}
+                </Paper>
+              </Grid>
+
+              {/* Form 138 */}
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: 2, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 2
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <SchoolIcon sx={{ mr: 1, color: 'white' }} />
+                    <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                      Form 138 (Report Card)
+                    </Typography>
+                  </Box>
+                  {selectedEnrollment.form138File ? (
+                    <Box>
+                      <Chip 
+                        label="✓ Uploaded" 
+                        color="success" 
+                        size="small" 
+                        sx={{ mb: 2, backgroundColor: '#4ade80', color: 'white' }}
+                      />
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                          const fileUrl = getFileUrl(selectedEnrollment.form138File);
+                          if (fileUrl) {
+                            window.open(fileUrl, '_blank');
+                          } else {
+                            alert('File not found');
+                          }
+                        }}
+                        sx={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
+                        }}
+                      >
+                        View Document
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Chip 
+                      label="Not Uploaded" 
+                      color="error" 
+                      size="small" 
+                      sx={{ backgroundColor: '#ef4444', color: 'white' }}
+                    />
+                  )}
+                </Paper>
+              </Grid>
+
+              {/* Good Moral Certificate */}
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: 2, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 2
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <PersonIcon sx={{ mr: 1, color: 'white' }} />
+                    <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                      Good Moral Certificate
+                    </Typography>
+                  </Box>
+                  {selectedEnrollment.goodMoralFile ? (
+                    <Box>
+                      <Chip 
+                        label="✓ Uploaded" 
+                        color="success" 
+                        size="small" 
+                        sx={{ mb: 2, backgroundColor: '#4ade80', color: 'white' }}
+                      />
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                          const fileUrl = getFileUrl(selectedEnrollment.goodMoralFile);
+                          if (fileUrl) {
+                            window.open(fileUrl, '_blank');
+                          } else {
+                            alert('File not found');
+                          }
+                        }}
+                        sx={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
+                        }}
+                      >
+                        View Document
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Chip 
+                      label="Not Uploaded" 
+                      color="error" 
+                      size="small" 
+                      sx={{ backgroundColor: '#ef4444', color: 'white' }}
+                    />
+                  )}
+                </Paper>
+              </Grid>
+
+              {/* Medical Certificate */}
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: 2, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 2
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <MedicalIcon sx={{ mr: 1, color: 'white' }} />
+                    <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                      Medical Certificate
+                    </Typography>
+                  </Box>
+                  {selectedEnrollment.medicalCertificateFile ? (
+                    <Box>
+                      <Chip 
+                        label="✓ Uploaded" 
+                        color="success" 
+                        size="small" 
+                        sx={{ mb: 2, backgroundColor: '#4ade80', color: 'white' }}
+                      />
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                          const fileUrl = getFileUrl(selectedEnrollment.medicalCertificateFile);
+                          if (fileUrl) {
+                            window.open(fileUrl, '_blank');
+                          } else {
+                            alert('File not found');
+                          }
+                        }}
+                        sx={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
+                        }}
+                      >
+                        View Document
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Chip 
+                      label="Not Uploaded" 
+                      color="error" 
+                      size="small" 
+                      sx={{ backgroundColor: '#ef4444', color: 'white' }}
+                    />
+                  )}
+                </Paper>
+              </Grid>
+
+              {/* Parent ID */}
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: 2, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 2
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <FamilyIcon sx={{ mr: 1, color: 'white' }} />
+                    <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                      Parent/Guardian ID
+                    </Typography>
+                  </Box>
+                  {selectedEnrollment.parentIdFile ? (
+                    <Box>
+                      <Chip 
+                        label="✓ Uploaded" 
+                        color="success" 
+                        size="small" 
+                        sx={{ mb: 2, backgroundColor: '#4ade80', color: 'white' }}
+                      />
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                          const fileUrl = getFileUrl(selectedEnrollment.parentIdFile);
+                          if (fileUrl) {
+                            window.open(fileUrl, '_blank');
+                          } else {
+                            alert('File not found');
+                          }
+                        }}
+                        sx={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
+                        }}
+                      >
+                        View Document
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Chip 
+                      label="Not Uploaded" 
+                      color="error" 
+                      size="small" 
+                      sx={{ backgroundColor: '#ef4444', color: 'white' }}
+                    />
+                  )}
+                </Paper>
+              </Grid>
+
+              {/* ID Pictures */}
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: 2, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 2
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <PersonIcon sx={{ mr: 1, color: 'white' }} />
+                    <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                      ID Pictures (2x2)
+                    </Typography>
+                  </Box>
+                  {selectedEnrollment.idPicturesFile ? (
+                    <Box>
+                      <Chip 
+                        label="✓ Uploaded" 
+                        color="success" 
+                        size="small" 
+                        sx={{ mb: 2, backgroundColor: '#4ade80', color: 'white' }}
+                      />
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                          const fileUrl = getFileUrl(selectedEnrollment.idPicturesFile);
+                          if (fileUrl) {
+                            window.open(fileUrl, '_blank');
+                          } else {
+                            alert('File not found');
+                          }
+                        }}
+                        sx={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
+                        }}
+                      >
+                        View Document
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Chip 
+                      label="Not Uploaded" 
+                      color="error" 
+                      size="small" 
+                      sx={{ backgroundColor: '#ef4444', color: 'white' }}
+                    />
+                  )}
+                </Paper>
+              </Grid>
+
+              {/* Document Summary */}
+              <Grid item xs={12}>
+                <Paper sx={{ 
+                  p: 3, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 2,
+                  mt: 2
+                }}>
+                  <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, mb: 2 }}>
+                    Document Summary
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {[
+                      { label: 'Form 137', file: selectedEnrollment.form137File },
+                      { label: 'Form 138', file: selectedEnrollment.form138File },
+                      { label: 'Good Moral', file: selectedEnrollment.goodMoralFile },
+                      { label: 'Medical Certificate', file: selectedEnrollment.medicalCertificateFile },
+                      { label: 'Parent ID', file: selectedEnrollment.parentIdFile },
+                      { label: 'ID Pictures', file: selectedEnrollment.idPicturesFile },
+                    ].map((doc, index) => (
+                      <Chip
+                        key={index}
+                        label={doc.label}
+                        color={doc.file ? 'success' : 'error'}
+                        size="small"
+                        icon={doc.file ? <CheckCircleIcon /> : <CancelIcon />}
+                        sx={{ 
+                          backgroundColor: doc.file ? '#4ade80' : '#ef4444', 
+                          color: 'white',
+                          fontWeight: 600
+                        }}
+                      />
+                    ))}
+                  </Box>
+                  <Typography variant="body2" sx={{ mt: 2, color: 'rgba(255, 255, 255, 0.8)' }}>
+                    Documents uploaded: {[
+                      selectedEnrollment.form137File,
+                      selectedEnrollment.form138File,
+                      selectedEnrollment.goodMoralFile,
+                      selectedEnrollment.medicalCertificateFile,
+                      selectedEnrollment.parentIdFile,
+                      selectedEnrollment.idPicturesFile
+                    ].filter(file => file).length} of 6
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ 
+          p: 3, 
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        }}>
+          <Button 
+            onClick={handleCloseDocumentsDialog}
+            variant="contained"
+            sx={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              },
+            }}
+          >
+            Close
           </Button>
         </DialogActions>
       </Dialog>

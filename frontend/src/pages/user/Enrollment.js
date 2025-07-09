@@ -59,7 +59,7 @@ const Enrollment = () => {
 
   const [formData, setFormData] = useState({
     // Enrollment Type
-    enrollmentType: '', // 'new', 'old', 'transferee'
+    enrollmentType: '', // 'new' (includes both new students and transferees), 'old'
     // Student Information
     learnerReferenceNumber: '',
     surname: '',
@@ -206,7 +206,7 @@ const Enrollment = () => {
   };
 
   const steps = [
-    'Enrollment Type',
+    'Enrollment Category',
     'Student Information', 
     'Address & Contact', 
     'Previous School', 
@@ -340,11 +340,40 @@ const Enrollment = () => {
       // Create FormData for file upload
       const formDataToSubmit = new FormData();
       
+      // Determine specific enrollment type for backend
+      let backendEnrollmentType = formData.enrollmentType;
+      if (formData.enrollmentType === 'new') {
+        // Auto-classify as transferee if enrolling in high school grades and coming from another school
+        const isHighSchoolGrade = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'].includes(formData.gradeToEnroll);
+        const lastSchool = formData.lastSchoolAttended.toLowerCase();
+        const isFromElementary = lastSchool.includes('elementary') || lastSchool.includes('elem') || 
+                                 formData.gradeLevel === 'Grade 6' || formData.gradeLevel === 'Kinder' || 
+                                 formData.gradeLevel.includes('Kindergarten');
+        
+        // If enrolling in high school but not coming from elementary, classify as transferee
+        if (isHighSchoolGrade && !isFromElementary) {
+          backendEnrollmentType = 'transferee';
+        }
+        
+        console.log('Auto-classification:', {
+          originalType: formData.enrollmentType,
+          finalType: backendEnrollmentType,
+          gradeToEnroll: formData.gradeToEnroll,
+          lastSchool: formData.lastSchoolAttended,
+          gradeLevel: formData.gradeLevel,
+          isHighSchoolGrade,
+          isFromElementary
+        });
+      }
+      
       // Add all text fields
       Object.keys(formData).forEach(key => {
         if (formData[key] && !key.includes('File')) {
           if (key === 'dateOfBirth' && formData[key]) {
             formDataToSubmit.append(key, formData[key].toISOString());
+          } else if (key === 'enrollmentType') {
+            // Use the determined backend type
+            formDataToSubmit.append(key, backendEnrollmentType);
           } else {
             formDataToSubmit.append(key, formData[key]);
           }
@@ -448,10 +477,10 @@ const Enrollment = () => {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Select Enrollment Type
+                  Select Enrollment Category
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Please select the type of enrollment that applies to you.
+                  Choose the category that best describes your enrollment status. New students and transferees follow the same streamlined process.
                 </Typography>
               </Grid>
 
@@ -467,9 +496,12 @@ const Enrollment = () => {
                       control={<Radio />} 
                       label={
                         <Box>
-                          <Typography variant="subtitle1">New Student</Typography>
+                          <Typography variant="subtitle1">New Student / Transferee</Typography>
                           <Typography variant="body2" color="text.secondary">
-                            First time enrolling at Eastern La Trinidad National High School
+                            First time enrolling at Eastern La Trinidad National High School or transferring from another school
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            • Same requirements and enrollment process for both new students and transferees
                           </Typography>
                         </Box>
                       }
@@ -483,17 +515,8 @@ const Enrollment = () => {
                           <Typography variant="body2" color="text.secondary">
                             Previously enrolled at Eastern La Trinidad National High School
                           </Typography>
-                        </Box>
-                      }
-                    />
-                    <FormControlLabel 
-                      value="transferee" 
-                      control={<Radio />} 
-                      label={
-                        <Box>
-                          <Typography variant="subtitle1">Transferee</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Transferring from another school
+                          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            • Simplified process with pre-filled school information
                           </Typography>
                         </Box>
                       }
@@ -782,13 +805,26 @@ const Enrollment = () => {
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {formData.enrollmentType === 'old' 
                     ? 'Provide details about your last completed grade level at Eastern La Trinidad National High School.'
-                    : 'Provide details about your last attended school.'}
+                    : 'Provide details about your last attended school. This applies to both new students (from elementary) and transferees (from other high schools).'}
                 </Typography>
               </Grid>
 
               {/* Show school info for new students and transferees only */}
               {formData.enrollmentType !== 'old' && (
                 <>
+                  <Grid item xs={12}>
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        New Students & Transferees - Unified Process
+                      </Typography>
+                      <Typography variant="body2">
+                        Whether you're coming from elementary school or transferring from another high school, 
+                        the enrollment requirements and process are the same. Simply provide information about 
+                        your most recent school.
+                      </Typography>
+                    </Alert>
+                  </Grid>
+                  
                   <Grid item xs={12} md={8}>
                     <TextField
                       fullWidth
@@ -802,16 +838,22 @@ const Enrollment = () => {
                     />
                   </Grid>
                   <Grid item xs={12} md={4}>
-                    <TextField
-                      fullWidth
-                      required
-                      label="Grade Level Completed"
-                      value={formData.gradeLevel}
-                      onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
-                      error={!!errors.gradeLevel}
-                      helperText={errors.gradeLevel}
-                      placeholder="e.g., Grade 6"
-                    />
+                    <FormControl fullWidth required error={!!errors.gradeLevel}>
+                      <InputLabel>Grade Level Completed</InputLabel>
+                      <Select
+                        value={formData.gradeLevel}
+                        label="Grade Level Completed"
+                        onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
+                      >
+                        <MenuItem value="Grade 6">Grade 6</MenuItem>
+                        <MenuItem value="Grade 7">Grade 7</MenuItem>
+                        <MenuItem value="Grade 8">Grade 8</MenuItem>
+                        <MenuItem value="Grade 9">Grade 9</MenuItem>
+                        <MenuItem value="Grade 10">Grade 10</MenuItem>
+                        <MenuItem value="Grade 11">Grade 11</MenuItem>
+                      </Select>
+                      {errors.gradeLevel && <FormHelperText>{errors.gradeLevel}</FormHelperText>}
+                    </FormControl>
                   </Grid>
                   <Grid item xs={12} md={8}>
                     <TextField
@@ -855,16 +897,21 @@ const Enrollment = () => {
                   </Grid>
                   
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      required
-                      label="Grade Level Completed"
-                      value={formData.gradeLevel}
-                      onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
-                      error={!!errors.gradeLevel}
-                      helperText={errors.gradeLevel}
-                      placeholder="e.g., Grade 7"
-                    />
+                    <FormControl fullWidth required error={!!errors.gradeLevel}>
+                      <InputLabel>Grade Level Completed</InputLabel>
+                      <Select
+                        value={formData.gradeLevel}
+                        label="Grade Level Completed"
+                        onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
+                      >
+                        <MenuItem value="Grade 7">Grade 7</MenuItem>
+                        <MenuItem value="Grade 8">Grade 8</MenuItem>
+                        <MenuItem value="Grade 9">Grade 9</MenuItem>
+                        <MenuItem value="Grade 10">Grade 10</MenuItem>
+                        <MenuItem value="Grade 11">Grade 11</MenuItem>
+                      </Select>
+                      {errors.gradeLevel && <FormHelperText>{errors.gradeLevel}</FormHelperText>}
+                    </FormControl>
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <TextField
@@ -1073,6 +1120,14 @@ const Enrollment = () => {
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Select the grade level and program you wish to enroll in.
                 </Typography>
+                {formData.enrollmentType === 'new' && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      <strong>Note:</strong> The system will automatically determine if you're a new student or transferee 
+                      based on your grade level selection and previous school information for administrative purposes.
+                    </Typography>
+                  </Alert>
+                )}
               </Grid>
 
               <Grid item xs={12} md={6}>
