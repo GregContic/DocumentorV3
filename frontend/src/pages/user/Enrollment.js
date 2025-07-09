@@ -1038,13 +1038,21 @@ const Enrollment = () => {
                 />
               </Grid>
               <Grid item xs={12} md={3}>
-                <TextField
-                  fullWidth
-                  label="Relationship"
-                  value={formData.guardianRelationship}
-                  onChange={(e) => setFormData(prev => ({ ...prev, guardianRelationship: e.target.value }))}
-                  placeholder="e.g., Uncle, Aunt"
-                />
+                <FormControl fullWidth>
+                  <InputLabel>Relationship</InputLabel>
+                  <Select
+                    value={formData.guardianRelationship}
+                    label="Relationship"
+                    onChange={(e) => setFormData(prev => ({ ...prev, guardianRelationship: e.target.value }))}
+                  >
+                    <MenuItem value="">
+                      <em>Select relationship</em>
+                    </MenuItem>
+                    <MenuItem value="Grandparent">Grandparent</MenuItem>
+                    <MenuItem value="Aunt">Aunt</MenuItem>
+                    <MenuItem value="Uncle">Uncle</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} md={3}>
                 <TextField

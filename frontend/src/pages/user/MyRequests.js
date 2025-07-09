@@ -33,6 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import Form137PDFWithQR from '../../components/PDFTemplates/Form137PDFWithQR';
 import Form138PDFWithQR from '../../components/PDFTemplates/Form138PDFWithQR';
 import SF9PDFWithQR from '../../components/PDFTemplates/SF9PDFWithQR';
+import GoodMoralPDFWithQR from '../../components/PDFTemplates/GoodMoralPDFWithQR';
 
 const MyRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -88,6 +89,22 @@ const MyRequests = () => {
             sx={{ ml: 1 }}          >
             PDF
           </SF9PDFWithQR>
+        );
+      
+      case 'Certificate of Good Moral Character':
+      case 'Good Moral Character':
+      case 'Good Moral Certificate':
+        return (
+          <GoodMoralPDFWithQR
+            formData={request}
+            fileName={fileName}
+            variant="outlined"
+            size="small"
+            color="primary"
+            sx={{ ml: 1 }}
+          >
+            PDF
+          </GoodMoralPDFWithQR>
         );
       
       case 'School Form 10':
