@@ -255,7 +255,7 @@ const Navbar = () => {
                 fontSize: { xs: '1.1rem', md: '1.3rem' }
               }}
             >
-              DOCUMENTOR: Document Request System
+              DOCUMENTOR: ELTNHS Online Enrollment Portal
             </Typography>
           </Box>
 

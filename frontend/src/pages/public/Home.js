@@ -2,26 +2,25 @@ import React from 'react';
 import {
   Container,
   Typography,
-  Paper,
   Button,
   Box,
   Grid,
   Card,
   CardContent,
   CardMedia,
-  useTheme,
   Chip,
   Avatar,
 } from '@mui/material';
 import {
   Description as DocumentIcon,
   Speed as SpeedIcon,
-  Security as SecurityIcon,
-  Support as SupportIcon,
   School as SchoolIcon,
   Assignment as AssignmentIcon,
-  CheckCircle as CheckIcon,
-  Star as StarIcon,
+  CloudQueue as CloudIcon,
+  Smartphone as MobileIcon,
+  AutoAwesome as SparkleIcon,
+  VerifiedUser as ShieldIcon,
+  Support as SupportIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -30,192 +29,248 @@ import QRCodeDisplay from '../../components/QRCodeDisplay';
 const Home = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const theme = useTheme();
+  
   const features = [
     {
-      icon: <DocumentIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
+      icon: <DocumentIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.9)' }} />,
       title: 'Digital Document Management',
       description: 'Request and manage all your academic documents online with our streamlined digital platform.',
+      gradient: 'linear-gradient(135deg, rgba(33, 150, 243, 0.8), rgba(103, 58, 183, 0.8))',
     },
     {
-      icon: <SpeedIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
+      icon: <SchoolIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.9)' }} />,
+      title: 'Online Enrollment System',
+      description: 'Complete your school enrollment application online with our easy-to-use digital enrollment platform.',
+      gradient: 'linear-gradient(135deg, rgba(76, 175, 80, 0.8), rgba(139, 195, 74, 0.8))',
+    },
+    {
+      icon: <SpeedIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.9)' }} />,
       title: 'Lightning Fast Processing',
       description: 'Experience rapid document processing with real-time status updates and instant notifications.',
+      gradient: 'linear-gradient(135deg, rgba(255, 152, 0, 0.8), rgba(255, 193, 7, 0.8))',
     },
     {
-      icon: <SecurityIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
+      icon: <ShieldIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.9)' }} />,
       title: 'Bank-Level Security',
       description: 'Your sensitive information is protected with enterprise-grade encryption and security protocols.',
+      gradient: 'linear-gradient(135deg, rgba(244, 67, 54, 0.8), rgba(233, 30, 99, 0.8))',
     },
     {
-      icon: <SupportIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-      title: 'Round-the-Clock Support',
-      description: 'Get expert assistance whenever you need help, with our dedicated 24/7 customer support team.',
+      icon: <CloudIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.9)' }} />,
+      title: 'Cloud Integration',
+      description: 'Access your documents anywhere, anytime with seamless cloud synchronization and backup.',
+      gradient: 'linear-gradient(135deg, rgba(0, 188, 212, 0.8), rgba(0, 150, 136, 0.8))',
     },
   ];
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
-      {/* Hero Section */}
-      <Paper
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+      position: 'relative',
+      fontFamily: '"Nunito", "Roboto", "Helvetica", "Arial", sans-serif',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: `
+          radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 40% 80%, rgba(119, 198, 255, 0.3) 0%, transparent 50%)
+        `,
+        pointerEvents: 'none',
+      }
+    }}>
+      {/* Glassmorphic Hero Section */}
+      <Box
         sx={{
           position: 'relative',
-          backgroundColor: 'grey.800',
-          color: '#fff',
-          mb: 4,
-          backgroundSize: 'cover',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center',
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80')`,
-          borderRadius: 0,
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
           overflow: 'hidden',
-          minHeight: '600px',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            background: 'linear-gradient(135deg, rgba(25,118,210,0.3), rgba(66,165,245,0.3), rgba(144,202,249,0.2))',
-            mixBlendMode: 'overlay',
-          },
-          animation: 'fadeIn 1.5s ease-in-out',
-          '@keyframes fadeIn': {
-            '0%': { opacity: 0, transform: 'translateY(20px)' },
-            '100%': { opacity: 1, transform: 'translateY(0)' },
-          }
         }}
       >
+        {/* Floating geometric shapes */}
         <Box
           sx={{
             position: 'absolute',
-            top: 0,
-            bottom: 0,
-            right: 0,
-            left: 0,
-            backgroundColor: 'rgba(0,0,0,.6)',
+            top: '10%',
+            left: '10%',
+            width: 100,
+            height: 100,
+            background: 'linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+            borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%',
+            backdropFilter: 'blur(10px)',
+            animation: 'float 6s ease-in-out infinite',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateY(-20px) rotate(180deg)' },
+            },
           }}
-        />        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
-          <Grid container spacing={4} alignItems="center" sx={{ minHeight: '500px' }}>
-            <Grid item xs={12} md={7}>
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '20%',
+            right: '15%',
+            width: 80,
+            height: 80,
+            background: 'linear-gradient(45deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))',
+            borderRadius: '50%',
+            backdropFilter: 'blur(8px)',
+            animation: 'float 8s ease-in-out infinite reverse',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: '15%',
+            left: '20%',
+            width: 120,
+            height: 60,
+            background: 'linear-gradient(45deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+            borderRadius: '50px',
+            backdropFilter: 'blur(12px)',
+            animation: 'float 10s ease-in-out infinite',
+          }}
+        />
+
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+          <Grid container spacing={6} alignItems="center">
+            <Grid item xs={12} md={6}>
               <Box
                 sx={{
-                  position: 'relative',
-                  p: { xs: 3, md: 6 },
-                  pr: { md: 0 },
-                  textAlign: { xs: 'center', md: 'left' },
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '32px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  p: { xs: 4, md: 6 },
+                  boxShadow: '0 24px 48px rgba(0, 0, 0, 0.1)',
+                  animation: 'slideInLeft 1s ease-out',
+                  '@keyframes slideInLeft': {
+                    '0%': { opacity: 0, transform: 'translateX(-50px)' },
+                    '100%': { opacity: 1, transform: 'translateX(0)' },
+                  },
                 }}
               >
                 <Chip
-                  label="🎓 Education Made Simple"
+                  label="✨ Welcome to the Future of Education"
                   sx={{ 
-                    mb: 3, 
-                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    mb: 3,
+                    background: 'linear-gradient(45deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
                     color: 'white',
                     backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    borderRadius: '25px',
                     fontSize: '0.9rem',
-                    animation: 'slideInLeft 1s ease-out 0.3s both',
-                    '@keyframes slideInLeft': {
-                      '0%': { opacity: 0, transform: 'translateX(-30px)' },
-                      '100%': { opacity: 1, transform: 'translateX(0)' },
-                    }
+                    fontWeight: 600,
+                    fontFamily: '"Nunito", sans-serif',
                   }}
                 />
                 <Typography 
-                  variant="h2" 
-                  color="inherit" 
-                  gutterBottom
+                  variant="h1" 
                   sx={{ 
-                    fontWeight: 700,
-                    fontSize: { xs: '2.5rem', md: '3.5rem' },
-                    background: 'linear-gradient(45deg, #fff, #e3f2fd)',
+                    fontWeight: 800,
+                    fontSize: { xs: '2.5rem', md: '4rem' },
+                    background: 'linear-gradient(45deg, #ffffff, #e3f2fd, #ffffff)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    animation: 'slideInUp 1s ease-out 0.5s both',
-                    '@keyframes slideInUp': {
-                      '0%': { opacity: 0, transform: 'translateY(30px)' },
-                      '100%': { opacity: 1, transform: 'translateY(0)' },
-                    }
+                    mb: 3,
+                    fontFamily: '"Nunito", sans-serif',
+                    letterSpacing: '-0.02em',
                   }}
                 >
-                  Document Request System
+                  ELTNHS Online Enrollment Portal
                 </Typography>
                 <Typography 
-                  variant="h5" 
-                  color="inherit" 
-                  paragraph
+                  variant="h4" 
                   sx={{ 
-                    mb: 4, 
-                    opacity: 0.9,
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    mb: 4,
                     fontWeight: 300,
-                    lineHeight: 1.6,
-                    animation: 'slideInUp 1s ease-out 0.7s both',
+                    lineHeight: 1.4,
+                    fontFamily: '"Nunito", sans-serif',
                   }}
                 >
-                  Streamline your document requests with our efficient and user-friendly system.
-                  Get started today and experience hassle-free document processing.
+                  Your Digital Gateway to Academic Excellence
                 </Typography>
-                {!isAuthenticated ? (
-                  <Box sx={{ 
-                    mt: 4, 
-                    display: 'flex', 
-                    gap: 2, 
-                    flexDirection: { xs: 'column', sm: 'row' },
-                    justifyContent: { xs: 'center', md: 'flex-start' },
-                    animation: 'slideInUp 1s ease-out 0.9s both',
-                  }}>
-                    <Button
-                      variant="contained"
-                      size="large"
-                      onClick={() => navigate('/login')}
-                      sx={{
-                        py: 1.5,
-                        px: 4,
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                        border: 0,
-                        borderRadius: '50px',
-                        boxShadow: '0 8px 30px rgba(33, 150, 243, 0.4)',
-                        color: 'white',
-                        transition: 'all 0.3s ease-in-out',
-                        '&:hover': {
-                          background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)',
-                          transform: 'translateY(-3px)',
-                          boxShadow: '0 12px 40px rgba(33, 150, 243, 0.6)',
-                        },
-                      }}
-                    >
-                      Login Now
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="large"
-                      onClick={() => navigate('/register')}
-                      sx={{
-                        py: 1.5,
-                        px: 4,
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        borderRadius: '50px',
-                        borderColor: 'rgba(255,255,255,0.5)',
-                        color: 'white',
-                        backdropFilter: 'blur(10px)',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        transition: 'all 0.3s ease-in-out',
-                        '&:hover': {
-                          borderColor: 'white',
-                          backgroundColor: 'rgba(255,255,255,0.2)',
-                          transform: 'translateY(-2px)',
-                        },
-                      }}
-                    >
-                      Register Now
-                    </Button>
-                  </Box>
-                ) : (
-                  <Box sx={{ mt: 4, animation: 'slideInUp 1s ease-out 0.9s both' }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    mb: 5,
+                    fontWeight: 400,
+                    lineHeight: 1.6,
+                    fontFamily: '"Nunito", sans-serif',
+                  }}
+                >
+                  Experience the next generation of document management and enrollment 
+                  with our AI-powered, glassmorphic interface designed for the modern student.
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+                  {!isAuthenticated ? (
+                    <>
+                      <Button
+                        variant="contained"
+                        size="large"
+                        onClick={() => navigate('/login')}
+                        sx={{
+                          py: 2,
+                          px: 5,
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                          background: 'linear-gradient(45deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
+                          color: '#1976d2',
+                          border: 0,
+                          borderRadius: '25px',
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 12px 24px rgba(255,255,255,0.2)',
+                          fontFamily: '"Nunito", sans-serif',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          '&:hover': {
+                            background: 'linear-gradient(45deg, rgba(255,255,255,1), rgba(255,255,255,0.9))',
+                            transform: 'translateY(-4px)',
+                            boxShadow: '0 16px 32px rgba(255,255,255,0.3)',
+                          },
+                        }}
+                        startIcon={<SparkleIcon />}
+                      >
+                        Launch Portal
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={() => navigate('/register')}
+                        sx={{
+                          py: 2,
+                          px: 5,
+                          fontSize: '1.1rem',
+                          fontWeight: 600,
+                          borderRadius: '25px',
+                          borderColor: 'rgba(255,255,255,0.4)',
+                          color: 'white',
+                          borderWidth: '2px',
+                          background: 'rgba(255,255,255,0.05)',
+                          backdropFilter: 'blur(10px)',
+                          fontFamily: '"Nunito", sans-serif',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          '&:hover': {
+                            borderColor: 'rgba(255,255,255,0.8)',
+                            background: 'rgba(255,255,255,0.15)',
+                            transform: 'translateY(-2px)',
+                          },
+                        }}
+                        startIcon={<MobileIcon />}
+                      >
+                        Get Started
+                      </Button>
+                    </>
+                  ) : (
                     <Button
                       variant="contained"
                       size="large"
@@ -223,97 +278,133 @@ const Home = () => {
                         navigate(user?.role === 'admin' ? '/admin/dashboard' : '/request-document')
                       }
                       sx={{
-                        py: 1.5,
-                        px: 4,
+                        py: 2,
+                        px: 5,
                         fontSize: '1.1rem',
-                        fontWeight: 600,
-                        background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                        fontWeight: 700,
+                        background: 'linear-gradient(45deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
+                        color: '#1976d2',
                         border: 0,
-                        borderRadius: '50px',
-                        boxShadow: '0 8px 30px rgba(33, 150, 243, 0.4)',
-                        color: 'white',
-                        transition: 'all 0.3s ease-in-out',
+                        borderRadius: '25px',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 12px 24px rgba(255,255,255,0.2)',
+                        fontFamily: '"Nunito", sans-serif',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
-                          background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)',
-                          transform: 'translateY(-3px)',
-                          boxShadow: '0 12px 40px rgba(33, 150, 243, 0.6)',
+                          background: 'linear-gradient(45deg, rgba(255,255,255,1), rgba(255,255,255,0.9))',
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 16px 32px rgba(255,255,255,0.3)',
                         },
                       }}
+                      startIcon={<SparkleIcon />}
                     >
-                      Go to Dashboard
+                      Enter Dashboard
                     </Button>
-                  </Box>
-                )}
+                  )}
+                </Box>
               </Box>
             </Grid>
-            <Grid item xs={12} md={5}>
+            
+            <Grid item xs={12} md={6}>
               <Box sx={{ 
                 textAlign: 'center',
-                animation: 'floatAnimation 3s ease-in-out infinite',
-                '@keyframes floatAnimation': {
-                  '0%, 100%': { transform: 'translateY(0)' },
-                  '50%': { transform: 'translateY(-10px)' },
-                }
+                animation: 'slideInRight 1s ease-out',
+                '@keyframes slideInRight': {
+                  '0%': { opacity: 0, transform: 'translateX(50px)' },
+                  '100%': { opacity: 1, transform: 'translateX(0)' },
+                },
               }}>
-                <img
-                  src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                  alt="Students studying"
-                  style={{
-                    width: '100%',
-                    maxWidth: '450px',
-                    height: 'auto',
-                    borderRadius: '20px',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                    border: '3px solid rgba(255,255,255,0.2)',
+                <Box
+                  sx={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: -20,
+                      left: -20,
+                      right: -20,
+                      bottom: -20,
+                      background: 'linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+                      borderRadius: '50%',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      animation: 'pulse 4s ease-in-out infinite',
+                      '@keyframes pulse': {
+                        '0%, 100%': { transform: 'scale(1)' },
+                        '50%': { transform: 'scale(1.05)' },
+                      },
+                    }
                   }}
-                />
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                    alt="Future Education"
+                    style={{
+                      width: '100%',
+                      maxWidth: '450px',
+                      height: 'auto',
+                      borderRadius: '32px',
+                      boxShadow: '0 32px 64px rgba(0,0,0,0.2)',
+                      border: '2px solid rgba(255,255,255,0.2)',
+                      position: 'relative',
+                      zIndex: 1,
+                    }}
+                  />
+                </Box>
               </Box>
             </Grid>
           </Grid>
         </Container>
-      </Paper>      {/* Features Section */}
-      <Container maxWidth="lg" sx={{ mb: 8, py: 4 }}>
+      </Box>      {/* Glassmorphic Features Section */}
+      <Container maxWidth="lg" sx={{ py: 8, position: 'relative', zIndex: 1 }}>
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography
-            variant="h3"
-            align="center"
-            gutterBottom
+            variant="h2"
             sx={{ 
-              mb: 2,
-              fontWeight: 700,
-              background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+              mb: 3,
+              fontWeight: 800,
+              background: 'linear-gradient(45deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8))',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              fontFamily: '"Nunito", sans-serif',
+              letterSpacing: '-0.02em',
             }}
           >
-            Why Choose Our Platform?
+            Future-Ready Features
           </Typography>
           <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{ maxWidth: '600px', mx: 'auto', mb: 4 }}
+            variant="h5"
+            sx={{ 
+              maxWidth: '700px', 
+              mx: 'auto',
+              color: 'rgba(255,255,255,0.8)',
+              fontWeight: 300,
+              fontFamily: '"Nunito", sans-serif',
+              lineHeight: 1.6,
+            }}
           >
-            Discover the benefits that make us the preferred choice for document management
+            Discover the next generation of educational technology designed for the modern world
           </Typography>
         </Box>
+        
         <Grid container spacing={4}>
           {features.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
+            <Grid item xs={12} sm={6} lg={4} key={index}>
               <Card
                 sx={{
                   height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                  borderRadius: '20px',
-                  background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
-                  border: '1px solid rgba(0,0,0,0.05)',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '24px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   overflow: 'hidden',
                   position: 'relative',
-                  animation: `slideInUp 0.6s ease-out ${index * 0.1}s both`,
-                  '@keyframes slideInUp': {
-                    '0%': { opacity: 0, transform: 'translateY(40px)' },
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+                  '@keyframes fadeInUp': {
+                    '0%': { opacity: 0, transform: 'translateY(60px)' },
                     '100%': { opacity: 1, transform: 'translateY(0)' },
                   },
                   '&::before': {
@@ -323,75 +414,80 @@ const Home = () => {
                     left: 0,
                     right: 0,
                     height: '4px',
-                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                    background: feature.gradient,
                     transform: 'scaleX(0)',
                     transition: 'transform 0.3s ease',
                   },
                   '&:hover': {
-                    transform: 'translateY(-12px) scale(1.02)',
-                    boxShadow: `0 20px 40px rgba(25,118,210,0.15)`,
+                    transform: 'translateY(-16px) scale(1.02)',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    boxShadow: '0 32px 64px rgba(0,0,0,0.2)',
                     '&::before': {
                       transform: 'scaleX(1)',
                     },
-                    '& .icon-wrapper': {
-                      transform: 'scale(1.2) rotate(10deg)',
-                      background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-                      '& .MuiSvgIcon-root': {
-                        color: 'white',
-                      }
+                    '& .feature-icon': {
+                      transform: 'scale(1.1) rotateY(10deg)',
+                      background: feature.gradient,
+                    },
+                    '& .feature-content': {
+                      transform: 'translateY(-4px)',
                     }
                   },
                 }}
               >
-                <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: 4 }}>
+                <CardContent sx={{ p: 4, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Box 
-                    className="icon-wrapper"
+                    className="feature-icon"
                     sx={{ 
                       mb: 3,
                       transition: 'all 0.4s ease',
                       display: 'inline-flex',
                       p: 3,
                       borderRadius: '50%',
-                      background: 'linear-gradient(45deg, rgba(25,118,210,0.1), rgba(66,165,245,0.1))',
-                      border: `2px solid ${theme.palette.primary.main}33`,
+                      background: 'rgba(255,255,255,0.1)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      alignSelf: 'center',
                     }}
                   >
                     {feature.icon}
                   </Box>
-                  <Typography 
-                    gutterBottom 
-                    variant="h5" 
-                    component="h3" 
-                    sx={{ 
-                      fontWeight: 700,
-                      color: 'primary.main',
-                      mb: 2,
-                      fontSize: '1.3rem'
-                    }}
-                  >
-                    {feature.title}
-                  </Typography>
-                  <Typography 
-                    color="text.secondary"
-                    sx={{ 
-                      lineHeight: 1.8,
-                      fontSize: '1rem',
-                      fontWeight: 400,
-                    }}
-                  >
-                    {feature.description}
-                  </Typography>
+                  <Box className="feature-content" sx={{ transition: 'all 0.3s ease', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        fontWeight: 700,
+                        color: 'rgba(255,255,255,0.95)',
+                        mb: 2,
+                        fontFamily: '"Nunito", sans-serif',
+                        fontSize: '1.4rem'
+                      }}
+                    >
+                      {feature.title}
+                    </Typography>
+                    <Typography 
+                      variant="body1"
+                      sx={{ 
+                        color: 'rgba(255,255,255,0.75)',
+                        lineHeight: 1.7,
+                        fontFamily: '"Nunito", sans-serif',
+                        flexGrow: 1,
+                      }}
+                    >
+                      {feature.description}
+                    </Typography>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
-          ))}        </Grid>
+          ))}
+        </Grid>
       </Container>
 
-      {/* How It Works Section */}
+      {/* Glassmorphic How It Works Section */}
       <Box sx={{ 
-        bgcolor: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', 
-        py: 8,
         position: 'relative',
+        py: 10,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -399,136 +495,157 @@ const Home = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(66,165,245,0.05) 100%)',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+          backdropFilter: 'blur(2px)',
         }
       }}>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ textAlign: 'center', mb: 8 }}>
             <Typography
-              variant="h3"
-              align="center"
-              gutterBottom
+              variant="h2"
               sx={{ 
-                mb: 2,
-                fontWeight: 700,
-                background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                mb: 3,
+                fontWeight: 800,
+                background: 'linear-gradient(45deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8))',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
+                fontFamily: '"Nunito", sans-serif',
+                letterSpacing: '-0.02em',
               }}
             >
-              How It Works
+              Simple & Elegant Process
             </Typography>
             <Typography
-              variant="h6"
-              color="text.secondary"
-              sx={{ maxWidth: '600px', mx: 'auto', mb: 4 }}
+              variant="h5"
+              sx={{ 
+                maxWidth: '600px', 
+                mx: 'auto',
+                color: 'rgba(255,255,255,0.8)',
+                fontWeight: 300,
+                fontFamily: '"Nunito", sans-serif',
+                lineHeight: 1.6,
+              }}
             >
-              Simple steps to get your documents quickly and securely
+              Two streamlined steps to access your educational future
             </Typography>
           </Box>
-          <Grid container spacing={4}>
+          
+          <Grid container spacing={6}>
             {[
               {
-                title: '1. Create an Account',
-                description: 'Sign up with your email and basic information to get started with our secure platform.',
+                title: '1. Create Account',
+                description: 'Sign up with your email and basic information to get started with our secure, AI-powered platform designed for the future of education.',
                 image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                color: '#4CAF50',
+                gradient: 'linear-gradient(135deg, #4CAF50, #81C784)',
               },
               {
-                title: '2. Submit Request',
-                description: 'Fill out the comprehensive document request form with all required details and information.',
+                title: '2. Submit & Track',
+                description: 'Fill out comprehensive forms or enrollment applications with AI assistance, then track your progress in real-time with our advanced notification system.',
                 image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                color: '#FF9800',
-              },
-              {
-                title: '3. Track Progress',
-                description: 'Monitor your request status in real-time and receive notifications about updates.',
-                image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                color: '#2196F3',
+                gradient: 'linear-gradient(135deg, #FF9800, #FFB74D)',
               },
             ].map((step, index) => (
-              <Grid item xs={12} md={4} key={index}>
+              <Grid item xs={12} md={6} key={index}>
                 <Card 
                   sx={{ 
                     height: '100%',
-                    borderRadius: '20px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(20px)',
+                    borderRadius: '32px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     overflow: 'hidden',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
-                    border: '1px solid rgba(255,255,255,0.8)',
-                    backdropFilter: 'blur(10px)',
                     position: 'relative',
-                    animation: `fadeInUp 0.6s ease-out ${index * 0.2}s both`,
-                    '@keyframes fadeInUp': {
-                      '0%': { opacity: 0, transform: 'translateY(40px)' },
-                      '100%': { opacity: 1, transform: 'translateY(0)' },
+                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                    animation: `slideInUp 0.8s ease-out ${index * 0.3}s both`,
+                    '@keyframes slideInUp': {
+                      '0%': { opacity: 0, transform: 'translateY(80px) rotateX(10deg)' },
+                      '100%': { opacity: 1, transform: 'translateY(0) rotateX(0deg)' },
                     },
                     '&:hover': {
-                      transform: 'translateY(-12px) scale(1.02)',
-                      boxShadow: `0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px ${step.color}33`,
+                      transform: 'translateY(-20px) scale(1.03)',
+                      background: 'rgba(255, 255, 255, 0.15)',
+                      boxShadow: '0 40px 80px rgba(0,0,0,0.25)',
                       '& .step-image': {
-                        transform: 'scale(1.1)',
+                        transform: 'scale(1.1) rotateZ(2deg)',
                       },
                       '& .step-number': {
-                        transform: 'scale(1.2) rotate(360deg)',
+                        transform: 'scale(1.3) rotate(360deg)',
+                        background: step.gradient,
+                      },
+                      '& .step-content': {
+                        transform: 'translateY(-8px)',
                       }
                     }
                   }}
                 >
-                  <Box sx={{ overflow: 'hidden', position: 'relative', height: 200 }}>
+                  <Box sx={{ position: 'relative', overflow: 'hidden', height: 250 }}>
                     <CardMedia
                       className="step-image"
                       component="img"
-                      height="200"
+                      height="250"
                       image={step.image}
                       alt={step.title}
                       sx={{
-                        transition: 'transform 0.5s ease',
-                        filter: 'brightness(0.9)',
+                        transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                        filter: 'brightness(0.8) contrast(1.1)',
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1))',
                       }}
                     />
                     <Box
                       className="step-number"
                       sx={{
                         position: 'absolute',
-                        top: 16,
-                        right: 16,
-                        width: 50,
-                        height: 50,
+                        top: 20,
+                        right: 20,
+                        width: 60,
+                        height: 60,
                         borderRadius: '50%',
-                        backgroundColor: step.color,
-                        color: 'white',
+                        background: 'rgba(255,255,255,0.9)',
+                        color: '#1976d2',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontWeight: 'bold',
-                        fontSize: '1.2rem',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                        transition: 'all 0.3s ease',
+                        fontWeight: 800,
+                        fontSize: '1.5rem',
+                        fontFamily: '"Nunito", sans-serif',
+                        backdropFilter: 'blur(10px)',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
                       {index + 1}
                     </Box>
                   </Box>
-                  <CardContent sx={{ p: 3 }}>
+                  <CardContent className="step-content" sx={{ p: 4, transition: 'all 0.3s ease' }}>
                     <Typography 
-                      gutterBottom 
-                      variant="h5" 
-                      component="h3"
+                      variant="h4" 
                       sx={{ 
-                        fontWeight: 600,
-                        color: step.color,
-                        mb: 2 
-                      }}                    >
+                        fontWeight: 700,
+                        color: 'rgba(255,255,255,0.95)',
+                        mb: 2,
+                        fontFamily: '"Nunito", sans-serif',
+                      }}
+                    >
                       {step.title}
                     </Typography>
                     <Typography 
                       variant="body1" 
-                      color="text.secondary"
                       sx={{ 
-                        lineHeight: 1.7,
-                        fontSize: '1rem' 
+                        color: 'rgba(255,255,255,0.8)',
+                        lineHeight: 1.8,
+                        fontSize: '1.1rem',
+                        fontFamily: '"Nunito", sans-serif',
                       }}
                     >
                       {step.description}
@@ -536,17 +653,16 @@ const Home = () => {
                   </CardContent>
                 </Card>
               </Grid>
-            ))}          </Grid>
+            ))}
+          </Grid>
         </Container>
       </Box>
 
-      {/* Call to Action Section */}
+      {/* Glassmorphic Call to Action Section */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          py: 8,
-          color: 'white',
           position: 'relative',
+          py: 10,
           overflow: 'hidden',
           '&::before': {
             content: '""',
@@ -555,108 +671,151 @@ const Home = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'url("https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.1,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+            backdropFilter: 'blur(5px)',
           },
         }}
       >
+        {/* Floating elements */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '10%',
+            right: '10%',
+            width: 200,
+            height: 200,
+            background: 'linear-gradient(45deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))',
+            borderRadius: '50%',
+            backdropFilter: 'blur(15px)',
+            animation: 'float 8s ease-in-out infinite',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: '20%',
+            left: '5%',
+            width: 150,
+            height: 150,
+            background: 'linear-gradient(45deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
+            borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%',
+            backdropFilter: 'blur(10px)',
+            animation: 'float 6s ease-in-out infinite reverse',
+          }}
+        />
+
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Box sx={{ textAlign: 'center' }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(30px)',
+              borderRadius: '40px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              p: { xs: 6, md: 8 },
+              boxShadow: '0 32px 64px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <Box sx={{ mb: 4 }}>
+              <SparkleIcon sx={{ fontSize: 60, color: 'rgba(255,255,255,0.8)', mb: 2 }} />
+            </Box>
             <Typography
-              variant="h3"
+              variant="h2"
               sx={{
-                fontWeight: 700,
-                mb: 3,
-                animation: 'fadeInUp 1s ease-out',
-                '@keyframes fadeInUp': {
-                  '0%': { opacity: 0, transform: 'translateY(30px)' },
-                  '100%': { opacity: 1, transform: 'translateY(0)' },
-                },
+                fontWeight: 800,
+                mb: 4,
+                background: 'linear-gradient(45deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8))',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontFamily: '"Nunito", sans-serif',
+                letterSpacing: '-0.02em',
               }}
             >
-              Ready to Get Started?
+              Ready to Transform Your Future?
             </Typography>
             <Typography
               variant="h5"
               sx={{
-                mb: 4,
-                opacity: 0.9,
-                maxWidth: '600px',
+                mb: 6,
+                color: 'rgba(255,255,255,0.8)',
+                maxWidth: '700px',
                 mx: 'auto',
                 lineHeight: 1.6,
-                animation: 'fadeInUp 1s ease-out 0.2s both',
+                fontFamily: '"Nunito", sans-serif',
+                fontWeight: 300,
               }}
             >
-              Join thousands of users who trust our platform for their document needs. 
-              Experience the convenience of digital document management today.
+              Join thousands of students who have already embraced the future of education. 
+              Experience seamless document management and enrollment with cutting-edge technology.
             </Typography>
             <Box sx={{ 
               display: 'flex', 
-              gap: 3, 
+              gap: 4, 
               justifyContent: 'center',
               flexDirection: { xs: 'column', sm: 'row' },
-              animation: 'fadeInUp 1s ease-out 0.4s both',
             }}>
               <Button
                 variant="contained"
                 size="large"
                 onClick={() => navigate('/register')}
                 sx={{
-                  py: 2,
-                  px: 6,
-                  fontSize: '1.2rem',
-                  fontWeight: 600,
-                  background: 'linear-gradient(45deg, #FFF 30%, #F0F0F0 90%)',
+                  py: 2.5,
+                  px: 8,
+                  fontSize: '1.3rem',
+                  fontWeight: 700,
+                  background: 'linear-gradient(45deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8))',
                   color: '#1976d2',
                   border: 0,
-                  borderRadius: '50px',
-                  boxShadow: '0 8px 30px rgba(255,255,255,0.3)',
-                  transition: 'all 0.3s ease-in-out',
+                  borderRadius: '30px',
+                  boxShadow: '0 16px 32px rgba(255,255,255,0.2)',
+                  fontFamily: '"Nunito", sans-serif',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    background: 'linear-gradient(45deg, #F5F5F5 30%, #E0E0E0 90%)',
-                    transform: 'translateY(-3px)',
-                    boxShadow: '0 12px 40px rgba(255,255,255,0.4)',
+                    background: 'linear-gradient(45deg, rgba(255,255,255,1), rgba(255,255,255,0.95))',
+                    transform: 'translateY(-6px) scale(1.05)',
+                    boxShadow: '0 24px 48px rgba(255,255,255,0.3)',
                   },
                 }}
+                startIcon={<SparkleIcon />}
               >
-                Get Started Now
+                Start Your Journey
               </Button>
               <Button
                 variant="outlined"
                 size="large"
                 onClick={() => navigate('/login')}
                 sx={{
-                  py: 2,
-                  px: 6,
-                  fontSize: '1.2rem',
+                  py: 2.5,
+                  px: 8,
+                  fontSize: '1.3rem',
                   fontWeight: 600,
-                  borderRadius: '50px',
-                  borderColor: 'rgba(255,255,255,0.7)',
+                  borderRadius: '30px',
+                  borderColor: 'rgba(255,255,255,0.4)',
                   color: 'white',
                   borderWidth: '2px',
+                  background: 'rgba(255,255,255,0.05)',
                   backdropFilter: 'blur(10px)',
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  transition: 'all 0.3s ease-in-out',
+                  fontFamily: '"Nunito", sans-serif',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    borderColor: 'white',
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    transform: 'translateY(-2px)',
+                    borderColor: 'rgba(255,255,255,0.8)',
+                    background: 'rgba(255,255,255,0.15)',
+                    transform: 'translateY(-4px)',
                   },
                 }}
+                startIcon={<MobileIcon />}
               >
-                Sign In
+                Sign In Now
               </Button>
             </Box>
           </Box>
         </Container>
       </Box>
 
-      {/* Services Section */}
+      {/* Glassmorphic Services Section */}
       <Box sx={{ 
-        py: 8,
-        background: 'linear-gradient(135deg, #f8f9ff 0%, #e8f5e8 100%)',
+        py: 10,
         position: 'relative',
         '&::before': {
           content: '""',
@@ -665,96 +824,166 @@ const Home = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'linear-gradient(135deg, rgba(25,118,210,0.02) 0%, rgba(76,175,80,0.02) 100%)',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
         }
       }}>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ textAlign: 'center', mb: 8 }}>
             <Typography
-              variant="h3"
-              align="center"
-              gutterBottom
+              variant="h2"
               sx={{ 
-                mb: 2,
-                fontWeight: 700,
-                background: 'linear-gradient(45deg, #1976d2, #4caf50)',
+                mb: 3,
+                fontWeight: 800,
+                background: 'linear-gradient(45deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8))',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
+                fontFamily: '"Nunito", sans-serif',
+                letterSpacing: '-0.02em',
               }}
             >
-              Our Services
+              Our Premium Services
             </Typography>
             <Typography
-              variant="h6"
-              color="text.secondary"
-              sx={{ maxWidth: '600px', mx: 'auto', mb: 4 }}
+              variant="h5"
+              sx={{ 
+                maxWidth: '600px', 
+                mx: 'auto',
+                color: 'rgba(255,255,255,0.8)',
+                fontWeight: 300,
+                fontFamily: '"Nunito", sans-serif',
+                lineHeight: 1.6,
+              }}
             >
-              Comprehensive educational services for students and families
+              Comprehensive educational services designed for the digital age
             </Typography>
           </Box>
           
-          <Grid container spacing={4}>
+          <Grid container spacing={6}>
             <Grid item xs={12} md={6}>
               <Card
                 sx={{
                   height: '100%',
-                  transition: 'all 0.3s ease-in-out',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(30px)',
+                  borderRadius: '32px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                   cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)',
-                  border: '1px solid',
-                  borderColor: 'rgba(25, 118, 210, 0.12)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '6px',
+                    background: 'linear-gradient(45deg, #1976d2, #42a5f5, #81c784)',
+                    transform: 'scaleX(0)',
+                    transition: 'transform 0.3s ease',
+                  },
                   '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 20px 40px rgba(25, 118, 210, 0.15)',
-                    borderColor: 'primary.main',
+                    transform: 'translateY(-16px) scale(1.02)',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    boxShadow: '0 40px 80px rgba(0,0,0,0.25)',
+                    '&::before': {
+                      transform: 'scaleX(1)',
+                    },
+                    '& .service-avatar': {
+                      transform: 'scale(1.1) rotateY(15deg)',
+                      background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
+                    },
+                    '& .service-content': {
+                      transform: 'translateY(-8px)',
+                    }
                   },
                 }}
                 onClick={() => navigate('/enrollment')}
               >
-                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                <CardContent sx={{ p: 6, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Avatar
+                    className="service-avatar"
                     sx={{
-                      width: 80,
-                      height: 80,
+                      width: 100,
+                      height: 100,
                       mx: 'auto',
-                      mb: 3,
-                      background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                      mb: 4,
+                      background: 'rgba(255,255,255,0.2)',
+                      backdropFilter: 'blur(10px)',
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
-                    <SchoolIcon sx={{ fontSize: 40 }} />
+                    <SchoolIcon sx={{ fontSize: 50, color: 'rgba(255,255,255,0.9)' }} />
                   </Avatar>
-                  <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
-                    Student Enrollment
-                  </Typography>
-                  <Typography variant="h6" color="primary" gutterBottom sx={{ mb: 3 }}>
-                    Eastern La Trinidad National High School
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
-                    Complete your enrollment application online for School Year 2025-2026. 
-                    Multi-step process with AI-assisted document upload and real-time validation.
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: 3 }}>
-                    <Chip label="Grades 7-12" size="small" color="primary" variant="outlined" />
-                    <Chip label="Senior High School" size="small" color="primary" variant="outlined" />
-                    <Chip label="AI-Assisted" size="small" color="success" variant="outlined" />
+                  <Box className="service-content" sx={{ transition: 'all 0.3s ease', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, color: 'rgba(255,255,255,0.95)', fontFamily: '"Nunito", sans-serif' }}>
+                      Student Enrollment
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', mb: 3, fontFamily: '"Nunito", sans-serif' }}>
+                      Eastern La Trinidad National High School
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 4, lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', fontFamily: '"Nunito", sans-serif', flexGrow: 1 }}>
+                      Complete your enrollment application for School Year 2025-2026 with our AI-powered, 
+                      futuristic interface. Multi-step process with intelligent document validation.
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: 4 }}>
+                      <Chip 
+                        label="Grades 7-12" 
+                        sx={{ 
+                          background: 'rgba(255,255,255,0.1)', 
+                          color: 'rgba(255,255,255,0.9)', 
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          fontFamily: '"Nunito", sans-serif'
+                        }} 
+                      />
+                      <Chip 
+                        label="AI-Powered" 
+                        sx={{ 
+                          background: 'rgba(76,175,80,0.2)', 
+                          color: 'rgba(255,255,255,0.9)', 
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(76,175,80,0.3)',
+                          fontFamily: '"Nunito", sans-serif'
+                        }} 
+                      />
+                      <Chip 
+                        label="Future-Ready" 
+                        sx={{ 
+                          background: 'rgba(33,150,243,0.2)', 
+                          color: 'rgba(255,255,255,0.9)', 
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(33,150,243,0.3)',
+                          fontFamily: '"Nunito", sans-serif'
+                        }} 
+                      />
+                    </Box>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      sx={{
+                        py: 2,
+                        background: 'linear-gradient(45deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
+                        color: '#1976d2',
+                        borderRadius: '20px',
+                        fontWeight: 700,
+                        fontFamily: '"Nunito", sans-serif',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, rgba(255,255,255,1), rgba(255,255,255,0.9))',
+                          transform: 'translateY(-2px)',
+                        },
+                      }}
+                      startIcon={<SparkleIcon />}
+                    >
+                      Launch Enrollment
+                    </Button>
                   </Box>
-                  <Button
-                    variant="contained"
-                    size="large"
-                    fullWidth
-                    sx={{
-                      py: 1.5,
-                      background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                      borderRadius: '12px',
-                      fontWeight: 600,
-                      '&:hover': {
-                        background: 'linear-gradient(45deg, #1565c0 30%, #1e88e5 90%)',
-                      },
-                    }}
-                  >
-                    Start Enrollment
-                  </Button>
                 </CardContent>
               </Card>
             </Grid>
@@ -763,62 +992,126 @@ const Home = () => {
               <Card
                 sx={{
                   height: '100%',
-                  transition: 'all 0.3s ease-in-out',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(30px)',
+                  borderRadius: '32px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                   cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #fff 0%, #f0f7ff 100%)',
-                  border: '1px solid',
-                  borderColor: 'rgba(25, 118, 210, 0.12)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '6px',
+                    background: 'linear-gradient(45deg, #ff9800, #ffb74d, #ffc107)',
+                    transform: 'scaleX(0)',
+                    transition: 'transform 0.3s ease',
+                  },
                   '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 20px 40px rgba(25, 118, 210, 0.15)',
-                    borderColor: 'primary.main',
+                    transform: 'translateY(-16px) scale(1.02)',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    boxShadow: '0 40px 80px rgba(0,0,0,0.25)',
+                    '&::before': {
+                      transform: 'scaleX(1)',
+                    },
+                    '& .service-avatar': {
+                      transform: 'scale(1.1) rotateY(15deg)',
+                      background: 'linear-gradient(135deg, #ff9800, #ffb74d)',
+                    },
+                    '& .service-content': {
+                      transform: 'translateY(-8px)',
+                    }
                   },
                 }}
                 onClick={() => navigate(isAuthenticated ? '/request-document' : '/login')}
               >
-                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                <CardContent sx={{ p: 6, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Avatar
+                    className="service-avatar"
                     sx={{
-                      width: 80,
-                      height: 80,
+                      width: 100,
+                      height: 100,
                       mx: 'auto',
-                      mb: 3,
-                      background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
+                      mb: 4,
+                      background: 'rgba(255,255,255,0.2)',
+                      backdropFilter: 'blur(10px)',
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
-                    <AssignmentIcon sx={{ fontSize: 40 }} />
+                    <AssignmentIcon sx={{ fontSize: 50, color: 'rgba(255,255,255,0.9)' }} />
                   </Avatar>
-                  <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
-                    Document Requests
-                  </Typography>
-                  <Typography variant="h6" color="primary" gutterBottom sx={{ mb: 3 }}>
-                    Academic Records & Certificates
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
-                    Request official academic documents including Form 137, Form 138, SF9, SF10, 
-                    diplomas, and transcripts with online tracking and pickup scheduling.
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: 3 }}>
-                    <Chip label="Form 137" size="small" color="secondary" variant="outlined" />
-                    <Chip label="Diploma" size="small" color="secondary" variant="outlined" />
-                    <Chip label="Transcripts" size="small" color="secondary" variant="outlined" />
+                  <Box className="service-content" sx={{ transition: 'all 0.3s ease', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, color: 'rgba(255,255,255,0.95)', fontFamily: '"Nunito", sans-serif' }}>
+                      Document Requests
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', mb: 3, fontFamily: '"Nunito", sans-serif' }}>
+                      Academic Records & Certificates
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 4, lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', fontFamily: '"Nunito", sans-serif', flexGrow: 1 }}>
+                      Request official academic documents with our intelligent processing system. 
+                      Real-time tracking, AI validation, and seamless digital delivery.
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: 4 }}>
+                      <Chip 
+                        label="Form 137" 
+                        sx={{ 
+                          background: 'rgba(255,255,255,0.1)', 
+                          color: 'rgba(255,255,255,0.9)', 
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          fontFamily: '"Nunito", sans-serif'
+                        }} 
+                      />
+                      <Chip 
+                        label="Real-time Tracking" 
+                        sx={{ 
+                          background: 'rgba(255,152,0,0.2)', 
+                          color: 'rgba(255,255,255,0.9)', 
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255,152,0,0.3)',
+                          fontFamily: '"Nunito", sans-serif'
+                        }} 
+                      />
+                      <Chip 
+                        label="Digital Delivery" 
+                        sx={{ 
+                          background: 'rgba(156,39,176,0.2)', 
+                          color: 'rgba(255,255,255,0.9)', 
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(156,39,176,0.3)',
+                          fontFamily: '"Nunito", sans-serif'
+                        }} 
+                      />
+                    </Box>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      sx={{
+                        py: 2,
+                        background: 'linear-gradient(45deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
+                        color: '#ff9800',
+                        borderRadius: '20px',
+                        fontWeight: 700,
+                        fontFamily: '"Nunito", sans-serif',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, rgba(255,255,255,1), rgba(255,255,255,0.9))',
+                          transform: 'translateY(-2px)',
+                        },
+                      }}
+                      startIcon={<DocumentIcon />}
+                    >
+                      {isAuthenticated ? 'Access Documents' : 'Login to Access'}
+                    </Button>
                   </Box>
-                  <Button
-                    variant="contained"
-                    size="large"
-                    fullWidth
-                    sx={{
-                      py: 1.5,
-                      background: 'linear-gradient(45deg, #ff9800 30%, #ffb74d 90%)',
-                      borderRadius: '12px',
-                      fontWeight: 600,
-                      '&:hover': {
-                        background: 'linear-gradient(45deg, #f57c00 30%, #ff9800 90%)',
-                      },
-                    }}
-                  >
-                    {isAuthenticated ? 'Request Documents' : 'Login to Request'}
-                  </Button>
                 </CardContent>
               </Card>
             </Grid>
@@ -826,163 +1119,139 @@ const Home = () => {
         </Container>
       </Box>
 
-      {/* QR Code Quick Access Section */}
-      <Box
-        sx={{
-          py: 8,
-          background: 'linear-gradient(180deg, #f8f9ff 0%, #ffffff 100%)',
-        }}
-      >
+      {/* Futuristic QR Code Section */}
+      <Box sx={{ py: 10, position: 'relative' }}>
         <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
             <Typography
-              variant="h3"
+              variant="h2"
               sx={{
-                fontWeight: 700,
-                mb: 2,
-                background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                fontWeight: 800,
+                mb: 3,
+                background: 'linear-gradient(45deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8))',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
+                fontFamily: '"Nunito", sans-serif',
+                letterSpacing: '-0.02em',
               }}
             >
-              Quick Access with QR Codes
+              Instant Access Portal
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '600px', mx: 'auto' }}>
-              Scan these QR codes with your mobile device for instant access to our services
+            <Typography variant="h5" sx={{ maxWidth: '600px', mx: 'auto', color: 'rgba(255,255,255,0.8)', fontFamily: '"Nunito", sans-serif', fontWeight: 300 }}>
+              Scan these quantum-encoded QR codes for immediate access to our services
             </Typography>
           </Box>
           
           <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  height: '100%',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 24px rgba(25, 118, 210, 0.15)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <QRCodeDisplay
-                      data={`${window.location.origin}/enrollment`}
-                      size={120}
-                      title="Student Enrollment"
-                      description="Quick access to enrollment application"
-                    />
-                  </Box>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Student Enrollment
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Scan to start your enrollment application for ELTNHS
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  height: '100%',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 24px rgba(25, 118, 210, 0.15)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <QRCodeDisplay
-                      data={`${window.location.origin}/request/form-137`}
-                      size={120}
-                      title="Form 137 Request"
-                      description="Quick access to Form 137 request form"
-                    />
-                  </Box>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Form 137 Request
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Scan to directly access the Form 137 request form on your mobile device
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  height: '100%',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 24px rgba(25, 118, 210, 0.15)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <QRCodeDisplay
-                      data={`${window.location.origin}/track`}
-                      size={120}
-                      title="Track Requests"
-                      description="Monitor your request status"
-                    />
-                  </Box>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Track Your Requests
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Scan to quickly check the status of your document requests
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  height: '100%',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 24px rgba(25, 118, 210, 0.15)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <QRCodeDisplay
-                      data={JSON.stringify({
-                        type: 'contact_info',
-                        school: 'Eastern La Trinidad National High School',
-                        phone: '+63-XXX-XXX-XXXX',
-                        email: 'info@eltnhs.edu.ph',
-                        address: 'La Trinidad, Benguet, Philippines'
-                      })}
-                      size={120}
-                      title="Contact Info"
-                      description="School contact information"
-                    />
-                  </Box>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Contact Information
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Scan to save our school contact information to your device
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            {[
+              {
+                data: `${window.location.origin}/enrollment`,
+                title: "Enrollment Portal",
+                description: "Access the future of education enrollment",
+                icon: <SchoolIcon sx={{ fontSize: 32, color: 'rgba(255,255,255,0.9)' }} />,
+                gradient: 'linear-gradient(135deg, #1976d2, #42a5f5)',
+              },
+              {
+                data: `${window.location.origin}/request/form-137`,
+                title: "Form 137 Hub",
+                description: "Instant document request access",
+                icon: <DocumentIcon sx={{ fontSize: 32, color: 'rgba(255,255,255,0.9)' }} />,
+                gradient: 'linear-gradient(135deg, #ff9800, #ffb74d)',
+              },
+              {
+                data: `${window.location.origin}/track`,
+                title: "Status Tracker",
+                description: "Real-time request monitoring",
+                icon: <SpeedIcon sx={{ fontSize: 32, color: 'rgba(255,255,255,0.9)' }} />,
+                gradient: 'linear-gradient(135deg, #4caf50, #81c784)',
+              },
+              {
+                data: JSON.stringify({
+                  type: 'contact_info',
+                  school: 'Eastern La Trinidad National High School',
+                  phone: '+63-XXX-XXX-XXXX',
+                  email: 'info@eltnhs.edu.ph',
+                  address: 'La Trinidad, Benguet, Philippines'
+                }),
+                title: "Contact Matrix",
+                description: "School information database",
+                icon: <SupportIcon sx={{ fontSize: 32, color: 'rgba(255,255,255,0.9)' }} />,
+                gradient: 'linear-gradient(135deg, #9c27b0, #ba68c8)',
+              },
+            ].map((qr, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(20px)',
+                    borderRadius: '24px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    textAlign: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                    animation: `slideInUp 0.6s ease-out ${index * 0.1}s both`,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '4px',
+                      background: qr.gradient,
+                      transform: 'scaleX(0)',
+                      transition: 'transform 0.3s ease',
+                    },
+                    '&:hover': {
+                      transform: 'translateY(-12px) scale(1.02)',
+                      background: 'rgba(255, 255, 255, 0.15)',
+                      boxShadow: '0 32px 64px rgba(0,0,0,0.2)',
+                      '&::before': {
+                        transform: 'scaleX(1)',
+                      },
+                      '& .qr-icon': {
+                        transform: 'scale(1.2) rotateY(15deg)',
+                        background: qr.gradient,
+                      }
+                    },
+                  }}
+                >
+                  <CardContent sx={{ p: 4 }}>
+                    <Box 
+                      className="qr-icon"
+                      sx={{ 
+                        mb: 3,
+                        display: 'inline-flex',
+                        p: 2,
+                        borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.1)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        transition: 'all 0.4s ease',
+                      }}
+                    >
+                      {qr.icon}
+                    </Box>
+                    <Box sx={{ mb: 2 }}>
+                      <QRCodeDisplay
+                        data={qr.data}
+                        size={120}
+                        title={qr.title}
+                        description={qr.description}
+                      />
+                    </Box>
+                    <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.95)', fontFamily: '"Nunito", sans-serif', fontWeight: 700, mb: 1 }}>
+                      {qr.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Nunito", sans-serif' }}>
+                      {qr.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
         </Container>
       </Box>
