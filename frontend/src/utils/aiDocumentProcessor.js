@@ -32,241 +32,319 @@ export const extractTextFromImage = async (imageFile, onProgress = null) => {
 
 // AI-powered information extraction using pattern matching and NLP
 export const extractStudentInformation = (text) => {
-  const extractedData = {
-    // Form 137 specific fields to match our form
+  // Clean and normalize text
+  const cleanText = text.replace(/[|]/g, '').replace(/\s+/g, ' ').trim();
+  const debug = true; // Set to true to log extraction process
+  const extractedFields = [];
+  const fieldConfidences = {};
+
+  // --- Personal Info ---
+  const personalInfo = {
     surname: '',
     firstName: '',
     middleName: '',
-    sex: '',
+    extension: '',
     dateOfBirth: null,
+    placeOfBirth: '',
+    sex: '',
+    age: '',
+    religion: '',
+    citizenship: '',
+    lrn: '',
+    registrationNumber: '',
+    issueDate: '',
+  };
+
+  // --- Address ---
+  const address = {
+    houseNumber: '',
+    street: '',
     barangay: '',
     city: '',
     province: '',
-    learnerReferenceNumber: '',
-    parentGuardianName: '',
-    parentGuardianAddress: '',
-    // Additional fields for PDF mapping
-    givenName: '', // alias for firstName
-    studentNumber: '', // alias for learnerReferenceNumber
-    town: '', // alias for city
-    barrio: '', // alias for barangay
-    placeOfBirth: '',
-    elementarySchool: '',
-    currentSchool: '',
-    yearGraduated: ''
+    zipCode: '',
   };
 
-  // Clean and normalize text
-  const cleanText = text.replace(/\s+/g, ' ').trim();
-  const lines = cleanText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  // --- Academic Info ---
+  const academicInfo = {
+    lastSchool: '',
+    schoolAddress: '',
+    gradeLevel: '',
+    schoolYear: '',
+    gradeToEnroll: '',
+    track: '',
+  };
 
-  // Name extraction patterns
-  const namePatterns = [
-    /name[:\s]*([a-zA-Z\s,]+)/i,
-    /student[:\s]*([a-zA-Z\s,]+)/i,
-    /^([A-Z][a-z]+,\s*[A-Z][a-z]+)/,
-    /surname[:\s]*([a-zA-Z]+)/i,
-    /given\s*name[:\s]*([a-zA-Z\s]+)/i,
-    /first\s*name[:\s]*([a-zA-Z\s]+)/i,
-    /last\s*name[:\s]*([a-zA-Z]+)/i
+  // --- Parent/Guardian Info ---
+  const parentInfo = {
+    fatherName: '',
+    fatherOccupation: '',
+    fatherContactNumber: '',
+    motherName: '',
+    motherOccupation: '',
+    motherContactNumber: '',
+    guardianName: '',
+    guardianRelationship: '',
+    guardianOccupation: '',
+    guardianContactNumber: '',
+  };
+
+  // --- Emergency Contact ---
+  const emergencyContact = {
+    emergencyContactName: '',
+    emergencyContactRelationship: '',
+    emergencyContactNumber: '',
+    emergencyContactAddress: '',
+  };
+
+  // --- Multilingual Keyword Patterns for Birth Certificate ---
+  const fieldPatterns = [
+    // Name
+    { keys: ['Name', 'Pangalan', "Child’s Name", "Child's Name"], assign: (v) => {
+      const parts = v.split(/\s+/);
+      if (parts.length >= 2) {
+        personalInfo.firstName = parts[0];
+        personalInfo.surname = parts[1];
+        if (parts.length >= 3) personalInfo.middleName = parts.slice(2).join(' ');
+        fieldConfidences.firstName = 0.9;
+        fieldConfidences.surname = 0.9;
+        fieldConfidences.middleName = 0.8;
+      }
+    } },
+    // Date of Birth
+    { keys: ['Date of Birth', 'Kaarawan', 'Kapanganakan'], assign: (v) => {
+      personalInfo.dateOfBirth = normalizeDate(v);
+      fieldConfidences.dateOfBirth = 0.9;
+    } },
+    // Place of Birth
+    { keys: ['Place of Birth', 'Lugar ng Kapanganakan'], assign: (v) => {
+      personalInfo.placeOfBirth = v;
+      fieldConfidences.placeOfBirth = 0.9;
+    } },
+    // Sex/Gender
+    { keys: ['Sex', 'Kasarian', 'Gender'], assign: (v) => {
+      personalInfo.sex = v;
+      fieldConfidences.sex = 0.9;
+    } },
+    // Father
+    { keys: ["Father’s Name", "Father's Name", 'Ama'], assign: (v) => {
+      parentInfo.fatherName = v;
+      fieldConfidences.fatherName = 0.9;
+    } },
+    // Mother
+    { keys: ["Mother’s Name", "Mother's Name", 'Ina'], assign: (v) => {
+      parentInfo.motherName = v;
+      fieldConfidences.motherName = 0.9;
+    } },
+    // Registry No.
+    { keys: ['Registry No.', 'Reg. No.'], assign: (v) => {
+      personalInfo.registrationNumber = v;
+      fieldConfidences.registrationNumber = 0.9;
+    } },
+    // Date Issued
+    { keys: ['Date Issued', 'Petsa ng Paglabas'], assign: (v) => {
+      personalInfo.issueDate = normalizeDate(v);
+      fieldConfidences.issueDate = 0.9;
+    } },
   ];
 
-  // Extract names
-  for (const pattern of namePatterns) {
-    const match = cleanText.match(pattern);
-    if (match) {
-      const fullName = match[1].trim();
-      if (fullName.includes(',')) {
-        const [surname, firstName] = fullName.split(',').map(n => n.trim());
-        extractedData.surname = surname;
-        extractedData.firstName = firstName;
-        extractedData.givenName = firstName; // alias
-      } else if (fullName.split(' ').length >= 2) {
-        const nameParts = fullName.split(' ');
-        extractedData.firstName = nameParts.slice(0, -1).join(' ');
-        extractedData.givenName = extractedData.firstName; // alias
-        extractedData.surname = nameParts[nameParts.length - 1];
-        // Extract middle name if present
-        if (nameParts.length >= 3) {
-          extractedData.middleName = nameParts[nameParts.length - 2];
-          extractedData.firstName = nameParts.slice(0, -2).join(' ');
-          extractedData.givenName = extractedData.firstName; // alias
-        }
-      }
-      break;
+  // --- Helper: Normalize date to YYYY-MM-DD ---
+  function normalizeDate(val) {
+    if (!val) return '';
+    let d = val.trim();
+    // Try to match DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, etc.
+    const parts = d.split(/[\/.\-]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      if (parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
     }
+    // Fallback: just return as is
+    return d;
   }
 
-  // Date of birth extraction
-  const datePatterns = [
-    /(?:date\s*of\s*birth|born|birth\s*date)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-    /(?:dob|d\.o\.b)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-    /(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/g
-  ];
-
-  for (const pattern of datePatterns) {
-    const match = cleanText.match(pattern);
-    if (match) {
-      try {
-        const dateStr = match[1] || match[0];
-        const parsedDate = new Date(dateStr);
-        if (!isNaN(parsedDate.getTime())) {
-          extractedData.dateOfBirth = parsedDate.toISOString().split('T')[0];
+  // --- Multilingual Field Extraction ---
+  for (const { keys, assign } of fieldPatterns) {
+    for (const k of keys) {
+      const regex = new RegExp(`${k}[:\s]*([a-zA-Z0-9\s,\-\/'\.]+)`, 'i');
+      const match = cleanText.match(regex);
+      if (match && match[1]) {
+        assign(match[1].trim());
           break;
-        }
-      } catch (e) {
-        // Continue to next pattern
       }
     }
   }
 
-  // Sex/Gender extraction
-  const sexPatterns = [
-    /(?:sex|gender)[:\s]*(male|female|m|f)/i,
-    /\b(male|female)\b/i
-  ];
+  // --- Robust Extraction Patterns ---
+  // Helper: typo/variant tolerant regex
+  const label = (variants) => `(?:${variants.join('|')})`;
 
-  for (const pattern of sexPatterns) {
-    const match = cleanText.match(pattern);
-    if (match) {
-      const sex = match[1].toLowerCase();
-      if (sex === 'm' || sex === 'male') {
-        extractedData.sex = 'Male';
-      } else if (sex === 'f' || sex === 'female') {
-        extractedData.sex = 'Female';
+  // Name
+  const surnamePattern = new RegExp(`${label(['surname', 'surnarne', 'last name', 'family name'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const firstNamePattern = new RegExp(`${label(['first name', 'given name', 'firstname'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const middleNamePattern = new RegExp(`${label(['middle name', 'middlename', 'm.i.', 'mi'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const extensionPattern = new RegExp(`${label(['extension', 'ext'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const fullNamePattern = /name[:\s]*([a-zA-Z\s,\.]+)/i;
+
+  // LRN
+  const lrnPattern = new RegExp(`${label(['lrn', 'learner reference number', 'lrn no', 'lrn number'])}[:\s]*([0-9\-]{8,})`, 'i');
+  const lrnFallbackPattern = /\b(\d{12})\b/;
+
+  // Date of Birth
+  const dobPattern = new RegExp(`${label(['date of birth', 'dob', 'd.o.b', 'birthdate', 'birth date'])}[:\s]*([0-9]{1,2}[\/\.\-][0-9]{1,2}[\/\.\-][0-9]{2,4})`, 'i');
+  const dobFallbackPattern = /(\d{1,2}[\/\.\-]{1}\d{1,2}[\/\.\-]{1}\d{2,4})/;
+
+  // Place of Birth
+  const pobPattern = new RegExp(`${label(['place of birth', 'birthplace', 'born in'])}[:\s]*([a-zA-Z\s,]+)`, 'i');
+
+  // Sex
+  const sexPattern = new RegExp(`${label(['sex', 'gender'])}[:\s]*(male|female|m|f)`, 'i');
+
+  // Religion
+  const religionPattern = new RegExp(`${label(['religion'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+
+  // Citizenship
+  const citizenshipPattern = new RegExp(`${label(['citizenship', 'nationality'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+
+  // Address
+  const houseNumberPattern = new RegExp(`${label(['house number', 'house no', 'houseno'])}[:\s]*([a-zA-Z0-9\s]+)`, 'i');
+  const streetPattern = new RegExp(`${label(['street', 'st'])}[:\s]*([a-zA-Z0-9\s]+)`, 'i');
+  const barangayPattern = new RegExp(`${label(['barangay', 'brgy', 'bgy'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const cityPattern = new RegExp(`${label(['city', 'municipality', 'town'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const provincePattern = new RegExp(`${label(['province'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const zipCodePattern = new RegExp(`${label(['zip code', 'zipcode', 'postal code'])}[:\s]*([0-9]+)`, 'i');
+
+  // Academic Info
+  const lastSchoolPattern = new RegExp(`${label(['last school attended', 'last school', 'previous school'])}[:\s]*([a-zA-Z0-9\s\.\-]+)`, 'i');
+  const schoolAddressPattern = new RegExp(`${label(['school address', 'school add'])}[:\s]*([a-zA-Z0-9\s,\.\-]+)`, 'i');
+  const gradeLevelPattern = new RegExp(`${label(['grade level', 'grade', 'year level'])}[:\s]*([a-zA-Z0-9\s]+)`, 'i');
+  const schoolYearPattern = new RegExp(`${label(['school year', 'sy', 's.y.'])}[:\s]*([0-9\-\s]+)`, 'i');
+  const gradeToEnrollPattern = new RegExp(`${label(['grade to enroll', 'to enroll', 'enroll in'])}[:\s]*([a-zA-Z0-9\s]+)`, 'i');
+  const trackPattern = new RegExp(`${label(['track', 'strand'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+
+  // Parent/Guardian Info
+  const fatherNamePattern = new RegExp(`${label(["father's name", 'father name', 'father'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const fatherOccupationPattern = new RegExp(`${label(["father's occupation", 'father occupation'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const fatherContactPattern = new RegExp(`${label(["father's contact number", 'father contact', 'father contact number'])}[:\s]*([0-9\-\s]+)`, 'i');
+  const motherNamePattern = new RegExp(`${label(["mother's name", 'mother name', 'mother'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const motherOccupationPattern = new RegExp(`${label(["mother's occupation", 'mother occupation'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const motherContactPattern = new RegExp(`${label(["mother's contact number", 'mother contact', 'mother contact number'])}[:\s]*([0-9\-\s]+)`, 'i');
+  const guardianNamePattern = new RegExp(`${label(["guardian's name", 'guardian name', 'guardian'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const guardianRelationshipPattern = new RegExp(`${label(["guardian's relationship", 'guardian relationship', 'relationship'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const guardianOccupationPattern = new RegExp(`${label(["guardian's occupation", 'guardian occupation'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const guardianContactPattern = new RegExp(`${label(["guardian's contact number", 'guardian contact', 'guardian contact number'])}[:\s]*([0-9\-\s]+)`, 'i');
+
+  // Emergency Contact
+  const emergencyNamePattern = new RegExp(`${label(['emergency contact name', 'emergency name'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const emergencyRelationshipPattern = new RegExp(`${label(['emergency contact relationship', 'emergency relationship'])}[:\s]*([a-zA-Z\s]+)`, 'i');
+  const emergencyNumberPattern = new RegExp(`${label(['emergency contact number', 'emergency number'])}[:\s]*([0-9\-\s]+)`, 'i');
+  const emergencyAddressPattern = new RegExp(`${label(['emergency contact address', 'emergency address'])}[:\s]*([a-zA-Z0-9\s,\.\-]+)`, 'i');
+
+  // --- Extraction ---
+  const patterns = [
+    [surnamePattern, v => { personalInfo.surname = v.trim(); extractedFields.push('surname'); }],
+    [firstNamePattern, v => { personalInfo.firstName = v.trim(); extractedFields.push('firstName'); }],
+    [middleNamePattern, v => { personalInfo.middleName = v.trim(); extractedFields.push('middleName'); }],
+    [extensionPattern, v => { personalInfo.extension = v.trim(); extractedFields.push('extension'); }],
+    [fullNamePattern, v => {
+      const parts = v.split(',');
+      if (parts.length === 2) {
+        personalInfo.surname = personalInfo.surname || parts[0].trim();
+        personalInfo.firstName = personalInfo.firstName || parts[1].trim();
+        extractedFields.push('surname', 'firstName');
       }
-      break;
-    }
-  }
-
-  // Student number extraction (LRN)
-  const studentNumberPatterns = [
-    /(?:lrn|learner\s*reference\s*number)[:\s]*([0-9\-]+)/i,
-    /(?:student\s*(?:number|id|no)|id\s*number)[:\s]*([a-zA-Z0-9\-]+)/i,
-    /\b(\d{12})\b/g, // 12-digit LRN pattern
-    /\b(\d{4,})\b/g // Generic number pattern
+    }],
+    [lrnPattern, v => { personalInfo.lrn = v.trim(); extractedFields.push('lrn'); }],
+    [dobPattern, v => { personalInfo.dateOfBirth = v.trim(); extractedFields.push('dateOfBirth'); }],
+    [pobPattern, v => { personalInfo.placeOfBirth = v.trim(); extractedFields.push('placeOfBirth'); }],
+    [sexPattern, v => { personalInfo.sex = v.trim(); extractedFields.push('sex'); }],
+    [religionPattern, v => { personalInfo.religion = v.trim(); extractedFields.push('religion'); }],
+    [citizenshipPattern, v => { personalInfo.citizenship = v.trim(); extractedFields.push('citizenship'); }],
+    [houseNumberPattern, v => { address.houseNumber = v.trim(); extractedFields.push('houseNumber'); }],
+    [streetPattern, v => { address.street = v.trim(); extractedFields.push('street'); }],
+    [barangayPattern, v => { address.barangay = v.trim(); extractedFields.push('barangay'); }],
+    [cityPattern, v => { address.city = v.trim(); extractedFields.push('city'); }],
+    [provincePattern, v => { address.province = v.trim(); extractedFields.push('province'); }],
+    [zipCodePattern, v => { address.zipCode = v.trim(); extractedFields.push('zipCode'); }],
+    [lastSchoolPattern, v => { academicInfo.lastSchool = v.trim(); extractedFields.push('lastSchool'); }],
+    [schoolAddressPattern, v => { academicInfo.schoolAddress = v.trim(); extractedFields.push('schoolAddress'); }],
+    [gradeLevelPattern, v => { academicInfo.gradeLevel = v.trim(); extractedFields.push('gradeLevel'); }],
+    [schoolYearPattern, v => { academicInfo.schoolYear = v.trim(); extractedFields.push('schoolYear'); }],
+    [gradeToEnrollPattern, v => { academicInfo.gradeToEnroll = v.trim(); extractedFields.push('gradeToEnroll'); }],
+    [trackPattern, v => { academicInfo.track = v.trim(); extractedFields.push('track'); }],
+    [fatherNamePattern, v => { parentInfo.fatherName = v.trim(); extractedFields.push('fatherName'); }],
+    [fatherOccupationPattern, v => { parentInfo.fatherOccupation = v.trim(); extractedFields.push('fatherOccupation'); }],
+    [fatherContactPattern, v => { parentInfo.fatherContactNumber = v.trim(); extractedFields.push('fatherContactNumber'); }],
+    [motherNamePattern, v => { parentInfo.motherName = v.trim(); extractedFields.push('motherName'); }],
+    [motherOccupationPattern, v => { parentInfo.motherOccupation = v.trim(); extractedFields.push('motherOccupation'); }],
+    [motherContactPattern, v => { parentInfo.motherContactNumber = v.trim(); extractedFields.push('motherContactNumber'); }],
+    [guardianNamePattern, v => { parentInfo.guardianName = v.trim(); extractedFields.push('guardianName'); }],
+    [guardianRelationshipPattern, v => { parentInfo.guardianRelationship = v.trim(); extractedFields.push('guardianRelationship'); }],
+    [guardianOccupationPattern, v => { parentInfo.guardianOccupation = v.trim(); extractedFields.push('guardianOccupation'); }],
+    [guardianContactPattern, v => { parentInfo.guardianContactNumber = v.trim(); extractedFields.push('guardianContactNumber'); }],
+    [emergencyNamePattern, v => { emergencyContact.emergencyContactName = v.trim(); extractedFields.push('emergencyContactName'); }],
+    [emergencyRelationshipPattern, v => { emergencyContact.emergencyContactRelationship = v.trim(); extractedFields.push('emergencyContactRelationship'); }],
+    [emergencyNumberPattern, v => { emergencyContact.emergencyContactNumber = v.trim(); extractedFields.push('emergencyContactNumber'); }],
+    [emergencyAddressPattern, v => { emergencyContact.emergencyContactAddress = v.trim(); extractedFields.push('emergencyContactAddress'); }],
   ];
 
-  for (const pattern of studentNumberPatterns) {
+  for (const [pattern, setter] of patterns) {
     const match = cleanText.match(pattern);
-    if (match) {
-      extractedData.learnerReferenceNumber = match[1];
-      extractedData.studentNumber = match[1]; // alias for PDF
-      break;
+    if (match && match[1]) setter(match[1]);
+  }
+
+  // Fallbacks for LRN and DOB if not found by label
+  if (!personalInfo.lrn) {
+    const lrnMatch = cleanText.match(lrnFallbackPattern);
+    if (lrnMatch) {
+      personalInfo.lrn = lrnMatch[1];
+      extractedFields.push('lrn (fallback)');
+    }
+  }
+  if (!personalInfo.dateOfBirth) {
+    const dobMatch = cleanText.match(dobFallbackPattern);
+    if (dobMatch) {
+      personalInfo.dateOfBirth = dobMatch[1];
+      extractedFields.push('dateOfBirth (fallback)');
     }
   }
 
-  // Place of birth extraction
-  const placePatterns = [
-    /(?:place\s*of\s*birth|born\s*in)[:\s]*([a-zA-Z\s,]+)/i,
-    /(?:birthplace)[:\s]*([a-zA-Z\s,]+)/i
-  ];
-
-  for (const pattern of placePatterns) {
-    const match = cleanText.match(pattern);
-    if (match) {
-      extractedData.placeOfBirth = match[1].trim();
-      break;
+  // Fallback for full name if not found
+  if (!personalInfo.surname || !personalInfo.firstName) {
+    // Try to find a line with 2-3 words after 'Name' or similar
+    const nameLine = cleanText.match(/name[:\s]*([a-zA-Z\s]+)/i);
+    if (nameLine && nameLine[1]) {
+      const parts = nameLine[1].trim().split(' ');
+      if (parts.length >= 2) {
+        personalInfo.firstName = personalInfo.firstName || parts[0];
+        personalInfo.surname = personalInfo.surname || parts[1];
+        if (parts.length >= 3) personalInfo.middleName = personalInfo.middleName || parts[2];
+        extractedFields.push('name (fallback)');
+      }
     }
   }
 
-  // Address component extraction
-  const addressPatterns = {
-    barangay: /(?:barangay|brgy\.?|brgy\s)[:\s]*([a-zA-Z\s]+)/i,
-    city: /(?:city|municipality)[:\s]*([a-zA-Z\s]+)/i,
-    province: /(?:province)[:\s]*([a-zA-Z\s]+)/i
+  if (debug) {
+    // eslint-disable-next-line no-console
+    console.log('AI Extraction Debug:', {
+      extractedFields,
+      personalInfo,
+      address,
+      academicInfo,
+      parentInfo,
+      emergencyContact,
+      fieldConfidences,
+      cleanText,
+    });
+  }
+
+  return {
+    personalInfo,
+    address,
+    academicInfo,
+    parentInfo,
+    emergencyContact,
+    fieldConfidences,
   };
-
-  Object.keys(addressPatterns).forEach(component => {
-    const match = cleanText.match(addressPatterns[component]);
-    if (match) {
-      extractedData[component] = match[1].trim();
-      // Set aliases for PDF
-      if (component === 'barangay') extractedData.barrio = extractedData[component];
-      if (component === 'city') extractedData.town = extractedData[component];
-    }
-  });
-
-  // Extract address from place of birth if available
-  if (extractedData.placeOfBirth && !extractedData.barangay) {
-    const placeParts = extractedData.placeOfBirth.split(',').map(p => p.trim());
-    if (placeParts.length >= 3) {
-      extractedData.barangay = placeParts[0];
-      extractedData.barrio = placeParts[0]; // alias
-      extractedData.city = placeParts[1];
-      extractedData.town = placeParts[1]; // alias
-      extractedData.province = placeParts[2];
-    }
-  }
-
-  // School extraction
-  const schoolPatterns = [
-    /(?:school|institution)[:\s]*([a-zA-Z\s]+(?:school|college|university)[a-zA-Z\s]*)/i,
-    /(?:elementary|primary)\s*school[:\s]*([a-zA-Z\s]+)/i,
-    /(?:high\s*school|secondary)[:\s]*([a-zA-Z\s]+)/i
-  ];
-
-  for (const pattern of schoolPatterns) {
-    const match = cleanText.match(pattern);
-    if (match) {
-      const schoolName = match[1].trim();
-      if (!extractedData.elementarySchool) {
-        extractedData.elementarySchool = schoolName;
-      }
-      if (!extractedData.currentSchool) {
-        extractedData.currentSchool = schoolName;
-      }
-      break;
-    }
-  }
-
-  // Year graduated extraction
-  const yearPatterns = [
-    /(?:graduated|year\s*graduated)[:\s]*(\d{4})/i,
-    /(?:class\s*of)[:\s]*(\d{4})/i,
-    /\b(19|20)\d{2}\b/g
-  ];
-
-  for (const pattern of yearPatterns) {
-    const match = cleanText.match(pattern);
-    if (match) {
-      const year = match[1] || match[0];
-      if (parseInt(year) >= 1990 && parseInt(year) <= new Date().getFullYear()) {
-        extractedData.yearGraduated = year;
-        break;
-      }
-    }
-  }
-
-  // Parent/Guardian extraction
-  const parentPatterns = [
-    /(?:parent|guardian|father|mother)[:\s]*([a-zA-Z\s,]+)/i,
-    /(?:emergency\s*contact)[:\s]*([a-zA-Z\s,]+)/i
-  ];
-
-  for (const pattern of parentPatterns) {
-    const match = cleanText.match(pattern);
-    if (match) {
-      extractedData.parentGuardianName = match[1].trim();
-      break;
-    }
-  }
-
-  // Parent/Guardian address extraction
-  const parentAddressPatterns = [
-    /(?:parent\s*address|guardian\s*address)[:\s]*([a-zA-Z0-9\s,\.\-]+)/i,
-    /(?:address)[:\s]*([a-zA-Z0-9\s,\.\-]+)/i
-  ];
-
-  for (const pattern of parentAddressPatterns) {
-    const match = cleanText.match(pattern);
-    if (match && match[1].length > 10) { // Ensure it's a substantial address
-      extractedData.parentGuardianAddress = match[1].trim();
-      break;
-    }
-  }
-
-  return extractedData;
 };
 
 // Confidence scoring for extracted data

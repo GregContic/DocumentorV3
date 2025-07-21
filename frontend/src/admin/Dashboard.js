@@ -334,7 +334,7 @@ const Dashboard = () => {
 
         <Button
           component={RouterLink}
-          to="/admin/form137-stubs"
+          to="/admin/requests"
           variant="outlined"
           size="large"
           startIcon={<Form137Icon />}
@@ -358,7 +358,7 @@ const Dashboard = () => {
             transition: 'all 0.2s ease-in-out',
           }}
         >
-          Form 137 Stubs
+          Document Requests
         </Button>
       </Box>      {error && (
         <Alert 

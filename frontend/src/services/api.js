@@ -90,6 +90,7 @@ export const enrollmentService = {
   getMyEnrollmentStatus: () => api.get('/api/enrollments/my-status'),
   getAllEnrollments: () => api.get('/api/enrollments/admin'),
   updateEnrollmentStatus: (id, statusData) => api.put(`/api/enrollments/${id}/status`, statusData),
+  getSectionsByGrade: (gradeLevel) => api.get(`/api/enrollments/sections?gradeLevel=${encodeURIComponent(gradeLevel)}`),
 };
 
 // Inquiry services

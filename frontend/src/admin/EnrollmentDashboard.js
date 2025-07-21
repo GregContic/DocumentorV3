@@ -22,7 +22,17 @@ import {
   Divider,
   IconButton,
   TextField,
+  Tabs,
+  Tab,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Snackbar,
+  Alert,
+  Tooltip,
 } from '@mui/material';
+import * as XLSX from 'xlsx';
 import {
   Visibility as VisibilityIcon,
   Close as CloseIcon,
@@ -50,6 +60,18 @@ const EnrollmentDashboard = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [enrollmentToReject, setEnrollmentToReject] = useState(null);
   const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [sectionUpdating, setSectionUpdating] = useState(null); // student id being updated
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assigningStudent, setAssigningStudent] = useState(null);
+  const [availableSections, setAvailableSections] = useState([]);
+  const [selectedSection, setSelectedSection] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Add state for filters at the top of the component
+  const [rejectionReasonFilter, setRejectionReasonFilter] = useState('');
+  const [dateFromFilter, setDateFromFilter] = useState('');
+  const [dateToFilter, setDateToFilter] = useState('');
 
   const handleViewDetails = (enrollment) => {
     setSelectedEnrollment(enrollment);
@@ -166,6 +188,80 @@ const EnrollmentDashboard = () => {
     }
   };
 
+  // Export to Excel handler
+  const handleExportToExcel = () => {
+    // Map enrollments to a flat array of objects for Excel
+    const data = enrollments.map((enr) => ({
+      'Student Name': `${enr.surname || ''}, ${enr.firstName || ''} ${enr.middleName || ''}`.trim(),
+      'Course': enr.track || enr.course || '',
+      'Year Level': enr.gradeToEnroll || enr.yearLevel || '',
+      'Section': enr.section || '',
+      'Enrollment Date': enr.createdAt ? new Date(enr.createdAt).toLocaleString() : '',
+      'LRN': enr.learnerReferenceNumber || '',
+      'Status': enr.status || '',
+      // Add more fields as needed
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Enrollments');
+    XLSX.writeFile(workbook, 'Student_Enrollments.xlsx');
+  };
+
+  // Section assignment handler
+  const handleSectionChange = async (enrollmentId, newSection) => {
+    setSectionUpdating(enrollmentId);
+    try {
+      await enrollmentService.updateEnrollmentSection(enrollmentId, { section: newSection });
+      // Refresh enrollments
+      const res = await enrollmentService.getAllEnrollments();
+      setEnrollments(res.data);
+    } catch (err) {
+      setError('Failed to update section');
+    }
+    setSectionUpdating(null);
+  };
+
+  // Section options (customize as needed)
+  const sectionOptions = ['Section A', 'Section B', 'Section C'];
+
+  // Open assign section dialog
+  const handleOpenAssignDialog = async (student) => {
+    setAssigningStudent(student);
+    setSelectedSection(student.section || '');
+    setAssignDialogOpen(true);
+    try {
+      const res = await enrollmentService.getSectionsByGrade(student.gradeToEnroll);
+      setAvailableSections(res.data.sections || []);
+    } catch (err) {
+      setAvailableSections([]);
+    }
+  };
+
+  const handleCloseAssignDialog = () => {
+    setAssignDialogOpen(false);
+    setAssigningStudent(null);
+    setAvailableSections([]);
+    setSelectedSection('');
+  };
+
+  // Assign section to student
+  const handleConfirmAssign = async () => {
+    if (!assigningStudent || !selectedSection) return;
+    setSectionUpdating(assigningStudent._id);
+    try {
+      await enrollmentService.updateEnrollmentSection(assigningStudent._id, { section: selectedSection });
+      const res = await enrollmentService.getAllEnrollments();
+      setEnrollments(res.data);
+      setSnackbar({ open: true, message: 'Section assigned successfully!', severity: 'success' });
+      handleCloseAssignDialog();
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Failed to assign section.', severity: 'error' });
+    }
+    setSectionUpdating(null);
+  };
+
+  const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
+
   useEffect(() => {
     enrollmentService.getAllEnrollments()
       .then(res => {
@@ -185,64 +281,249 @@ const EnrollmentDashboard = () => {
           <Typography variant="h4" gutterBottom>
             Student Enrollment Dashboard
           </Typography>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-            <CircularProgress />
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Button variant="contained" color="success" onClick={handleExportToExcel}>
+              Export to Excel
+            </Button>
           </Box>
-        ) : error ? (
-          <Typography color="error">{error}</Typography>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>LRN</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Grade to Enroll</TableCell>
-                  <TableCell>Track</TableCell>
-                  <TableCell>Date Submitted</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {enrollments.map((e) => (
-                  <TableRow key={e._id}>
-                    <TableCell>{e.learnerReferenceNumber}</TableCell>
-                    <TableCell>{e.surname}, {e.firstName} {e.middleName}</TableCell>
-                    <TableCell>{e.gradeToEnroll}</TableCell>
-                    <TableCell>{e.track}</TableCell>
-                    <TableCell>{new Date(e.createdAt).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={e.status || 'pending'} 
-                        color={getStatusColor(e.status || 'pending')} 
-                        size="small" 
-                        icon={
-                          (e.status === 'approved' && <ApproveIcon />) ||
-                          (e.status === 'rejected' && <RejectIcon />) ||
-                          <PendingIcon />
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<VisibilityIcon />}
-                        onClick={() => handleViewDetails(e)}
-                        sx={{ mr: 1 }}
-                      >
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Paper>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)}>
+              <Tab label="All Enrollments" />
+              <Tab label="Accepted Students" />
+              <Tab label="Rejected" />
+            </Tabs>
+          </Box>
+          {activeTab === 0 && (
+            <>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : error ? (
+                <Typography color="error">{error}</Typography>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>LRN</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Grade to Enroll</TableCell>
+                        <TableCell>Track</TableCell>
+                        <TableCell>Date Submitted</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {enrollments.map((e) => (
+                        <TableRow key={e._id}>
+                          <TableCell>{e.learnerReferenceNumber}</TableCell>
+                          <TableCell>{e.surname}, {e.firstName} {e.middleName}</TableCell>
+                          <TableCell>{e.gradeToEnroll}</TableCell>
+                          <TableCell>{e.track}</TableCell>
+                          <TableCell>{new Date(e.createdAt).toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={e.status || 'pending'} 
+                              color={getStatusColor(e.status || 'pending')} 
+                              size="small" 
+                              icon={
+                                (e.status === 'approved' && <ApproveIcon />) ||
+                                (e.status === 'rejected' && <RejectIcon />) ||
+                                <PendingIcon />
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<VisibilityIcon />}
+                              onClick={() => handleViewDetails(e)}
+                              sx={{ mr: 1 }}
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </>
+          )}
+          {activeTab === 1 && (
+            <>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : error ? (
+                <Typography color="error">{error}</Typography>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Full Name</TableCell>
+                        <TableCell>Grade Level</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Assigned Section</TableCell>
+                        <TableCell>Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {enrollments.filter(e => e.status === 'approved').map((e) => (
+                        <TableRow key={e._id}>
+                          <TableCell>{e.surname}, {e.firstName} {e.middleName}</TableCell>
+                          <TableCell>{e.gradeToEnroll}</TableCell>
+                          <TableCell>
+                            <Chip label={e.status} color={getStatusColor(e.status)} size="small" />
+                          </TableCell>
+                          <TableCell>{e.section || 'Unassigned'}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => handleOpenAssignDialog(e)}
+                              disabled={sectionUpdating === e._id}
+                            >
+                              Assign Section
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+              {/* Assign Section Dialog */}
+              <Dialog open={assignDialogOpen} onClose={handleCloseAssignDialog}>
+                <DialogTitle>Assign Section</DialogTitle>
+                <DialogContent>
+                  <FormControl fullWidth sx={{ mt: 2 }}>
+                    <InputLabel>Section</InputLabel>
+                    <Select
+                      value={selectedSection}
+                      label="Section"
+                      onChange={e => setSelectedSection(e.target.value)}
+                    >
+                      {availableSections.length === 0 && <MenuItem value="" disabled>No sections available</MenuItem>}
+                      {availableSections.map((s) => (
+                        <MenuItem key={s} value={s}>{s}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleCloseAssignDialog}>Cancel</Button>
+                  <Button
+                    onClick={handleConfirmAssign}
+                    variant="contained"
+                    disabled={!selectedSection || sectionUpdating === (assigningStudent && assigningStudent._id)}
+                  >
+                    Confirm Assignment
+                  </Button>
+                </DialogActions>
+              </Dialog>
+              {/* Success/Error Snackbar */}
+              <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+                <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+                  {snackbar.message}
+                </Alert>
+              </Snackbar>
+            </>
+          )}
+          {activeTab === 2 && (
+            <>
+              {/* Filter Bar for Rejection Reason and Date Range */}
+              <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                <TextField
+                  label="Rejection Reason"
+                  size="small"
+                  value={rejectionReasonFilter || ''}
+                  onChange={e => setRejectionReasonFilter(e.target.value)}
+                  sx={{ minWidth: 200 }}
+                />
+                <TextField
+                  label="From"
+                  type="date"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  value={dateFromFilter || ''}
+                  onChange={e => setDateFromFilter(e.target.value)}
+                />
+                <TextField
+                  label="To"
+                  type="date"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  value={dateToFilter || ''}
+                  onChange={e => setDateToFilter(e.target.value)}
+                />
+                <Button variant="outlined" onClick={() => { setRejectionReasonFilter(''); setDateFromFilter(''); setDateToFilter(''); }}>Clear Filters</Button>
+              </Box>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : error ? (
+                <Typography color="error">{error}</Typography>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Full Name</TableCell>
+                        <TableCell>Grade Level</TableCell>
+                        <TableCell>Date Rejected</TableCell>
+                        <TableCell>Rejection Reason</TableCell>
+                        <TableCell>Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {enrollments
+                        .filter(e => e.status === 'rejected')
+                        .filter(e =>
+                          (!rejectionReasonFilter || (e.rejectionReason || '').toLowerCase().includes(rejectionReasonFilter.toLowerCase())) &&
+                          (!dateFromFilter || (e.reviewedAt && new Date(e.reviewedAt) >= new Date(dateFromFilter))) &&
+                          (!dateToFilter || (e.reviewedAt && new Date(e.reviewedAt) <= new Date(dateToFilter)))
+                        )
+                        .map((e) => (
+                          <TableRow key={e._id}>
+                            <TableCell sx={{ fontFamily: 'Gotham, Nunito, Montserrat', color: '#2A2A2A' }}>{e.surname}, {e.firstName} {e.middleName}</TableCell>
+                            <TableCell sx={{ fontFamily: 'Gotham', color: '#2A2A2A' }}>{e.gradeToEnroll}</TableCell>
+                            <TableCell sx={{ fontFamily: 'Gotham', color: '#2A2A2A' }}>{e.reviewedAt ? new Date(e.reviewedAt).toLocaleString() : 'N/A'}</TableCell>
+                            <TableCell sx={{ maxWidth: 220, fontFamily: 'Gotham', color: '#2A2A2A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {e.rejectionReason && e.rejectionReason.length > 40 ? (
+                                <Tooltip title={e.rejectionReason} arrow>
+                                  <span>{e.rejectionReason.slice(0, 40)}...</span>
+                                </Tooltip>
+                              ) : (
+                                e.rejectionReason || 'N/A'
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<VisibilityIcon />}
+                                onClick={() => handleViewDetails(e)}
+                              >
+                                View Form
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </>
+          )}
+        </Paper>
 
       {/* Enrollment Details Dialog */}
       <Dialog 

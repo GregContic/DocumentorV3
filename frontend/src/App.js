@@ -15,6 +15,7 @@ import DocumentRequest from './components/DocumentDashboard';
 import MyRequests from './pages/user/MyRequests';
 import UserInquiriesDashboard from './components/UserInquiriesDashboard';
 import UserForm137Dashboard from './user/UserForm137Dashboard';
+import UserRequestHistoryDashboard from './user/UserRequestHistoryDashboard';
 import Form137Request from './pages/user/Form137Request';
 import Form138Request from './pages/user/Form138Request';
 import GoodMoralRequest from './pages/user/GoodMoralRequest';
@@ -26,6 +27,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import Archive from './admin/Archive';
 import EnrollmentDashboard from './admin/EnrollmentDashboard';
 import Form137StubDashboard from './admin/Form137StubDashboard';
+import AdminRequestDashboard from './admin/AdminRequestDashboard';
 import InquiriesDashboard from './admin/InquiriesDashboard';
 import Settings from './admin/Settings';
 
@@ -137,7 +139,15 @@ function App() {
               path="/my-form137-requests"
               element={
                 <ProtectedRoute>
-                  <UserForm137Dashboard />
+                  <UserRequestHistoryDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-requests-history"
+              element={
+                <ProtectedRoute>
+                  <UserRequestHistoryDashboard />
                 </ProtectedRoute>
               }
             />
@@ -171,7 +181,15 @@ function App() {
               path="/admin/form137-stubs"
               element={
                 <ProtectedRoute requireAdmin={true}>
-                  <Form137StubDashboard />
+                  <AdminRequestDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/requests"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminRequestDashboard />
                 </ProtectedRoute>
               }
             />

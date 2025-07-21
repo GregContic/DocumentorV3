@@ -53,12 +53,6 @@ const AdminSidebar = ({ open, onClose, variant = 'permanent' }) => {
       description: 'Generated Form 137 claim stubs'
     },
     {
-      text: 'Inquiries',
-      icon: <InquiriesIcon />,
-      path: '/admin/inquiries',
-      description: 'Student inquiries and messages'
-    },
-    {
       text: 'Settings',
       icon: <SettingsIcon />,
       path: '/admin/settings',

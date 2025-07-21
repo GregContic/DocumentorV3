@@ -41,12 +41,13 @@ import {
   Notifications as NotificationsIcon,
   CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useEnrollmentNotifications from '../../hooks/useEnrollmentNotifications';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const { hasApprovedEnrollment, enrollmentData } = useEnrollmentNotifications();
   const theme = useTheme();
@@ -55,6 +56,9 @@ const Navbar = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const isMenuOpen = Boolean(anchorEl);
+
+  // Hide Navbar on admin dashboard routes
+  if (location.pathname.startsWith('/admin')) return null;
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -112,7 +116,7 @@ const Navbar = () => {
   // Menu items that will be in the hamburger dropdown for students
   const studentMenuItems = [
     { text: 'My Requests', path: '/my-requests', icon: <RequestsIcon /> },
-    { text: 'My Form 137 Stubs', path: '/my-form137-requests', icon: <ReceiptIcon /> },
+    { text: 'Request History', path: '/my-requests-history', icon: <ReceiptIcon /> },
   ];
 
   const renderDrawerContent = () => (

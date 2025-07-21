@@ -36,8 +36,8 @@ import {
   Login as LoginIcon,
   QrCode as QrCodeIcon,
 } from '@mui/icons-material';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import Form137StubPDF from '../../components/PDFTemplates/Form137StubPDF';
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
+import Form137RequestLetterPDF from '../../components/PDFTemplates/Form137RequestLetterPDF';
 import { DatePickerWrapper, DatePicker } from '../../components/DatePickerWrapper';
 import { form137StubService } from '../../services/api';
 import AIDocumentUploader from '../../components/AIDocumentUploader';
@@ -64,6 +64,7 @@ const Form137Request = () => {
     learnerReferenceNumber: '',
     // Academic Information
     lastGradeLevel: '',
+    strand: '',
     lastAttendedYear: '',
     receivingSchool: '',
     receivingSchoolAddress: '',
@@ -79,7 +80,7 @@ const Form137Request = () => {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showAIUploader, setShowAIUploader] = useState(false);
-  const [generatedStub, setGeneratedStub] = useState(null);
+  const [generatedRequestLetter, setGeneratedRequestLetter] = useState(null);
 
   // AI Document Assistant handler
   const handleAIDataExtracted = (extractedData) => {
@@ -102,6 +103,12 @@ const Form137Request = () => {
         if (extractedData.address.barangay) updatedFormData.barangay = extractedData.address.barangay;
       }
       
+      if (extractedData.academicInfo) {
+        if (extractedData.academicInfo.lastGradeLevel) updatedFormData.lastGradeLevel = extractedData.academicInfo.lastGradeLevel;
+        if (extractedData.academicInfo.strand) updatedFormData.strand = extractedData.academicInfo.strand;
+        if (extractedData.academicInfo.lastAttendedYear) updatedFormData.lastAttendedYear = extractedData.academicInfo.lastAttendedYear;
+      }
+      
       if (extractedData.parentInfo) {
         if (extractedData.parentInfo.guardianName) updatedFormData.parentGuardianName = extractedData.parentInfo.guardianName;
         if (extractedData.parentInfo.guardianContact) updatedFormData.parentGuardianContact = extractedData.parentInfo.guardianContact;
@@ -115,11 +122,12 @@ const Form137Request = () => {
   const requirements = [
     'Valid School ID or Any Valid Government ID',
     'Authorization Letter (if not the student)',
-    'Present the generated stub to the School Registrar',
-    'Wait for official processing notification',
+    'Submit the generated request letter to the School Registrar',
+    'Wait for admin verification and approval',
+    'Collect your Form 137 upon notification',
   ];
 
-  const steps = ['Student Information', 'Academic Details', 'Parent/Guardian Info', 'Generate Stub'];
+  const steps = ['Student Information', 'Academic Details', 'Parent/Guardian Info', 'Generate Request Letter'];
 
   const validateStep = (stepIndex) => {
     const newErrors = {};
@@ -137,6 +145,9 @@ const Form137Request = () => {
         break;
       case 1: // Academic Details
         if (!formData.lastGradeLevel.trim()) newErrors.lastGradeLevel = 'Last grade level is required';
+        if ((formData.lastGradeLevel === 'Grade 11' || formData.lastGradeLevel === 'Grade 12') && !formData.strand.trim()) {
+          newErrors.strand = 'Strand is required for Grade 11 and 12 students';
+        }
         if (!formData.lastAttendedYear.trim()) newErrors.lastAttendedYear = 'Last attended year is required';
         if (!formData.receivingSchool.trim()) newErrors.receivingSchool = 'Receiving school is required';
         if (!formData.purpose.trim()) newErrors.purpose = 'Purpose is required';
@@ -180,41 +191,82 @@ const Form137Request = () => {
 
     // Check authentication before submitting
     if (!isAuthenticated) {
-      setErrorMessage('Please log in to generate your Form 137 stub.');
+      setErrorMessage('Please log in to generate your Form 137 request letter.');
       setShowError(true);
       return;
     }
 
     setLoading(true);
     try {
-      console.log('Generating Form 137 stub:', formData);
-      const response = await form137StubService.createStub(formData);
-      console.log('Stub generation response:', response);
+      console.log('Generating Form 137 request letter:', formData);
       
-      setGeneratedStub(response.data.data);
+      // Generate request letter data with unique ID
+      const requestLetterData = {
+        ...formData,
+        requestId: `FORM137-${Date.now()}`,
+        submittedAt: new Date().toISOString(),
+        status: 'pending_verification',
+        requestDate: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      };
+      
+      // Automatically generate and download PDF
+      await generateAndDownloadPDF(requestLetterData);
+      
+      setGeneratedRequestLetter(requestLetterData);
       setShowSuccess(true);
-      setActiveStep(activeStep + 1); // Move to final step showing the stub
+      setActiveStep(activeStep + 1); // Move to final step showing confirmation
       
     } catch (error) {
-      console.error('Stub generation error:', error);
-      console.error('Error response:', error.response);
+      console.error('Request letter generation error:', error);
       
       // More detailed error handling
-      let errorMsg = 'Failed to generate Form 137 stub. Please try again.';
+      let errorMsg = 'Failed to generate Form 137 request letter. Please try again.';
       if (error.response?.status === 401) {
-        errorMsg = 'You need to be logged in to generate a stub. Please log in and try again.';
+        errorMsg = 'You need to be logged in to generate a request letter. Please log in and try again.';
       } else if (error.response?.status === 400) {
         errorMsg = 'Invalid form data. Please check your inputs and try again.';
       } else if (error.response?.data?.message) {
         errorMsg = error.response.data.message;
       } else if (!isAuthenticated) {
-        errorMsg = 'Please log in to generate your Form 137 stub.';
+        errorMsg = 'Please log in to generate your Form 137 request letter.';
       }
       
       setErrorMessage(errorMsg);
       setShowError(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to automatically generate and download PDF
+  const generateAndDownloadPDF = async (requestLetterData) => {
+    try {
+      // Generate PDF blob
+      const pdfDoc = <Form137RequestLetterPDF requestData={requestLetterData} />;
+      const blob = await pdf(pdfDoc).toBlob();
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Form137_Request_${requestLetterData.requestId}.pdf`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      return true;
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw new Error('Failed to generate PDF');
     }
   };
 
@@ -380,18 +432,53 @@ const Form137Request = () => {
               </Grid>
               
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Last Grade Level Completed"
-                  value={formData.lastGradeLevel}
-                  onChange={(e) => setFormData(prev => ({ ...prev, lastGradeLevel: e.target.value }))}
-                  error={!!errors.lastGradeLevel}
-                  helperText={errors.lastGradeLevel}
-                  placeholder="e.g., Grade 10, Grade 12"
-                />
+                <FormControl fullWidth required error={!!errors.lastGradeLevel}>
+                  <InputLabel>Last Grade Level Completed</InputLabel>
+                  <Select
+                    value={formData.lastGradeLevel}
+                    label="Last Grade Level Completed"
+                    onChange={(e) => {
+                      const selectedGrade = e.target.value;
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        lastGradeLevel: selectedGrade,
+                        // Clear strand if not Grade 11 or 12
+                        strand: (selectedGrade === 'Grade 11' || selectedGrade === 'Grade 12') ? prev.strand : ''
+                      }));
+                    }}
+                  >
+                    <MenuItem value="Grade 7">Grade 7</MenuItem>
+                    <MenuItem value="Grade 8">Grade 8</MenuItem>
+                    <MenuItem value="Grade 9">Grade 9</MenuItem>
+                    <MenuItem value="Grade 10">Grade 10</MenuItem>
+                    <MenuItem value="Grade 11">Grade 11</MenuItem>
+                    <MenuItem value="Grade 12">Grade 12</MenuItem>
+                  </Select>
+                  {errors.lastGradeLevel && <FormHelperText>{errors.lastGradeLevel}</FormHelperText>}
+                </FormControl>
               </Grid>
-              <Grid item xs={12} md={6}>
+              
+              {/* Conditional Strand Dropdown for Grade 11 and 12 */}
+              {(formData.lastGradeLevel === 'Grade 11' || formData.lastGradeLevel === 'Grade 12') && (
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth required error={!!errors.strand}>
+                    <InputLabel>Strand</InputLabel>
+                    <Select
+                      value={formData.strand}
+                      label="Strand"
+                      onChange={(e) => setFormData(prev => ({ ...prev, strand: e.target.value }))}
+                    >
+                      <MenuItem value="ABM">ABM (Accountancy, Business & Management)</MenuItem>
+                      <MenuItem value="STEM">STEM (Science, Technology, Engineering & Mathematics)</MenuItem>
+                      <MenuItem value="HUMSS">HUMSS (Humanities & Social Sciences)</MenuItem>
+                      <MenuItem value="GAS">GAS (General Academic Strand)</MenuItem>
+                      <MenuItem value="TVL">TVL (Technical-Vocational-Livelihood)</MenuItem>
+                    </Select>
+                    {errors.strand && <FormHelperText>{errors.strand}</FormHelperText>}
+                  </FormControl>
+                </Grid>
+              )}
+              <Grid item xs={12} md={formData.lastGradeLevel === 'Grade 11' || formData.lastGradeLevel === 'Grade 12' ? 12 : 6}>
                 <TextField
                   fullWidth
                   required
@@ -494,19 +581,19 @@ const Form137Request = () => {
             </Grid>
           );
 
-        case 3: // Generate Stub
+        case 3: // Generate Request Letter
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Generate Form 137 Pickup Stub
+                  Generate Form 137 Request Letter
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Review your information and generate your Form 137 pickup stub.
+                  Review your information and generate your formal Form 137 request letter.
                 </Typography>
               </Grid>
               
-              {!generatedStub ? (
+              {!generatedRequestLetter ? (
                 <Grid item xs={12}>
                   <Card variant="outlined">
                     <CardContent>
@@ -521,6 +608,9 @@ const Form137Request = () => {
                       </Typography>
                       <Typography variant="body2" paragraph>
                         <strong>Last Grade:</strong> {formData.lastGradeLevel} ({formData.lastAttendedYear})
+                        {(formData.lastGradeLevel === 'Grade 11' || formData.lastGradeLevel === 'Grade 12') && formData.strand && (
+                          <span> - {formData.strand}</span>
+                        )}
                       </Typography>
                       <Typography variant="body2" paragraph>
                         <strong>Receiving School:</strong> {formData.receivingSchool}
@@ -539,33 +629,38 @@ const Form137Request = () => {
                   <Card variant="outlined" sx={{ backgroundColor: '#e8f5e8' }}>
                     <CardContent>
                       <Box display="flex" alignItems="center" mb={2}>
-                        <QrCodeIcon color="success" sx={{ mr: 1 }} />
+                        <CheckIcon color="success" sx={{ mr: 1 }} />
                         <Typography variant="h6" color="success.main">
-                          Stub Generated Successfully!
+                          Request Letter Generated & Downloaded Successfully!
                         </Typography>
                       </Box>
                       <Typography variant="body2" paragraph>
-                        <strong>Stub Code:</strong> {generatedStub.stubCode}
+                        <strong>Request ID:</strong> {generatedRequestLetter.requestId}
                       </Typography>
                       <Typography variant="body2" paragraph>
-                        Your Form 137 pickup stub has been generated. Download the PDF and present it to the school registrar to begin the official transfer process.
+                        <strong>Generated Date:</strong> {generatedRequestLetter.requestDate}
+                      </Typography>
+                      <Typography variant="body2" paragraph>
+                        Your formal Form 137 request letter has been automatically downloaded to your device. 
+                        Please submit the letter to the school registrar for verification and processing.
                       </Typography>
                       
-                      {generatedStub && (
+                      {/* Optional manual download button in case auto-download failed */}
+                      {generatedRequestLetter && (
                         <Box mt={2}>
                           <PDFDownloadLink
-                            document={<Form137StubPDF stubData={generatedStub} />}
-                            fileName={`Form137_Stub_${generatedStub.stubCode}.pdf`}
+                            document={<Form137RequestLetterPDF requestData={generatedRequestLetter} />}
+                            fileName={`Form137_Request_${generatedRequestLetter.requestId}.pdf`}
                           >
                             {({ loading }) => (
                               <Button
-                                variant="contained"
+                                variant="outlined"
                                 color="primary"
                                 startIcon={loading ? <CircularProgress size={20} /> : <DownloadIcon />}
                                 disabled={loading}
-                                size="large"
+                                size="small"
                               >
-                                {loading ? 'Generating PDF...' : 'Download Pickup Stub'}
+                                {loading ? 'Generating PDF...' : 'Download Again'}
                               </Button>
                             )}
                           </PDFDownloadLink>
@@ -579,15 +674,15 @@ const Form137Request = () => {
               <Grid item xs={12}>
                 <Paper elevation={1} sx={{ p: 2, backgroundColor: '#fff3cd' }}>
                   <Typography variant="h6" gutterBottom color="warning.dark">
-                    Important Instructions:
+                    Next Steps:
                   </Typography>
                   <List dense>
                     {[
-                      'This is NOT an official Form 137 request',
-                      'Present this stub to the School Registrar with required documents',
-                      'The registrar will verify your information and process the official transfer',
-                      'You will be notified when your Form 137 is ready for pickup',
-                      'Keep this stub for reference and tracking'
+                      'Submit this formal request letter to the School Registrar',
+                      'Bring required supporting documents (ID, authorization letter if applicable)',
+                      'Wait for admin verification of your request',
+                      'You will receive a collection stub once approved',
+                      'Present the collection stub to collect your Form 137'
                     ].map((instruction, index) => (
                       <ListItem key={index}>
                         <ListItemIcon>
@@ -679,14 +774,14 @@ const Form137Request = () => {
             
             <Box>
               {activeStep === steps.length - 1 ? (
-                !generatedStub && (
+                !generatedRequestLetter && (
                   <Button
                     onClick={handleSubmit}
                     variant="contained"
                     disabled={loading || !isAuthenticated}
-                    startIcon={loading ? <CircularProgress size={20} /> : <QrCodeIcon />}
+                    startIcon={loading ? <CircularProgress size={20} /> : <DescriptionIcon />}
                   >
-                    {loading ? 'Generating Stub...' : 'Generate Stub'}
+                    {loading ? 'Generating Request Letter...' : 'Generate Request Letter'}
                   </Button>
                 )
               ) : (

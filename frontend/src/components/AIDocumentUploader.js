@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import * as pdfjs from 'pdfjs-dist';
 import {
   Box,
   Typography,
@@ -21,7 +22,14 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
+  Fade,
+  Stack,
+  Tooltip,
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ImageIcon from '@mui/icons-material/Image';
+import { processDocument } from '../utils/pdfProcessor';
 import {
   CloudUpload as UploadIcon,
   AutoAwesome as AIIcon,
@@ -50,44 +58,135 @@ const AIDocumentUploader = ({ onDataExtracted, formData, setFormData }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [originalText, setOriginalText] = useState('');
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [file, setFile] = useState(null);
+
+  // Styled components for enhanced UI
+  const StyledUploadBox = styled(Paper)(({ theme }) => ({
+    padding: theme.spacing(4),
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    cursor: 'pointer',
+    border: `2px dashed ${theme.palette.primary.main}`,
+    borderRadius: theme.spacing(2),
+    backgroundColor: 'rgba(25, 118, 210, 0.04)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    '&:hover': {
+      backgroundColor: 'rgba(25, 118, 210, 0.08)',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+    },
+  }));
+
+  const PreviewCard = styled(Card)(({ theme }) => ({
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: theme.spacing(2),
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+    '& img': {
+      width: '100%',
+      height: 'auto',
+      maxHeight: '300px',
+      objectFit: 'contain',
+    },
+  }));
+
+  const AIOverlay = styled(Box)(({ theme }) => ({
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(2),
+    zIndex: 1,
+    animation: 'pulse 2s infinite',
+    '@keyframes pulse': {
+      '0%': {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      },
+      '50%': {
+        backgroundColor: 'rgba(25, 118, 210, 0.05)',
+      },
+      '100%': {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      },
+    },
+  }));
+
+  const ConfidenceChip = styled(Chip)(({ theme, score }) => ({
+    backgroundColor: score >= 90 
+      ? theme.palette.success.light 
+      : score >= 70 
+      ? theme.palette.warning.light 
+      : theme.palette.error.light,
+    color: score >= 90 
+      ? theme.palette.success.dark 
+      : score >= 70 
+      ? theme.palette.warning.dark 
+      : theme.palette.error.dark,
+    fontWeight: 'bold',
+    '& .MuiChip-icon': {
+      color: 'inherit',
+    },
+  }));
 
   const onDrop = useCallback(async (acceptedFiles) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
+    const uploadedFile = acceptedFiles[0];
+    if (!uploadedFile) return;
 
     setError(null);
     setUploading(true);
     setProgress(0);
+    setFile(uploadedFile);
 
     try {
-      // Create preview
-      const imageUrl = URL.createObjectURL(file);
-      setPreviewImage(imageUrl);
+      // Create preview for images or PDFs
+      if (uploadedFile.type.startsWith('image/')) {
+        const imageUrl = URL.createObjectURL(uploadedFile);
+        setPreviewImage(imageUrl);
+      } else if (uploadedFile.type === 'application/pdf') {
+        // For PDFs, we'll show the first page as preview
+        const pdfUrl = URL.createObjectURL(uploadedFile);
+        setPreviewImage(pdfUrl);
+      }
 
       // Start AI processing
       setExtracting(true);
       setProgress(10);
 
-      // Extract text using OCR
-      const ocrResult = await extractTextFromImage(file, (progressPercent) => {
+      // Process document (image or PDF)
+      const result = await processDocument(uploadedFile, (progressPercent) => {
         setProgress(10 + (progressPercent * 0.6)); // 10-70%
       });
 
       setProgress(75);
-      setOriginalText(ocrResult.text);
+      setOriginalText(result.text);
 
       // Identify document type
-      const docType = identifyDocumentType(ocrResult.text);
+      const docType = identifyDocumentType(result.text);
       
       setProgress(80);
 
       // Extract structured information using AI
-      const extractedInfo = extractStudentInformation(ocrResult.text);
+      const extractedInfo = extractStudentInformation(result.text);
       
       setProgress(90);
 
       // Calculate confidence score
-      const confidenceScore = calculateExtractionConfidence(extractedInfo, ocrResult.text);
+      const confidenceScore = {
+        score: result.confidence,
+        recommendation: result.confidence >= 90 ? 'high' : result.confidence >= 70 ? 'medium' : 'low',
+        extractedFields: Object.keys(extractedInfo).length,
+        totalFields: 10, // Update based on your expected fields
+      };
       
       setProgress(100);
 
@@ -95,7 +194,7 @@ const AIDocumentUploader = ({ onDataExtracted, formData, setFormData }) => {
       setExtractedData({
         ...extractedInfo,
         documentType: docType,
-        ocrConfidence: ocrResult.confidence
+        ocrConfidence: result.confidence
       });
       setConfidence(confidenceScore);
       setShowResults(true);
@@ -118,7 +217,8 @@ const AIDocumentUploader = ({ onDataExtracted, formData, setFormData }) => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.bmp', '.webp']
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.bmp', '.webp'],
+      'application/pdf': ['.pdf']
     },
     maxFiles: 1,
     disabled: uploading || extracting
@@ -128,10 +228,19 @@ const AIDocumentUploader = ({ onDataExtracted, formData, setFormData }) => {
     if (extractedData && setFormData) {
       setFormData(prev => ({
         ...prev,
-        ...extractedData,
+        // Personal Info
+        ...extractedData.personalInfo,
+        // Address
+        ...extractedData.address,
+        // Academic Info
+        ...extractedData.academicInfo,
+        // Parent/Guardian Info
+        ...extractedData.parentInfo,
+        // Emergency Contact
+        ...extractedData.emergencyContact,
         // Preserve existing data that wasn't extracted
-        documentType: prev.documentType, // Keep original document type
-        purpose: prev.purpose, // Keep purpose if already filled
+        documentType: prev.documentType,
+        purpose: prev.purpose,
       }));
       setShowResults(false);
     }
@@ -157,68 +266,225 @@ const AIDocumentUploader = ({ onDataExtracted, formData, setFormData }) => {
       {/* Upload Area */}
       <Paper
         {...getRootProps()}
+        elevation={3}
         sx={{
           p: 4,
           border: '2px dashed',
           borderColor: isDragActive ? 'primary.main' : 'grey.300',
-          backgroundColor: isDragActive ? 'primary.light' : 'grey.50',
+          backgroundColor: isDragActive ? 'rgba(25, 118, 210, 0.08)' : 'background.paper',
           cursor: uploading ? 'not-allowed' : 'pointer',
-          transition: 'all 0.3s ease',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: 3,
           '&:hover': {
             borderColor: 'primary.main',
-            backgroundColor: 'primary.light',
-          }
+            backgroundColor: 'rgba(25, 118, 210, 0.04)',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+          },
+          '&::before': isDragActive ? {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at center, rgba(25, 118, 210, 0.1) 0%, transparent 70%)',
+            animation: 'pulse 2s infinite',
+          } : {}
         }}
       >
         <input {...getInputProps()} />
-        <Box sx={{ textAlign: 'center' }}>
+        <Box sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
           {uploading || extracting ? (
             <Box>
-              <CircularProgress size={60} sx={{ mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                {extracting ? 'Processing Document with AI...' : 'Uploading...'}
+              <Box sx={{ position: 'relative', mb: 3 }}>
+                <CircularProgress 
+                  size={80} 
+                  sx={{ 
+                    opacity: 0.3,
+                    animation: 'spin 2s linear infinite',
+                  }} 
+                />
+                <CircularProgress 
+                  size={60} 
+                  sx={{ 
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    marginTop: '-30px',
+                    marginLeft: '-30px',
+                    animation: 'spin 1.5s linear infinite reverse',
+                  }} 
+                />
+                <BrainIcon 
+                  sx={{ 
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: 32,
+                    color: 'primary.main',
+                    animation: 'pulse 1s ease-in-out infinite',
+                  }} 
+                />
+              </Box>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  fontWeight: 600,
+                }}
+              >
+                {extracting ? 'AI Processing in Progress' : 'Uploading Document'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {extracting ? 'Extracting information from your document' : 'Please wait...'}
+                {extracting ? 'Analyzing and extracting information' : 'Please wait while we upload your document'}
               </Typography>
               {progress > 0 && (
                 <Box sx={{ width: '100%', maxWidth: 300, mx: 'auto' }}>
-                  <LinearProgress variant="determinate" value={progress} />
-                  <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
-                    {progress}% Complete
-                  </Typography>
+                  <Box sx={{ position: 'relative' }}>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={progress} 
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 4,
+                          backgroundImage: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                        },
+                      }}
+                    />
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        position: 'absolute',
+                        top: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        mt: 1,
+                      }}
+                    >
+                      {progress}% Complete
+                    </Typography>
+                  </Box>
                 </Box>
               )}
             </Box>
           ) : (
             <Box>
-              <AIIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                AI-Powered Document Processing
+              <Box 
+                sx={{ 
+                  position: 'relative',
+                  display: 'inline-flex',
+                  mb: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    animation: 'float 3s ease-in-out infinite',
+                    '@keyframes float': {
+                      '0%': { transform: 'translateY(0px)' },
+                      '50%': { transform: 'translateY(-10px)' },
+                      '100%': { transform: 'translateY(0px)' },
+                    },
+                  }}
+                >
+                  <AIIcon 
+                    sx={{ 
+                      fontSize: 72,
+                      color: 'primary.main',
+                      filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))',
+                    }} 
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: -10,
+                    right: -10,
+                    animation: 'pulse 2s ease-in-out infinite',
+                  }}
+                >
+                  <BrainIcon 
+                    sx={{ 
+                      fontSize: 24,
+                      color: 'secondary.main',
+                    }}
+                  />
+                </Box>
+              </Box>
+              <Typography 
+                variant="h5" 
+                gutterBottom
+                sx={{
+                  fontWeight: 600,
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 2,
+                }}
+              >
+                AI-Powered Document Scanner
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+              <Typography variant="h6" color="text.primary" gutterBottom>
                 {isDragActive
-                  ? 'Drop your document here...'
-                  : 'Drag & drop a document image here, or click to select'}
+                  ? 'Release to Upload Document'
+                  : 'Drag & Drop or Click to Upload'}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Supported: JPG, PNG, GIF, BMP, WebP
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
+                Our AI will automatically extract and process your document information
               </Typography>
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Chip 
                   icon={<BrainIcon />} 
-                  label="AI Extraction" 
+                  label="Smart Extraction" 
                   color="primary" 
-                  variant="outlined" 
-                  sx={{ mr: 1 }}
+                  sx={{ 
+                    borderRadius: 4,
+                    '& .MuiChip-icon': { fontSize: 20 },
+                    background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                    color: 'white',
+                    fontWeight: 500,
+                  }}
                 />
                 <Chip 
                   icon={<DocumentIcon />} 
-                  label="Form 137" 
-                  color="secondary" 
-                  variant="outlined" 
+                  label="Form 137/138" 
+                  color="secondary"
+                  sx={{ 
+                    borderRadius: 4,
+                    '& .MuiChip-icon': { fontSize: 20 },
+                    background: 'linear-gradient(45deg, #9c27b0 30%, #d81b60 90%)',
+                    color: 'white',
+                    fontWeight: 500,
+                  }}
                 />
               </Box>
+              <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
+                <Tooltip title="Images (JPG, PNG, GIF, BMP, WebP)">
+                  <Chip
+                    icon={<ImageIcon />}
+                    label="Images"
+                    variant="outlined"
+                    size="small"
+                  />
+                </Tooltip>
+                <Tooltip title="PDF Documents">
+                  <Chip
+                    icon={<PictureAsPdfIcon />}
+                    label="PDF"
+                    variant="outlined"
+                    size="small"
+                  />
+                </Tooltip>
+              </Stack>
             </Box>
           )}
         </Box>
@@ -239,35 +505,117 @@ const AIDocumentUploader = ({ onDataExtracted, formData, setFormData }) => {
         </Alert>
       )}
 
-      {/* Preview Image */}
-      {previewImage && (
-        <Card sx={{ mt: 2 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Uploaded Document</Typography>
-              <Button
-                startIcon={<PreviewIcon />}
-                onClick={() => setShowPreview(true)}
-                size="small"
+      {/* Preview Image or PDF */}
+      {file && (
+        <Fade in>
+          <Card 
+            sx={{ 
+              mt: 2,
+              overflow: 'hidden',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+              transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 48px rgba(0, 0, 0, 0.12)',
+              },
+            }}
+          >
+            <CardContent>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  mb: 2,
+                  background: 'linear-gradient(45deg, rgba(25, 118, 210, 0.05) 0%, rgba(66, 165, 245, 0.05) 100%)',
+                  p: 2,
+                  borderRadius: 2,
+                }}
               >
-                View Full Size
-              </Button>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <img 
-                src={previewImage} 
-                alt="Uploaded document" 
-                style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: '200px', 
-                  objectFit: 'contain',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }} 
-              />
-            </Box>
-          </CardContent>
-        </Card>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <DocumentIcon color="primary" />
+                  <Typography 
+                    variant="h6"
+                    sx={{
+                      background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Uploaded Document
+                  </Typography>
+                </Box>
+                <Button
+                  startIcon={<PreviewIcon />}
+                  onClick={() => setShowPreview(true)}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    '&:hover': {
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    },
+                  }}
+                >
+                  View Full Size
+                </Button>
+              </Box>
+              <Box 
+                sx={{ 
+                  textAlign: 'center',
+                  position: 'relative',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    pointerEvents: 'none',
+                    borderRadius: 2,
+                    boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                  },
+                }}
+              >
+                {previewImage ? (
+                  <img 
+                    src={previewImage} 
+                    alt="Uploaded document" 
+                    style={{ 
+                      maxWidth: '100%', 
+                      maxHeight: '300px', 
+                      objectFit: 'contain',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                    }} 
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      p: 4,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 2,
+                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                      borderRadius: '8px',
+                    }}
+                  >
+                    <PictureAsPdfIcon sx={{ fontSize: 64, color: 'primary.main' }} />
+                    <Typography variant="body1" color="text.secondary">
+                      {file?.name}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        </Fade>
       )}
 
       {/* Full Size Preview Dialog */}

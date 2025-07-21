@@ -134,6 +134,10 @@ const Enrollment = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [showAIUploader, setShowAIUploader] = useState(false);
 
+  // Utility to capitalize first letter of each word
+  const capitalizeWords = (str) =>
+    str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+
   // Authentication guard
   useEffect(() => {
     if (!isAuthenticated) {
@@ -169,37 +173,88 @@ const Enrollment = () => {
   const handleAIDataExtracted = (extractedData) => {
     if (extractedData) {
       const updatedFormData = { ...formData };
-      
-      // Map extracted data to form fields
+      // Personal Info
       if (extractedData.personalInfo) {
-        if (extractedData.personalInfo.firstName) updatedFormData.firstName = extractedData.personalInfo.firstName;
-        if (extractedData.personalInfo.lastName) updatedFormData.surname = extractedData.personalInfo.lastName;
-        if (extractedData.personalInfo.middleName) updatedFormData.middleName = extractedData.personalInfo.middleName;
-        if (extractedData.personalInfo.lrn) updatedFormData.learnerReferenceNumber = extractedData.personalInfo.lrn;
-        if (extractedData.personalInfo.dateOfBirth) updatedFormData.dateOfBirth = new Date(extractedData.personalInfo.dateOfBirth);
-        if (extractedData.personalInfo.sex) updatedFormData.sex = extractedData.personalInfo.sex;
-        if (extractedData.personalInfo.placeOfBirth) updatedFormData.placeOfBirth = extractedData.personalInfo.placeOfBirth;
+        Object.entries(extractedData.personalInfo).forEach(([key, value]) => {
+          if (key === 'dateOfBirth' && value) {
+            // Robustly parse date string
+            let parsed = null;
+            if (typeof value === 'string') {
+              const parts = value.split(/[\/.\-]/);
+              if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                  parsed = new Date(value);
+                } else if (parts[2].length === 4) {
+                  parsed = new Date(`${parts[2]}-${parts[0]}-${parts[1]}`);
+                  if (isNaN(parsed.getTime())) {
+                    parsed = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                  }
+                }
+              } else {
+                parsed = new Date(value);
+              }
+            } else if (value instanceof Date) {
+              parsed = value;
+            }
+            updatedFormData.dateOfBirth = parsed && !isNaN(parsed.getTime()) ? parsed : null;
+          } else if (value) {
+            // Capitalize names and trim whitespace
+            if ([
+              'surname', 'firstName', 'middleName', 'extension',
+              'placeOfBirth', 'religion', 'citizenship'
+            ].includes(key)) {
+              updatedFormData[key] = capitalizeWords(value.trim());
+            } else {
+              updatedFormData[key] = value.toString().trim();
+            }
+          }
+        });
       }
-      
+      // Address
       if (extractedData.address) {
-        if (extractedData.address.street) updatedFormData.street = extractedData.address.street;
-        if (extractedData.address.city) updatedFormData.city = extractedData.address.city;
-        if (extractedData.address.province) updatedFormData.province = extractedData.address.province;
-        if (extractedData.address.barangay) updatedFormData.barangay = extractedData.address.barangay;
+        Object.entries(extractedData.address).forEach(([key, value]) => {
+          if (value) {
+            updatedFormData[key] = capitalizeWords(value.trim());
+          }
+        });
       }
-      
+      // Academic Info
       if (extractedData.academicInfo) {
-        if (extractedData.academicInfo.lastSchool) updatedFormData.lastSchoolAttended = extractedData.academicInfo.lastSchool;
-        if (extractedData.academicInfo.gradeLevel) updatedFormData.gradeLevel = extractedData.academicInfo.gradeLevel;
-        if (extractedData.academicInfo.schoolYear) updatedFormData.schoolYear = extractedData.academicInfo.schoolYear;
+        Object.entries(extractedData.academicInfo).forEach(([key, value]) => {
+          if (value) {
+            updatedFormData[key] = value.toString().trim();
+          }
+        });
       }
-      
+      // Parent/Guardian Info
       if (extractedData.parentInfo) {
-        if (extractedData.parentInfo.fatherName) updatedFormData.fatherName = extractedData.parentInfo.fatherName;
-        if (extractedData.parentInfo.motherName) updatedFormData.motherName = extractedData.parentInfo.motherName;
-        if (extractedData.parentInfo.guardianName) updatedFormData.guardianName = extractedData.parentInfo.guardianName;
+        Object.entries(extractedData.parentInfo).forEach(([key, value]) => {
+          if (value) {
+            if ([
+              'fatherName', 'motherName', 'guardianName',
+              'fatherOccupation', 'motherOccupation', 'guardianOccupation'
+            ].includes(key)) {
+              updatedFormData[key] = capitalizeWords(value.trim());
+            } else {
+              updatedFormData[key] = value.toString().trim();
+            }
+          }
+        });
       }
-      
+      // Emergency Contact
+      if (extractedData.emergencyContact) {
+        Object.entries(extractedData.emergencyContact).forEach(([key, value]) => {
+          if (value) {
+            if ([
+              'emergencyContactName', 'emergencyContactAddress', 'emergencyContactRelationship'
+            ].includes(key)) {
+              updatedFormData[key] = capitalizeWords(value.trim());
+            } else {
+              updatedFormData[key] = value.toString().trim();
+            }
+          }
+        });
+      }
       setFormData(updatedFormData);
       setShowAIUploader(false);
     }
@@ -207,10 +262,7 @@ const Enrollment = () => {
 
   const steps = [
     'Enrollment Category',
-    'Student Information', 
-    'Address & Contact', 
-    'Previous School', 
-    'Family Information', 
+    'Student, Address, School & Family Info',
     'Enrollment Details', 
     'Upload Documents', 
     'Review & Submit'
@@ -252,7 +304,7 @@ const Enrollment = () => {
       case 0: // Enrollment Type
         if (!formData.enrollmentType) newErrors.enrollmentType = 'Please select enrollment type';
         break;
-      case 1: // Student Information
+      case 1: // Combined Info
         if (!formData.learnerReferenceNumber.trim()) newErrors.learnerReferenceNumber = 'LRN is required';
         if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
         if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
@@ -261,8 +313,6 @@ const Enrollment = () => {
         if (!formData.sex) newErrors.sex = 'Sex is required';
         if (!formData.religion.trim()) newErrors.religion = 'Religion is required';
         if (!formData.citizenship.trim()) newErrors.citizenship = 'Citizenship is required';
-        break;
-      case 2: // Address & Contact
         if (!formData.houseNumber.trim()) newErrors.houseNumber = 'House number is required';
         if (!formData.barangay.trim()) newErrors.barangay = 'Barangay is required';
         if (!formData.city.trim()) newErrors.city = 'City/Municipality is required';
@@ -271,33 +321,28 @@ const Enrollment = () => {
         if (formData.emailAddress && !/\S+@\S+\.\S+/.test(formData.emailAddress)) {
           newErrors.emailAddress = 'Invalid email address';
         }
-        break;
-      case 3: // Previous School
-        // For continuing students, school info is auto-filled and not required
         if (formData.enrollmentType !== 'old') {
           if (!formData.lastSchoolAttended.trim()) newErrors.lastSchoolAttended = 'Last school attended is required';
           if (!formData.schoolAddress.trim()) newErrors.schoolAddress = 'School address is required';
         }
         if (!formData.gradeLevel.trim()) newErrors.gradeLevel = 'Grade level is required';
         if (!formData.schoolYear.trim()) newErrors.schoolYear = 'School year is required';
-        break;
-      case 4: // Family Information
         if (!formData.fatherName.trim()) newErrors.fatherName = 'Father\'s name is required';
         if (!formData.motherName.trim()) newErrors.motherName = 'Mother\'s name is required';
         if (!formData.emergencyContactName.trim()) newErrors.emergencyContactName = 'Emergency contact name is required';
         if (!formData.emergencyContactNumber.trim()) newErrors.emergencyContactNumber = 'Emergency contact number is required';
         break;
-      case 5: // Enrollment Details
+      case 2: // Enrollment Details
         if (!formData.gradeToEnroll) newErrors.gradeToEnroll = 'Grade to enroll is required';
         if ((formData.gradeToEnroll === 'Grade 11' || formData.gradeToEnroll === 'Grade 12')) {
           if (!formData.track) newErrors.track = 'Track is required for Senior High School';
         }
         break;
-      case 6: // Upload Documents
+      case 3: // Upload Documents
         // Documents are now optional - no validation required
         // Users can proceed without uploading documents
         break;
-      case 7: // Review & Submit
+      case 4: // Review & Submit
         if (!formData.agreementAccepted) newErrors.agreementAccepted = 'You must accept the enrollment agreement';
         break;
       default:
@@ -530,9 +575,10 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 1: // Student Information
+        case 1: // Combined Info
           return (
             <Grid container spacing={3}>
+              {/* --- Student Information --- */}
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
                   Student Personal Information
@@ -541,16 +587,12 @@ const Enrollment = () => {
                   Please provide accurate student information as it appears on official documents.
                 </Typography>
               </Grid>
-
-              {/* AI Assistant Cards */}
               <Grid item xs={12}>
                 <AIAssistantCard
                   show={!showAIUploader}
                   onStartAIProcessing={() => setShowAIUploader(true)}
                 />
               </Grid>
-              
-              {/* AI Document Uploader */}
               {showAIUploader && (
                 <Grid item xs={12}>
                   <AIDocumentUploader
@@ -560,7 +602,6 @@ const Enrollment = () => {
                   />
                 </Grid>
               )}
-
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -573,7 +614,6 @@ const Enrollment = () => {
                   placeholder="e.g., 123456789012"
                 />
               </Grid>
-
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main' }}>
                   Full Name
@@ -617,7 +657,6 @@ const Enrollment = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, extension: e.target.value }))}
                 />
               </Grid>
-
               <Grid item xs={12} md={6}>
                 <DatePickerWrapper>
                   <DatePicker
@@ -644,7 +683,6 @@ const Enrollment = () => {
                   helperText={errors.placeOfBirth}
                 />
               </Grid>
-
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth required error={!!errors.sex}>
                   <InputLabel>Sex</InputLabel>
@@ -682,13 +720,9 @@ const Enrollment = () => {
                   placeholder="e.g., Filipino"
                 />
               </Grid>
-            </Grid>
-          );
 
-        case 2: // Address & Contact
-          return (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
+              {/* --- Address & Contact --- */}
+              <Grid item xs={12} mt={4}>
                 <Typography variant="h6" gutterBottom>
                   Address & Contact Information
                 </Typography>
@@ -696,7 +730,6 @@ const Enrollment = () => {
                   Provide your current residential address and contact information.
                 </Typography>
               </Grid>
-
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main' }}>
                   Residential Address
@@ -762,7 +795,6 @@ const Enrollment = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, zipCode: e.target.value }))}
                 />
               </Grid>
-
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main', mt: 2 }}>
                   Contact Information
@@ -792,13 +824,9 @@ const Enrollment = () => {
                   placeholder="e.g., student@email.com"
                 />
               </Grid>
-            </Grid>
-          );
 
-        case 3: // Previous School
-          return (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
+              {/* --- Previous School --- */}
+              <Grid item xs={12} mt={4}>
                 <Typography variant="h6" gutterBottom>
                   Previous School Information
                 </Typography>
@@ -808,7 +836,6 @@ const Enrollment = () => {
                     : 'Provide details about your last attended school. This applies to both new students (from elementary) and transferees (from other high schools).'}
                 </Typography>
               </Grid>
-
               {/* Show school info for new students and transferees only */}
               {formData.enrollmentType !== 'old' && (
                 <>
@@ -824,7 +851,6 @@ const Enrollment = () => {
                       </Typography>
                     </Alert>
                   </Grid>
-                  
                   <Grid item xs={12} md={8}>
                     <TextField
                       fullWidth
@@ -880,7 +906,6 @@ const Enrollment = () => {
                   </Grid>
                 </>
               )}
-
               {/* Show simplified form for continuing students */}
               {formData.enrollmentType === 'old' && (
                 <>
@@ -895,7 +920,6 @@ const Enrollment = () => {
                       </Typography>
                     </Alert>
                   </Grid>
-                  
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth required error={!!errors.gradeLevel}>
                       <InputLabel>Grade Level Completed</InputLabel>
@@ -925,7 +949,6 @@ const Enrollment = () => {
                       placeholder="e.g., 2024-2025"
                     />
                   </Grid>
-                  
                   <Grid item xs={12}>
                     <Card sx={{ p: 2, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
                       <CardContent>
@@ -943,13 +966,9 @@ const Enrollment = () => {
                   </Grid>
                 </>
               )}
-            </Grid>
-          );
 
-        case 4: // Family Information
-          return (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
+              {/* --- Family Information --- */}
+              <Grid item xs={12} mt={4}>
                 <Typography variant="h6" gutterBottom>
                   Family Information
                 </Typography>
@@ -957,7 +976,6 @@ const Enrollment = () => {
                   Please provide information about your parents/guardians and emergency contact.
                 </Typography>
               </Grid>
-
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main' }}>
                   Father's Information
@@ -990,7 +1008,6 @@ const Enrollment = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, fatherContactNumber: e.target.value }))}
                 />
               </Grid>
-
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main', mt: 2 }}>
                   Mother's Information
@@ -1023,7 +1040,6 @@ const Enrollment = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, motherContactNumber: e.target.value }))}
                 />
               </Grid>
-
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main', mt: 2 }}>
                   Guardian Information (if applicable)
@@ -1070,7 +1086,6 @@ const Enrollment = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, guardianContactNumber: e.target.value }))}
                 />
               </Grid>
-
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.main', mt: 2 }}>
                   Emergency Contact
@@ -1118,7 +1133,7 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 5: // Enrollment Details
+        case 2: // Enrollment Details
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -1204,7 +1219,7 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 6: // Upload Documents
+        case 3: // Upload Documents
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -1436,7 +1451,7 @@ const Enrollment = () => {
             </Grid>
           );
 
-        case 7: // Review & Submit
+        case 4: // Review & Submit
           return (
             <Grid container spacing={3}>
               <Grid item xs={12}>
