@@ -1,0 +1,218 @@
+import { getDocument } from 'pdfjs-dist';
+import { createWorker } from 'tesseract.js';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+// Create a worker scheduler to handle worker lifecycle
+const workerScheduler = (() => {
+  let currentWorker = null;
+  let isProcessing = false;
+
+  const initWorker = async () => {
+    if (currentWorker && !isProcessing) {
+      return currentWorker;
+    }
+
+    // Clean up existing worker if any
+    if (currentWorker) {
+      try {
+        await currentWorker.terminate();
+      } catch (e) {
+        console.error('Error terminating worker:', e);
+      }
+      currentWorker = null;
+    }
+
+    // Create new worker
+    try {
+      console.log('Creating new Tesseract worker...');
+      currentWorker = await createWorker({
+        logger: m => console.log(m)
+      });
+      
+      console.log('Loading language...');
+      await currentWorker.loadLanguage('eng');
+      
+      console.log('Initializing API...');
+      await currentWorker.initialize('eng');
+      
+      console.log('Worker ready');
+      return currentWorker;
+    } catch (error) {
+      console.error('Worker creation failed:', error);
+      currentWorker = null;
+      throw new Error('Failed to initialize text recognition system. Please refresh and try again.');
+    }
+  };
+
+  return {
+    getWorker: async () => {
+      return await initWorker();
+    },
+    setProcessing: (state) => {
+      isProcessing = state;
+    },
+    cleanup: async () => {
+      if (currentWorker) {
+        try {
+          await currentWorker.terminate();
+          currentWorker = null;
+        } catch (e) {
+          console.error('Cleanup error:', e);
+        }
+      }
+      isProcessing = false;
+    }
+  };
+})();
+
+// Convert PDF page to image
+const convertPDFPageToImage = async (page) => {
+  try {
+    const viewport = page.getViewport({ scale: 2.0 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    await page.render({
+      canvasContext: context,
+      viewport: viewport
+    }).promise;
+
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Error converting PDF to image:', error);
+    throw new Error('Failed to process PDF page. Please try again.');
+  }
+};
+
+// Process PDF document
+export const extractTextFromPDF = async (file, onProgress = () => {}) => {
+  try {
+    console.log('Starting PDF text extraction...');
+    const fileBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(fileBuffer).promise;
+    
+    let extractedText = '';
+    let totalConfidence = 0;
+    const numPages = pdf.numPages;
+    
+    console.log(`PDF loaded. Processing ${numPages} pages...`);
+    const worker = await workerScheduler.getWorker();
+
+    for (let i = 1; i <= numPages; i++) {
+      console.log(`Processing page ${i}/${numPages}`);
+      onProgress(Math.floor((i / numPages) * 50));
+
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+
+      if (pageText.trim().length < 50) {
+        console.log(`Using OCR for page ${i}`);
+        const imageUrl = await convertPDFPageToImage(page);
+        const result = await worker.recognize(imageUrl);
+        
+        if (!result || !result.data) {
+          throw new Error(`OCR failed for page ${i}. Please try again with a clearer PDF.`);
+        }
+
+        if (result.data.confidence < 65) {
+          throw new Error(`Page ${i} quality is too low for accurate text recognition (Confidence: ${Math.round(result.data.confidence)}%). Please provide a clearer PDF.`);
+        }
+        
+        extractedText += result.data.text + '\n';
+        totalConfidence += result.data.confidence;
+      } else {
+        console.log(`Using direct text extraction for page ${i}`);
+        extractedText += pageText + '\n';
+        totalConfidence += 95;
+      }
+    }
+
+    return {
+      text: extractedText.trim(),
+      confidence: totalConfidence / numPages
+    };
+  } catch (error) {
+    console.error('PDF processing error:', error);
+    throw error;
+  }
+};
+
+// Main document processing function
+export const processDocument = async (file, onProgress = () => {}) => {
+  try {
+    console.log('Starting document processing...', file.type);
+    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+    const maxSizeMB = 10;
+    
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Unsupported file type. Please upload a PDF or image file (PNG, JPEG).');
+    }
+    
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      throw new Error(`File is too large. Maximum allowed size is ${maxSizeMB}MB.`);
+    }
+
+    let result;
+    workerScheduler.setProcessing(true);
+    
+    if (file.type === 'application/pdf') {
+      console.log('Processing PDF file...');
+      result = await extractTextFromPDF(file, onProgress);
+    } else {
+      console.log('Processing image file...');
+      try {
+        const worker = await workerScheduler.getWorker();
+        console.log('Running OCR on image...');
+        const { data } = await worker.recognize(file);
+        
+        if (!data) {
+          throw new Error('OCR failed. Please try again with a clearer image.');
+        }
+        
+        if (data.confidence < 65) {
+          throw new Error(`Image quality is too low for accurate text recognition (Confidence: ${Math.round(data.confidence)}%). Please provide a clearer image.`);
+        }
+
+        result = {
+          text: data.text.trim(),
+          confidence: data.confidence
+        };
+      } catch (error) {
+        console.error('Image processing error:', error);
+        throw error;
+      }
+    }
+
+    if (result?.text) {
+      result.text = result.text
+        .replace(/\s+/g, ' ')
+        .replace(/[^\w\s:,.-]/g, '')
+        .trim();
+    }
+
+    return {
+      ...result,
+      fileType: file.type,
+      fileName: file.name,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Document processing error:', error);
+    throw error;
+  } finally {
+    await workerScheduler.cleanup();
+    workerScheduler.setProcessing(false);
+  }
+};
+
+// Export cleanup function
+export const cleanupWorker = async () => {
+  await workerScheduler.cleanup();
+};
