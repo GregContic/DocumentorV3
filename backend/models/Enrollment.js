@@ -52,6 +52,7 @@ const EnrollmentSchema = new mongoose.Schema({
   emergencyContactAddress: String,
   gradeToEnroll: String,
   track: String,
+  section: String,
   // Document file paths
   form137File: String,
   form138File: String,

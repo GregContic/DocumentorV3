@@ -1,3 +1,15 @@
+// Delete enrollment by ID (admin only)
+exports.deleteEnrollment = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findByIdAndDelete(req.params.id);
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Enrollment not found' });
+    }
+    res.json({ message: 'Enrollment deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete enrollment', error: error.message });
+  }
+};
 const Enrollment = require('../models/Enrollment');
 const { sendEnrollmentStatusEmail } = require('../utils/emailService');
 

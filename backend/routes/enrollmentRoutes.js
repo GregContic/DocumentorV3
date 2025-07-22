@@ -16,4 +16,7 @@ router.get('/admin', authenticate, authorizeAdmin, enrollmentController.getAllEn
 // Admin: Update enrollment status
 router.put('/:id/status', authenticate, authorizeAdmin, enrollmentController.updateEnrollmentStatus);
 
+// Admin: Delete enrollment
+router.delete('/:id', authenticate, authorizeAdmin, enrollmentController.deleteEnrollment);
+
 module.exports = router;

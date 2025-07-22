@@ -46,6 +46,7 @@ import {
   Pending as PendingIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import AdminLayout from '../components/AdminLayout';
 
@@ -67,11 +68,21 @@ const EnrollmentDashboard = () => {
   const [availableSections, setAvailableSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [manageSectionsOpen, setManageSectionsOpen] = useState(false);
+  const [sectionsByGrade, setSectionsByGrade] = useState({
+    '7': ['Section A', 'Section B'],
+    '8': ['Section A', 'Section B'],
+    '9': ['Section A', 'Section B'],
+    '10': ['Section A', 'Section B'],
+    '11': ['STEM', 'ABM', 'HUMSS', 'GAS'],
+    '12': ['STEM', 'ABM', 'HUMSS', 'GAS'],
+  });
 
   // Add state for filters at the top of the component
   const [rejectionReasonFilter, setRejectionReasonFilter] = useState('');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleViewDetails = (enrollment) => {
     setSelectedEnrollment(enrollment);
@@ -190,21 +201,73 @@ const EnrollmentDashboard = () => {
 
   // Export to Excel handler
   const handleExportToExcel = () => {
-    // Map enrollments to a flat array of objects for Excel
-    const data = enrollments.map((enr) => ({
-      'Student Name': `${enr.surname || ''}, ${enr.firstName || ''} ${enr.middleName || ''}`.trim(),
-      'Course': enr.track || enr.course || '',
-      'Year Level': enr.gradeToEnroll || enr.yearLevel || '',
-      'Section': enr.section || '',
-      'Enrollment Date': enr.createdAt ? new Date(enr.createdAt).toLocaleString() : '',
+    // Filter only accepted students with sections
+    const acceptedStudents = enrollments.filter(enr => 
+      enr.status === 'approved' && enr.section
+    );
+
+    // Map enrollments to a flat array of objects for Excel with all required fields
+    const data = acceptedStudents.map((enr) => ({
+      // 1. Basic Learner Information
       'LRN': enr.learnerReferenceNumber || '',
+      'Last Name': enr.surname || '',
+      'First Name': enr.firstName || '',
+      'Middle Name': enr.middleName || '',
+      'Extension Name': enr.extension || '',
+      'Sex': enr.sex || '',
+      'Birthdate': enr.dateOfBirth ? new Date(enr.dateOfBirth).toISOString().split('T')[0] : '',
+      'Age': enr.age || '',
+
+      // 2. Enrollment Details
+      'Grade Level': enr.gradeToEnroll || '',
+      'Track': enr.track || '',
+      'Strand': '', // If you have strand data, add it here
+      'Enrollment Type': enr.enrollmentType || '',
+      'School Year': enr.schoolYear || '',
+      'Date of Enrollment': enr.createdAt ? new Date(enr.createdAt).toISOString().split('T')[0] : '',
+      'Section': enr.section || '',
       'Status': enr.status || '',
-      // Add more fields as needed
+
+      // 3. Address & Contact
+      'House Number/Street': `${enr.houseNumber || ''} ${enr.street || ''}`.trim(),
+      'Barangay': enr.barangay || '',
+      'Municipality/City': enr.city || '',
+      'Province': enr.province || '',
+      'Zip Code': enr.zipCode || '',
+      'Contact Number': enr.contactNumber || '',
+      'Email Address': enr.emailAddress || '',
+
+      // 4. Guardian/Parent Info
+      'Parent/Guardian Name': enr.guardianName || `${enr.fatherName || ''} ${enr.motherName ? '/ ' + enr.motherName : ''}`.trim(),
+      'Relationship to Learner': enr.guardianRelationship || '',
+      'Parent/Guardian Contact Number': enr.guardianContactNumber || enr.fatherContactNumber || enr.motherContactNumber || '',
+
+      // 5. Previous School Info
+      'Last School Attended': enr.lastSchoolAttended || '',
+      'School ID': '', // If you have school ID data, add it here
+      'School Address': enr.schoolAddress || ''
     }));
+
+    // Create worksheet with the data
     const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // Add some styling to the header row
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    for (let i = range.s.c; i <= range.e.c; i++) {
+      const address = XLSX.utils.encode_col(i) + '1';
+      if (!worksheet[address]) continue;
+      worksheet[address].s = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: "CCCCCC" } }
+      };
+    }
+
+    // Create workbook and add the worksheet
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Enrollments');
-    XLSX.writeFile(workbook, 'Student_Enrollments.xlsx');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Accepted Students');
+
+    // Generate the Excel file
+    XLSX.writeFile(workbook, `Accepted_Students_with_Sections_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // Section assignment handler
@@ -262,6 +325,23 @@ const EnrollmentDashboard = () => {
 
   const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
 
+  const handleDeleteEnrollment = async (enrollmentId) => {
+    if (!window.confirm('Are you sure you want to delete this enrollment request?')) return;
+    setLoading(true);
+    try {
+      await enrollmentService.deleteEnrollment(enrollmentId);
+      const res = await enrollmentService.getAllEnrollments();
+      setEnrollments(res.data);
+      setSnackbar({ open: true, message: 'Enrollment deleted successfully!', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Failed to delete enrollment.', severity: 'error' });
+    }
+    setLoading(false);
+  };
+
+  const handleOpenManageSections = () => setManageSectionsOpen(true);
+  const handleCloseManageSections = () => setManageSectionsOpen(false);
+
   useEffect(() => {
     enrollmentService.getAllEnrollments()
       .then(res => {
@@ -274,6 +354,15 @@ const EnrollmentDashboard = () => {
       });
   }, []);
 
+  // Filter enrollments by search term
+  const filteredEnrollments = enrollments.filter(e => {
+    const name = `${e.surname || ''} ${e.firstName || ''} ${e.middleName || ''}`.toLowerCase();
+    const lrn = (e.learnerReferenceNumber || '').toString().toLowerCase();
+    const track = (e.track || '').toLowerCase();
+    const term = searchTerm.toLowerCase();
+    return name.includes(term) || lrn.includes(term) || track.includes(term);
+  });
+
   return (
     <AdminLayout title="Student Enrollment Dashboard">
       <Container maxWidth="xl">
@@ -281,10 +370,22 @@ const EnrollmentDashboard = () => {
           <Typography variant="h4" gutterBottom>
             Student Enrollment Dashboard
           </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <Button variant="contained" color="success" onClick={handleExportToExcel}>
-              Export to Excel
-            </Button>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <TextField
+              label="Search by Name, LRN, or Track"
+              variant="outlined"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              sx={{ width: 350 }}
+            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button variant="contained" color="primary" onClick={handleOpenManageSections}>
+                Manage Sections
+              </Button>
+              <Button variant="contained" color="success" onClick={handleExportToExcel}>
+                Export to Excel
+              </Button>
+            </Box>
           </Box>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
             <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)}>
@@ -309,6 +410,7 @@ const EnrollmentDashboard = () => {
                         <TableCell>LRN</TableCell>
                         <TableCell>Name</TableCell>
                         <TableCell>Grade to Enroll</TableCell>
+                        <TableCell>Section</TableCell>
                         <TableCell>Track</TableCell>
                         <TableCell>Date Submitted</TableCell>
                         <TableCell>Status</TableCell>
@@ -316,11 +418,20 @@ const EnrollmentDashboard = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {enrollments.map((e) => (
+                      {filteredEnrollments.map((e) => (
                         <TableRow key={e._id}>
                           <TableCell>{e.learnerReferenceNumber}</TableCell>
                           <TableCell>{e.surname}, {e.firstName} {e.middleName}</TableCell>
                           <TableCell>{e.gradeToEnroll}</TableCell>
+                          <TableCell>
+                            {e.section ? (
+                              <Chip label={e.section} color="primary" size="small" />
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                Not Assigned
+                              </Typography>
+                            )}
+                          </TableCell>
                           <TableCell>{e.track}</TableCell>
                           <TableCell>{new Date(e.createdAt).toLocaleString()}</TableCell>
                           <TableCell>
@@ -344,6 +455,15 @@ const EnrollmentDashboard = () => {
                               sx={{ mr: 1 }}
                             >
                               View
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              size="small"
+                              startIcon={<DeleteIcon />}
+                              onClick={() => handleDeleteEnrollment(e._id)}
+                            >
+                              Delete
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -1440,8 +1560,48 @@ const EnrollmentDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      </Container>
-    </AdminLayout>
+
+      {/* Manage Sections Dialog */}
+      <Dialog open={manageSectionsOpen} onClose={handleCloseManageSections} maxWidth="sm" fullWidth>
+        <DialogTitle>Manage Sections</DialogTitle>
+        <DialogContent>
+          {Object.entries(sectionsByGrade).map(([grade, sections]) => (
+            <Box key={grade} sx={{ mb: 3 }}>
+              <Typography variant="h6">Grade {grade}</Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                {sections.map((section, idx) => (
+                  <Chip key={section + idx} label={section} color="primary" variant="outlined" />
+                ))}
+              </Box>
+            </Box>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseManageSections}>Close</Button>
+    </DialogActions>
+  </Dialog>
+
+      {/* Manage Sections Dialog */}
+      <Dialog open={manageSectionsOpen} onClose={handleCloseManageSections} maxWidth="sm" fullWidth>
+        <DialogTitle>Manage Sections</DialogTitle>
+        <DialogContent>
+          {Object.entries(sectionsByGrade).map(([grade, sections]) => (
+            <Box key={grade} sx={{ mb: 3 }}>
+              <Typography variant="h6">Grade {grade}</Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                {sections.map((section, idx) => (
+                  <Chip key={section + idx} label={section} color="primary" variant="outlined" />
+                ))}
+              </Box>
+            </Box>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseManageSections}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  </AdminLayout>
   );
 };
 

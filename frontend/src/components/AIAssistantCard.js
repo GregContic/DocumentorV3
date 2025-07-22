@@ -14,7 +14,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import {
-  AutoAwesome as AIIcon,
+  // ...existing code...
   ExpandMore as ExpandIcon,
   ExpandLess as CollapseIcon,
   CheckCircle as CheckIcon,
@@ -52,45 +52,50 @@ const AIAssistantCard = ({ onStartAIProcessing, show = true }) => {
   ];
 
   return (
-    <Card 
-      sx={{ 
-        mb: 3, 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
+    <Card
+      sx={{
+        mb: 3,
+        background: '#f7fafc',
+        color: '#222',
+        borderRadius: 4,
+        boxShadow: '0 4px 24px 0 rgba(60, 120, 180, 0.10)',
+        border: '1px solid #e3e8ee',
         position: 'relative',
         overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '100px',
-          height: '100px',
-          background: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: '50%',
-          transform: 'translate(30px, -30px)',
-        }
       }}
     >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <AIIcon sx={{ fontSize: 40, mr: 2 }} />
+          <Box sx={{
+            width: 56,
+            height: 56,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #b2f7ef 0%, #f7d6e0 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mr: 2,
+            boxShadow: '0 2px 8px 0 rgba(60, 120, 180, 0.10)',
+          }}>
+            <BrainIcon sx={{ fontSize: 32, color: '#3a7bd5' }} />
+          </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" gutterBottom>
-              AI Document Assistant
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: '#3a7bd5' }}>
+              Document AI Assistant
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Save time by uploading a photo of your documents. Our AI will automatically extract and fill in your information.
+            <Typography variant="body2" sx={{ color: '#444', opacity: 0.9 }}>
+              Upload your school documents and let our AI help you fill out your enrollment form quickly and accurately.
             </Typography>
           </Box>
-          <Chip 
-            label="NEW" 
-            size="small" 
-            sx={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              fontWeight: 'bold'
-            }} 
+          <Chip
+            label="AI"
+            size="small"
+            sx={{
+              backgroundColor: '#e3e8ee',
+              color: '#3a7bd5',
+              fontWeight: 'bold',
+              letterSpacing: 1,
+            }}
           />
         </Box>
 
@@ -99,51 +104,69 @@ const AIAssistantCard = ({ onStartAIProcessing, show = true }) => {
             variant="contained"
             onClick={onStartAIProcessing}
             sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: '#3a7bd5',
               color: 'white',
+              borderRadius: 2,
+              boxShadow: '0 2px 8px 0 rgba(60, 120, 180, 0.10)',
+              textTransform: 'none',
+              fontWeight: 600,
               '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-              }
+                backgroundColor: '#2457a6',
+              },
             }}
-            startIcon={<AIIcon />}
+            startIcon={<BrainIcon />}
           >
-            Start AI Processing
+            Use Document AI
           </Button>
           <Button
-            variant="text"
+            variant="outlined"
             onClick={() => setExpanded(!expanded)}
-            sx={{ color: 'white' }}
+            sx={{
+              color: '#3a7bd5',
+              borderColor: '#3a7bd5',
+              borderRadius: 2,
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#e3e8ee',
+                borderColor: '#2457a6',
+                color: '#2457a6',
+              },
+            }}
             endIcon={expanded ? <CollapseIcon /> : <ExpandIcon />}
           >
-            {expanded ? 'Less Info' : 'Learn More'}
+            {expanded ? 'Hide Details' : 'How it works'}
           </Button>
         </Box>
 
         <Collapse in={expanded}>
-          <Alert 
-            severity="info" 
-            sx={{ 
-              mb: 2, 
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              color: 'white',
+          <Alert
+            severity="info"
+            sx={{
+              mb: 2,
+              backgroundColor: '#e3e8ee',
+              color: '#2457a6',
+              borderRadius: 2,
+              boxShadow: 'none',
+              fontWeight: 500,
               '& .MuiAlert-icon': {
-                color: 'white'
-              }
+                color: '#3a7bd5',
+              },
             }}
           >
-            <Typography variant="subtitle2" gutterBottom>
-              How it works:
+            <Typography variant="subtitle2" gutterBottom sx={{ color: '#2457a6', fontWeight: 700 }}>
+              How Document AI Works:
             </Typography>
-            <Typography variant="body2">
-              1. Upload a clear photo of your student ID, transcript, or Form 137<br/>
-              2. Our AI extracts text using advanced OCR technology<br/>
-              3. Smart algorithms identify and map information to form fields<br/>
-              4. Review and confirm the extracted data before proceeding
+            <Typography variant="body2" sx={{ color: '#444' }}>
+              1. Upload a clear photo or PDF of your school document<br />
+              2. AI extracts and analyzes the text<br />
+              3. Information is mapped to your enrollment form<br />
+              4. You review and confirm before submitting
             </Typography>
           </Alert>
 
-          <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-            Features & Benefits:
+          <Typography variant="subtitle2" gutterBottom sx={{ mt: 2, color: '#2457a6', fontWeight: 700 }}>
+            Features:
           </Typography>
           <List dense>
             {features.map((feature, index) => (
@@ -154,30 +177,33 @@ const AIAssistantCard = ({ onStartAIProcessing, show = true }) => {
                 <ListItemText
                   primary={feature.title}
                   secondary={feature.description}
-                  primaryTypographyProps={{ 
-                    color: 'white', 
-                    fontWeight: 'medium' 
+                  primaryTypographyProps={{
+                    color: '#2457a6',
+                    fontWeight: 600,
                   }}
-                  secondaryTypographyProps={{ 
-                    color: 'rgba(255, 255, 255, 0.8)' 
+                  secondaryTypographyProps={{
+                    color: '#444',
                   }}
                 />
               </ListItem>
             ))}
           </List>
 
-          <Alert 
-            severity="success" 
-            sx={{ 
+          <Alert
+            severity="success"
+            sx={{
               mt: 2,
-              backgroundColor: 'rgba(76, 175, 80, 0.2)',
-              color: 'white',
+              backgroundColor: '#b2f7ef',
+              color: '#2457a6',
+              borderRadius: 2,
+              boxShadow: 'none',
+              fontWeight: 500,
               '& .MuiAlert-icon': {
-                color: '#4caf50'
-              }
+                color: '#3a7bd5',
+              },
             }}
           >
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ color: '#2457a6', fontWeight: 600 }}>
               <strong>Supported Documents:</strong> Student IDs, Transcripts, Form 137, Report Cards, Diplomas, and other official school documents
             </Typography>
           </Alert>

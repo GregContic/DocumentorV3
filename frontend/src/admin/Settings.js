@@ -78,6 +78,7 @@ const Settings = () => {
     enableChatbot: true,
     autoArchiveCompletedRequests: true,
     autoArchiveDays: 90,
+    showDeleteEnrollmentButton: true, // NEW
   });
 
   // UI State
@@ -136,6 +137,7 @@ const Settings = () => {
         enableChatbot: settings.enableChatbot ?? true,
         autoArchiveCompletedRequests: settings.autoArchiveCompletedRequests ?? true,
         autoArchiveDays: settings.autoArchiveDays || 90,
+        showDeleteEnrollmentButton: settings.showDeleteEnrollmentButton ?? true, // NEW
       });
       
     } catch (error) {
@@ -554,6 +556,17 @@ const Settings = () => {
                     value={documentSettings.autoArchiveDays}
                     onChange={(e) => handleDocumentSettingsChange('autoArchiveDays', parseInt(e.target.value))}
                     inputProps={{ min: 1, max: 365 }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={documentSettings.showDeleteEnrollmentButton}
+                        onChange={e => handleDocumentSettingsChange('showDeleteEnrollmentButton', e.target.checked)}
+                      />
+                    }
+                    label="Show Delete Button on Enrollment Dashboard"
                   />
                 </Grid>
               </Grid>
