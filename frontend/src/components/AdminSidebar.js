@@ -47,12 +47,6 @@ const AdminSidebar = ({ open, onClose, variant = 'permanent' }) => {
       description: 'Archived documents and inquiries'
     },
     {
-      text: 'Form 137 Stubs',
-      icon: <Form137Icon />,
-      path: '/admin/form137-stubs',
-      description: 'Generated Form 137 claim stubs'
-    },
-    {
       text: 'Settings',
       icon: <SettingsIcon />,
       path: '/admin/settings',

@@ -50,12 +50,14 @@ import AIDocumentUploader from '../../components/AIDocumentUploader';
 import AIAssistantCard from '../../components/AIAssistantCard';
 import { useAuth } from '../../context/AuthContext';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { generateStudentData } from '../../utils/mockDataGenerator';
 
 const Enrollment = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [aiExtracting, setAIExtracting] = useState(false);
 
   const [formData, setFormData] = useState({
     // Enrollment Type
@@ -169,95 +171,55 @@ const Enrollment = () => {
     return null;
   }
 
-  // AI Document Assistant handler
-  const handleAIDataExtracted = (extractedData) => {
-    if (extractedData) {
-      const updatedFormData = { ...formData };
-      // Personal Info
-      if (extractedData.personalInfo) {
-        Object.entries(extractedData.personalInfo).forEach(([key, value]) => {
-          if (key === 'dateOfBirth' && value) {
-            // Robustly parse date string
-            let parsed = null;
-            if (typeof value === 'string') {
-              const parts = value.split(/[\/.\-]/);
-              if (parts.length === 3) {
-                if (parts[0].length === 4) {
-                  parsed = new Date(value);
-                } else if (parts[2].length === 4) {
-                  parsed = new Date(`${parts[2]}-${parts[0]}-${parts[1]}`);
-                  if (isNaN(parsed.getTime())) {
-                    parsed = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                  }
-                }
-              } else {
-                parsed = new Date(value);
-              }
-            } else if (value instanceof Date) {
-              parsed = value;
-            }
-            updatedFormData.dateOfBirth = parsed && !isNaN(parsed.getTime()) ? parsed : null;
-          } else if (value) {
-            // Capitalize names and trim whitespace
-            if ([
-              'surname', 'firstName', 'middleName', 'extension',
-              'placeOfBirth', 'religion', 'citizenship'
-            ].includes(key)) {
-              updatedFormData[key] = capitalizeWords(value.trim());
-            } else {
-              updatedFormData[key] = value.toString().trim();
-            }
-          }
-        });
-      }
-      // Address
-      if (extractedData.address) {
-        Object.entries(extractedData.address).forEach(([key, value]) => {
-          if (value) {
-            updatedFormData[key] = capitalizeWords(value.trim());
-          }
-        });
-      }
-      // Academic Info
-      if (extractedData.academicInfo) {
-        Object.entries(extractedData.academicInfo).forEach(([key, value]) => {
-          if (value) {
-            updatedFormData[key] = value.toString().trim();
-          }
-        });
-      }
-      // Parent/Guardian Info
-      if (extractedData.parentInfo) {
-        Object.entries(extractedData.parentInfo).forEach(([key, value]) => {
-          if (value) {
-            if ([
-              'fatherName', 'motherName', 'guardianName',
-              'fatherOccupation', 'motherOccupation', 'guardianOccupation'
-            ].includes(key)) {
-              updatedFormData[key] = capitalizeWords(value.trim());
-            } else {
-              updatedFormData[key] = value.toString().trim();
-            }
-          }
-        });
-      }
-      // Emergency Contact
-      if (extractedData.emergencyContact) {
-        Object.entries(extractedData.emergencyContact).forEach(([key, value]) => {
-          if (value) {
-            if ([
-              'emergencyContactName', 'emergencyContactAddress', 'emergencyContactRelationship'
-            ].includes(key)) {
-              updatedFormData[key] = capitalizeWords(value.trim());
-            } else {
-              updatedFormData[key] = value.toString().trim();
-            }
-          }
-        });
-      }
-      setFormData(updatedFormData);
+  const handleAIDataExtracted = (file) => {
+    // Simulate AI extraction delay
+    setAIExtracting(true);
+    setTimeout(() => {
+      // Generate mock data
+      const mockData = generateStudentData();
+      // Map mockData fields to formData fields
+      setFormData(prev => ({
+        ...prev,
+        learnerReferenceNumber: mockData.lrn || '',
+        surname: mockData.lastName || '',
+        firstName: mockData.firstName || '',
+        middleName: mockData.middleName || '',
+        dateOfBirth: mockData.birthDate ? new Date(mockData.birthDate) : null,
+        placeOfBirth: mockData.placeOfBirth || '',
+        sex: mockData.gender || '',
+        religion: mockData.religion || '',
+        citizenship: mockData.citizenship || '',
+        houseNumber: '',
+        street: '',
+        barangay: mockData.barangay || '',
+        city: mockData.city || '',
+        province: mockData.province || '',
+        contactNumber: mockData.phoneNumber || '',
+        emailAddress: mockData.email || '',
+        lastSchoolAttended: mockData.lastSchoolAttended || '',
+        gradeLevel: mockData.gradeLevel || '',
+        schoolYear: mockData.schoolYear || '',
+        fatherName: mockData.fatherName || '',
+        fatherOccupation: mockData.fatherOccupation || '',
+        fatherContactNumber: mockData.fatherContact || '',
+        motherName: mockData.motherName || '',
+        motherOccupation: mockData.motherOccupation || '',
+        motherContactNumber: mockData.motherContact || '',
+        guardianName: mockData.guardianName || '',
+        guardianRelationship: mockData.guardianRelationship || '',
+        guardianOccupation: mockData.guardianOccupation || '',
+        guardianContactNumber: mockData.guardianContact || '',
+        emergencyContactName: mockData.guardianName || '',
+        emergencyContactRelationship: mockData.guardianRelationship || '',
+        emergencyContactNumber: mockData.guardianContact || '',
+        emergencyContactAddress: '',
+        gradeToEnroll: mockData.gradeToEnroll || '',
+        track: mockData.strand || '',
+      }));
+      setAIExtracting(false);
       setShowAIUploader(false);
-    }
+      setShowSuccess(true);
+    }, 2000); // 2 seconds fake delay
   };
 
   const steps = [
@@ -598,8 +560,14 @@ const Enrollment = () => {
                   <AIDocumentUploader
                     formData={formData}
                     setFormData={setFormData}
-                    onDataExtracted={handleAIDataExtracted}
+                    onUploadComplete={handleAIDataExtracted}
                   />
+                  {aiExtracting && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                      <CircularProgress size={24} sx={{ mr: 2 }} />
+                      <Typography>Extracting data from uploaded document...</Typography>
+                    </Box>
+                  )}
                 </Grid>
               )}
               <Grid item xs={12}>
@@ -1808,44 +1776,6 @@ const Enrollment = () => {
         </Snackbar>
       </Paper>
 
-      {showAIUploader && (
-        <Box sx={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          bottom: 0, 
-          bgcolor: 'rgba(0, 0, 0, 0.5)', 
-          zIndex: 1100,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 2
-        }}>
-          <Box sx={{ 
-            maxWidth: 800, 
-            width: '100%', 
-            maxHeight: '90vh', 
-            overflow: 'auto',
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            p: 3
-          }}>
-            <AIDocumentUploader
-              onDataExtracted={handleAIDataExtracted}
-              formData={formData}
-              setFormData={setFormData}
-            />
-            <Button
-              onClick={() => setShowAIUploader(false)}
-              sx={{ mt: 2 }}
-              variant="outlined"
-            >
-              Close
-            </Button>
-          </Box>
-        </Box>
-      )}
     </Container>
   );
 };
