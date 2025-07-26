@@ -2,7 +2,7 @@
 const firstNames = [
     'Crisanto Abel', 'Ernesto',
     'Fernando', 'Joe Juan',
-    'Kabunian', 'Lumawig', 'Makisig', 'Nina', 'Olivia',
+    'Nina', 'Olivia', 'Kevin', 'Benedict',
     'Airies Petra', 'Quina', 'Rosa', 'Sofia', 'Teresa',
     'Victoria Anne', 'Xyra Mae',
     'Maria', 'Ana', 'Elena', 'Clara',
@@ -25,8 +25,7 @@ const religions = [
     'Roman Catholic',
     'Protestant',
     'Iglesia ni Cristo',
-    'Baptist',
-    'Methodist',
+    'Baptist'
 ];
 
 // Common Cordillera addresses and barangays
@@ -48,13 +47,13 @@ const schools = [
     'Baguio City National High School',
     'Saint Louis School of La Trinidad',
     'Benguet State University Laboratory High School',
-    'Tublay School of Home Industries',
     'Mountain Province General Comprehensive High School',
     'Kalinga State University Laboratory School',
     'Ifugao State University Laboratory School',
     'Cordillera Career Development College',
     'Easter College',
-    'University of Baguio Science High School'
+    'University of Baguio Science High School',
+    'Eastern La Trinidad National High School'
 ];
 
 const getRandomElement = (array) => array[Math.floor(Math.random() * array.length)];

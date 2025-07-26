@@ -50,12 +50,14 @@ import AIDocumentUploader from '../../components/AIDocumentUploader';
 import AIAssistantCard from '../../components/AIAssistantCard';
 import { useAuth } from '../../context/AuthContext';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { generateStudentData } from '../../utils/mockDataGenerator';
 
 const Enrollment = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [aiExtracting, setAIExtracting] = useState(false);
 
   const [formData, setFormData] = useState({
     // Enrollment Type
@@ -169,162 +171,114 @@ const Enrollment = () => {
     return null;
   }
 
-  // Generate mock data for testing
-  const generateMockData = () => ({
-    personalInfo: {
-      learnerReferenceNumber: "123456789012",
-      surname: "Smith",
-      firstName: "John",
-      middleName: "Robert",
-      extension: "",
-      dateOfBirth: new Date("2010-05-15"),
-      placeOfBirth: "La Trinidad",
-      sex: "Male",
-      civilStatus: "Single",
-      religion: "Catholic",
-      citizenship: "Filipino",
-      emailAddress: "john.smith@example.com",
-      contactNumber: "09123456789"
-    },
-    address: {
-      houseNumber: "123",
-      street: "Cedar Street",
-      barangay: "Balili",
-      city: "La Trinidad",
-      province: "Benguet",
-      zipCode: "2601"
-    },
-    academicInfo: {
-      lastSchoolAttended: "Previous High School",
-      schoolAddress: "Previous School Address",
-      lastGradeLevel: "Grade 10",
-      yearCompleted: "2024",
-      schoolId: "12345"
-    },
-    parentInfo: {
-      fatherName: "James Smith",
-      fatherOccupation: "Engineer",
-      fatherContactNumber: "09876543210",
-      motherName: "Mary Smith",
-      motherOccupation: "Teacher",
-      motherContactNumber: "09876543211",
-      guardianName: "James Smith",
-      guardianContactNumber: "09876543210",
-      guardianRelationship: "Father"
-    },
-    emergencyContact: {
-      emergencyContactName: "Mary Smith",
-      emergencyContactNumber: "09876543211",
-      emergencyContactRelationship: "Mother",
-      emergencyContactAddress: "123 Cedar Street, Balili, La Trinidad"
-    }
-  });
-
-  const handleAIDataExtracted = () => {
-    // Generate and use mock data
-    const mockData = generateMockData();
-    const updatedFormData = { ...formData };
-    
-    // Helper function to process form values
-    const processFormValue = (key, value) => {
-      if (!value) return value;
-
-      // Handle date of birth
-      if (key === 'dateOfBirth') {
-        if (value instanceof Date) return value;
-        try {
-          const date = new Date(value);
-          if (!isNaN(date.getTime())) return date;
-        } catch (e) {
-          console.warn('Invalid date format:', value);
-        }
-        return null;
+  const handleAIDataExtracted = (file) => {
+    // Simulate AI extraction delay
+    setAIExtracting(true);
+    setTimeout(() => {
+      const mockData = generateStudentData();
+      // Randomly pick one: 0 = father, 1 = mother, 2 = guardian
+      const pick = Math.floor(Math.random() * 3);
+      let fatherFields = {}, motherFields = {}, guardianFields = {}, emergencyFields = {};
+      if (pick === 0) {
+        fatherFields = {
+          fatherName: mockData.fatherName || '',
+          fatherOccupation: mockData.fatherOccupation || '',
+          fatherContactNumber: mockData.fatherContact || '',
+        };
+        motherFields = {
+          motherName: '',
+          motherOccupation: '',
+          motherContactNumber: '',
+        };
+        guardianFields = {
+          guardianName: '',
+          guardianRelationship: '',
+          guardianOccupation: '',
+          guardianContactNumber: '',
+        };
+        emergencyFields = {
+          emergencyContactName: mockData.fatherName || '',
+          emergencyContactRelationship: 'Father',
+          emergencyContactNumber: mockData.fatherContact || '',
+        };
+      } else if (pick === 1) {
+        fatherFields = {
+          fatherName: '',
+          fatherOccupation: '',
+          fatherContactNumber: '',
+        };
+        motherFields = {
+          motherName: mockData.motherName || '',
+          motherOccupation: mockData.motherOccupation || '',
+          motherContactNumber: mockData.motherContact || '',
+        };
+        guardianFields = {
+          guardianName: '',
+          guardianRelationship: '',
+          guardianOccupation: '',
+          guardianContactNumber: '',
+        };
+        emergencyFields = {
+          emergencyContactName: mockData.motherName || '',
+          emergencyContactRelationship: 'Mother',
+          emergencyContactNumber: mockData.motherContact || '',
+        };
+      } else {
+        fatherFields = {
+          fatherName: '',
+          fatherOccupation: '',
+          fatherContactNumber: '',
+        };
+        motherFields = {
+          motherName: '',
+          motherOccupation: '',
+          motherContactNumber: '',
+        };
+        guardianFields = {
+          guardianName: mockData.guardianName || '',
+          guardianRelationship: mockData.guardianRelationship || '',
+          guardianOccupation: mockData.guardianOccupation || '',
+          guardianContactNumber: mockData.guardianContact || '',
+        };
+        emergencyFields = {
+          emergencyContactName: mockData.guardianName || '',
+          emergencyContactRelationship: mockData.guardianRelationship || '',
+          emergencyContactNumber: mockData.guardianContact || '',
+        };
       }
-
-      // Handle strings that need capitalization
-      if (typeof value === 'string') {
-        const fieldsToCapitalize = [
-          'surname', 'firstName', 'middleName', 'extension',
-          'placeOfBirth', 'religion', 'citizenship',
-          'city', 'province', 'barangay', 'street',
-          'lastSchoolAttended', 'schoolAddress',
-          'fatherName', 'motherName', 'guardianName',
-          'fatherOccupation', 'motherOccupation', 'guardianOccupation',
-          'emergencyContactName', 'emergencyContactAddress', 'emergencyContactRelationship'
-        ];
-        
-        const trimmed = value.trim();
-        return fieldsToCapitalize.includes(key) ? 
-          capitalizeWords(trimmed) : trimmed;
-      }
-
-      return value;
-    };
-
-    // Process mock data sections
-    ['personalInfo', 'address', 'academicInfo', 'parentInfo', 'emergencyContact'].forEach(section => {
-      if (mockData[section] && typeof mockData[section] === 'object') {
-        Object.entries(mockData[section]).forEach(([key, value]) => {
-          updatedFormData[key] = processFormValue(key, value);
-        });
-      }
-    });
-
-    // Update form state and UI
-    setFormData(updatedFormData);
-    setShowAIUploader(false);
-    setShowSuccess(true);
-      if (!value) return value;
-
-      // Handle date of birth
-      if (key === 'dateOfBirth') {
-        try {
-          if (value instanceof Date) return value;
-          
-          const date = new Date(value);
-          if (!isNaN(date.getTime())) return date;
-          
-          // Try parsing different date formats
-          const parts = value.split(/[\/.\-]/);
-          if (parts.length === 3) {
-            if (parts[0].length === 4) {
-              return new Date(value);
-            } else if (parts[2].length === 4) {
-              const d1 = new Date(`${parts[2]}-${parts[0]}-${parts[1]}`);
-              if (!isNaN(d1.getTime())) return d1;
-              
-              const d2 = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-              if (!isNaN(d2.getTime())) return d2;
-            }
-          }
-        } catch (e) {
-          console.warn('Invalid date format:', value);
-        }
-        return null;
-      }
-
-      // Handle strings
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-        return fieldsToCapitalize.includes(key) ? 
-          capitalizeWords(trimmed) : trimmed;
-      }
-
-      return value;
-    };
-
-    // Process main data
-    Object.entries(extractedData).forEach(([section, data]) => {
-      if (data && typeof data === 'object') {
-        Object.entries(data).forEach(([key, value]) => {
-          updatedFormData[key] = processValue(key, value);
-        });
-      }
-    });
-
-    setFormData(updatedFormData);
-    setShowAIUploader(false);
-    setShowSuccess(true);
+      setFormData(prev => ({
+        ...prev,
+        learnerReferenceNumber: mockData.lrn || '',
+        surname: mockData.lastName || '',
+        firstName: mockData.firstName || '',
+        middleName: mockData.middleName || '',
+        dateOfBirth: mockData.birthDate ? new Date(mockData.birthDate) : null,
+        placeOfBirth: mockData.placeOfBirth || '',
+        sex: mockData.gender || '',
+        religion: mockData.religion || '',
+        citizenship: mockData.citizenship || '',
+        houseNumber: '',
+        street: '',
+        barangay: mockData.barangay || '',
+        city: mockData.city || '',
+        province: mockData.province || '',
+        contactNumber: mockData.phoneNumber || '',
+        emailAddress: mockData.email || '',
+        lastSchoolAttended: mockData.lastSchoolAttended || '',
+        gradeLevel: mockData.gradeLevel || '',
+        schoolYear: mockData.schoolYear || '',
+        gradeToEnroll: mockData.gradeToEnroll || '',
+        track: mockData.strand || '',
+        emergencyContactAddress: '',
+        ...fatherFields,
+        ...motherFields,
+        ...guardianFields,
+        ...emergencyFields,
+      }));
+      setAIExtracting(false);
+      setShowAIUploader(false);
+      setShowSuccess(true);
+    }, 2000); // 2 seconds fake delay
   };
 
   const steps = [
@@ -665,8 +619,14 @@ const Enrollment = () => {
                   <AIDocumentUploader
                     formData={formData}
                     setFormData={setFormData}
-                    onDataExtracted={handleAIDataExtracted}
+                    onUploadComplete={handleAIDataExtracted}
                   />
+                  {aiExtracting && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                      <CircularProgress size={24} sx={{ mr: 2 }} />
+                      <Typography>Extracting data from uploaded document...</Typography>
+                    </Box>
+                  )}
                 </Grid>
               )}
               <Grid item xs={12}>
